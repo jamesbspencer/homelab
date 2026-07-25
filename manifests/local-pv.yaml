@@ -1,0 +1,64 @@
+# ==============================================================================
+# Manifest: local-pv.yaml
+# Description: Kubernetes Local PersistentVolume (PV) and PersistentVolumeClaim (PVC)
+#              definition for node-local hostPath storage in K3s/Kubernetes.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. StorageClass Definition (manual local storage)
+# ------------------------------------------------------------------------------
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+
+---
+# ------------------------------------------------------------------------------
+# 2. PersistentVolume (PV) Definition
+# ------------------------------------------------------------------------------
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local-pv-data
+  labels:
+    type: local
+    app: homelab
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    # Path on the host filesystem (must exist or be created on the node)
+    path: /mnt/k8s-data
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                # Replace with target host/node name (e.g., ubuntu-server or node1)
+                - ubuntu
+---
+# ------------------------------------------------------------------------------
+# 3. PersistentVolumeClaim (PVC) Definition
+# ------------------------------------------------------------------------------
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: local-pvc-data
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage
+  resources:
+    requests:
+      storage: 10Gi
