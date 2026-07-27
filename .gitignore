@@ -1,0 +1,7 @@
+# Portainer persistent data
+portainer/data/*
+!portainer/data/README.md
+
+# Traefik local certificates
+traefik/letsencrypt/*
+!traefik/letsencrypt/README.md

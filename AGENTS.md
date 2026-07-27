@@ -25,8 +25,13 @@ When creating or modifying bash scripts:
 .
 ├── AGENTS.md            # Guidelines for AI coding agents
 ├── README.md            # General documentation and script usage guide
-
+├── install-docker.sh    # Docker Engine installer script for Ubuntu
+├── portainer/
+│   └── docker-compose.yml # Portainer CE compose file
+└── traefik/
+    └── docker-compose.yml # Traefik v3 reverse proxy compose file
 ```
+
 
 - Keep root scripts well documented and executable (`chmod +x`).
 - Put modular automation scripts or manifests into clear subdirectories (e.g., `scripts/`, `manifests/`, `ansible/`) as the repository grows.
