@@ -4,13 +4,14 @@ Instructions and guidelines for AI Coding Agents interacting with the `homelab` 
 
 ## Repository Overview
 
-This repository (`homelab`) contains GitOps configurations, shell scripts, and infrastructure-as-code automation for managing homelab services and Kubernetes (K3s) clusters on Ubuntu servers.
+This repository (`homelab`) contains GitOps configurations, shell scripts, and infrastructure-as-code automation for managing homelab services on Ubuntu servers.
 
 ## Guidelines for AI Agents
 
 ### 1. Shell Scripting Standards (`*.sh`)
 
 When creating or modifying bash scripts:
+
 - **Header & Flags**: Always start with `#!/usr/bin/env bash` and set strict error handling flags: `set -euo pipefail`.
 - **Privilege Checks**: Scripts modifying system configuration must verify `root` or `sudo` execution (`$EUID -eq 0`) and provide informative error messages.
 - **Idempotency**: All operations (package installation, directory creation, config file edits) should be safe to run multiple times without unintended side effects.
@@ -24,12 +25,7 @@ When creating or modifying bash scripts:
 .
 ├── AGENTS.md            # Guidelines for AI coding agents
 ├── README.md            # General documentation and script usage guide
-├── install-k3s.sh       # K3s cluster installer script for Ubuntu
-├── install-portainer.sh # Portainer Helm chart installer script for K3s
-├── helmfiles/
-│   └── portainer.yaml   # Declarative Helmfile for Portainer installation
-└── manifests/
-    └── local-pv.yaml    # Local Persistent Volume & PVC manifest
+
 ```
 
 - Keep root scripts well documented and executable (`chmod +x`).
@@ -43,7 +39,9 @@ When creating or modifying bash scripts:
 ### 4. Verification & Testing
 
 - Before completing a task involving bash scripts, test syntax validity using:
+
   ```bash
   bash -n <script_name>.sh
   ```
+
 - Verify scripts are executable (`chmod +x`).
