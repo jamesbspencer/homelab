@@ -5,3 +5,7 @@ portainer/data/*
 # Traefik local certificates
 traefik/letsencrypt/*
 !traefik/letsencrypt/README.md
+
+# Local environment overrides
+.env
+

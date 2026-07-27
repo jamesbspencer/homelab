@@ -25,6 +25,9 @@ When creating or modifying bash scripts:
 .
 ├── AGENTS.md            # Guidelines for AI coding agents
 ├── README.md            # General documentation and script usage guide
+├── homepage/
+│   ├── config/          # Homepage configuration files
+│   └── docker-compose.yml # Homepage dashboard compose file
 ├── install-docker.sh    # Docker Engine installer script for Ubuntu
 ├── portainer/
 │   └── docker-compose.yml # Portainer CE compose file

@@ -78,3 +78,29 @@ cd traefik
 docker compose down
 ```
 
+---
+
+## Homepage Dashboard (`homepage/docker-compose.yml`)
+
+Docker Compose configuration to deploy the Homepage dashboard.
+
+### Features
+- Exposes port `3000` locally.
+- Mounts local configuration folder `./config` dynamically to `/app/config`.
+- Integrates with the shared `web` network.
+- Configures Traefik labels to expose the dashboard dynamically at `${HOMEPAGE_HOST}`.
+
+### Usage Examples
+
+#### Starting Homepage
+```bash
+cd homepage
+docker compose up -d
+```
+
+#### Stopping Homepage
+```bash
+cd homepage
+docker compose down
+```
+
