@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  backend:
+    container_name: infisical-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    image: infisical/infisical:latest # PIN THIS TO A SPECIFIC TAG
+    pull_policy: always
+    env_file: .env
+    ports:
+      - 8080:8080 # Exposes Infisical backend. Adjust to avoid conflicts (e.g. Traefik port 80).
+    environment:
+      - NODE_ENV=production
+    networks:
+      - infisical
+
+  redis:
+    image: redis:7-alpine
+    container_name: infisical-redis
+    env_file: .env
+    restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - infisical
+    volumes:
+      - ./redis-data:/data
+
+  db:
+    container_name: infisical-db
+    image: postgres:14-alpine
+    restart: always
+    env_file: .env
+    volumes:
+      - ./db-data:/var/lib/postgresql/data
+    networks:
+      - infisical
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username=${POSTGRES_USER} && psql --username=${POSTGRES_USER} --list"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+
+networks:
+  infisical:

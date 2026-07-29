@@ -18,6 +18,7 @@ Launch the core ingress reverse proxy:
 ### 3. Management & Dashboards
 Deploy applications and user interfaces:
 - **Portainer**: Deploy [portainer/docker-compose.yml](portainer/docker-compose.yml) for container management.
+- **Infisical Secrets Manager**: Deploy [infisical/docker-compose.yml](infisical/docker-compose.yml) to manage platform credentials and secrets.
 - **Homepage**: Deploy [homepage/docker-compose.yml](homepage/docker-compose.yml) to display the homelab dashboard.
 
 ---
@@ -169,6 +170,39 @@ docker compose up -d
 #### Stopping Homepage
 ```bash
 cd homepage
+docker compose down
+```
+
+---
+
+## Infisical Secrets Manager (`infisical/docker-compose.yml`)
+
+Docker Compose configuration to deploy the Infisical secret management platform.
+
+### Features
+- Deploys the Infisical backend service.
+- Configures Postgres 14 database for platform storage.
+- Configures Redis 7 for caching and session management.
+- Uses local directory bind mounts `./db-data` and `./redis-data` for persistence.
+- Exposes port `8080` for backend API and dashboard interface.
+
+### Usage Examples
+
+#### Starting Infisical
+1. Create and configure the environment variables:
+   ```bash
+   cp infisical/.env.example infisical/.env
+   # Edit infisical/.env and generate keys as instructed
+   ```
+2. Start the services:
+   ```bash
+   cd infisical
+   docker compose up -d
+   ```
+
+#### Stopping Infisical
+```bash
+cd infisical
 docker compose down
 ```
 
