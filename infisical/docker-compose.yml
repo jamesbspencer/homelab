@@ -1,8 +1,8 @@
 version: "3"
 
 services:
-  backend:
-    container_name: infisical-backend
+  infisical:
+    container_name: infisical
     restart: unless-stopped
     depends_on:
       db:
@@ -16,8 +16,15 @@ services:
       - 8080:8080 # Exposes Infisical backend. Adjust to avoid conflicts (e.g. Traefik port 80).
     environment:
       - NODE_ENV=production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.infisical.rule=Host(`${INFISICAL_HOST}`)"
+      - "traefik.http.routers.infisical.entrypoints=websecure"
+      - "traefik.http.routers.infisical.tls.certresolver=letsencrypt"
+      - "traefik.http.services.infisical.loadbalancer.server.port=8080"
     networks:
       - infisical
+      - web
 
   redis:
     image: redis:7-alpine
@@ -41,10 +48,13 @@ services:
     networks:
       - infisical
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready --username=${POSTGRES_USER} && psql --username=${POSTGRES_USER} --list"]
+      test: [ "CMD-SHELL", "pg_isready --username=${POSTGRES_USER} && psql --username=${POSTGRES_USER} --list" ]
       interval: 5s
       timeout: 10s
       retries: 10
 
 networks:
   infisical:
+  web:
+    external: true
+    name: web
