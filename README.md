@@ -185,7 +185,7 @@ Docker Compose configuration to deploy the Infisical secret management platform.
 - Configures Postgres 14 database for platform storage.
 - Configures Redis 7 for caching and session management.
 - Uses local directory bind mounts `./db-data` and `./redis-data` for persistence.
-- Exposes port `8080` for backend API and dashboard interface.
+- Exposes port `8081` for backend API and dashboard interface.
 
 ### Usage Examples
 
@@ -214,7 +214,7 @@ docker compose down
 Docker Compose configuration to deploy the Open WebUI web interface alongside Ollama.
 
 ### Features
-- Deploys the Open WebUI client (listens on port 8080 internally, exposed on port 3000 locally).
+- Deploys the Open WebUI client (listens on port 8080 internally, exposed on port 3080 locally).
 - Deploys a local Ollama service for running local large language models.
 - Network isolation: database/backend connections are isolated on the private network `open-webui-net`, while only the UI container is exposed to Traefik's `web` network.
 - Persistent directory storage bind mounts `./open-webui-data` and `./ollama-data`.

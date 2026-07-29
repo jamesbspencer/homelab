@@ -6,7 +6,7 @@ services:
     container_name: open-webui
     restart: always
     ports:
-      - "3000:8080" # Local port mapping (optional if using Traefik)
+      - "3080:8080" # Local port mapping (optional if using Traefik)
     volumes:
       - ./open-webui-data:/app/backend/data
     environment:
