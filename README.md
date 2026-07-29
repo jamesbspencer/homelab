@@ -59,6 +59,7 @@ Automated script to install and configure QEMU/KVM and libvirt on Ubuntu systems
 - Enables and starts the `libvirtd` systemd service automatically.
 - Initializes and activates the default network (NAT by default, or bridged if a host bridge is specified).
 - Initializes and activates the default VM storage pool (customizable path, defaults to `/var/lib/libvirt/images`).
+- Initializes and activates a dedicated VM ISO storage pool (customizable path, defaults to `/var/lib/libvirt/isos`).
 - Supports an optional flag to configure nested virtualization.
 
 ### Usage Examples
@@ -73,9 +74,9 @@ sudo ./system-config/install-qemu.sh
 sudo ./system-config/install-qemu.sh -b br0
 ```
 
-#### Install with Custom Image Directory
+#### Install with Custom Image and ISO Directories
 ```bash
-sudo ./system-config/install-qemu.sh -d /mnt/storage/vms
+sudo ./system-config/install-qemu.sh -d /mnt/storage/vms -i /mnt/storage/isos
 ```
 
 #### Install with Nested Virtualization
@@ -89,6 +90,7 @@ sudo ./system-config/install-qemu.sh --nested
 | --- | --- |
 | `-b, --bridge NAME` | Configure the default libvirt network to use a host bridge (e.g., `br0`) |
 | `-d, --image-dir PATH` | Custom directory path for the default VM storage pool (default: `/var/lib/libvirt/images`) |
+| `-i, --iso-dir PATH` | Custom directory path for the VM ISO storage pool (default: `/var/lib/libvirt/isos`) |
 | `--nested` | Enable nested virtualization configuration for Intel or AMD processors |
 | `-h, --help` | Display the help menu |
 

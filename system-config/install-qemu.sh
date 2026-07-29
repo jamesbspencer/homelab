@@ -37,13 +37,14 @@ Automated script to install and configure QEMU, KVM, and libvirt on Ubuntu.
 Options:
   -b, --bridge NAME     Configure the default network to use a host bridge (e.g., br0)
   -d, --image-dir PATH  Custom directory path for the default VM storage pool (default: /var/lib/libvirt/images)
+  -i, --iso-dir PATH    Custom directory path for the ISO storage pool (default: /var/lib/libvirt/isos)
   --nested              Enable nested virtualization configuration (Intel/AMD)
   -h, --help            Show this help menu and exit
 
 Examples:
   sudo ./$(basename "$0")
   sudo ./$(basename "$0") -b br0
-  sudo ./$(basename "$0") -d /mnt/storage/vms
+  sudo ./$(basename "$0") -d /mnt/storage/vms -i /mnt/storage/isos
   sudo ./$(basename "$0") --nested
 EOF
     exit 0
@@ -53,6 +54,7 @@ EOF
 NESTED_VIRT=false
 IMAGE_DIR="/var/lib/libvirt/images"
 BRIDGE_NAME=""
+ISO_DIR="/var/lib/libvirt/isos"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -72,6 +74,15 @@ while [[ $# -gt 0 ]]; do
         -d|--image-dir)
             if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
                 IMAGE_DIR="$2"
+                shift 2
+            else
+                log_error "Option $1 requires a non-empty directory path argument."
+                usage
+            fi
+            ;;
+        -i|--iso-dir)
+            if [[ -n "${2:-}" && ! "$2" =~ ^- ]]; then
+                ISO_DIR="$2"
                 shift 2
             else
                 log_error "Option $1 requires a non-empty directory path argument."
@@ -332,6 +343,47 @@ else
     virsh pool-start default || true
     virsh pool-autostart default || true
     log_success "Default storage pool has been defined, started, and set to autostart."
+fi
+
+# Configure ISO storage pool
+log_info "Configuring ISO storage pool..."
+# Ensure the requested directory exists and has appropriate permissions
+mkdir -p "$ISO_DIR"
+chown root:root "$ISO_DIR"
+chmod 711 "$ISO_DIR"
+
+if virsh pool-info iso &>/dev/null; then
+    # ISO pool exists, let's check its current path
+    current_iso_path=$(virsh pool-dumpxml iso 2>/dev/null | grep -o '<path>[^<]*</path>' | sed 's|<path>||;s|</path>||' || true)
+    
+    if [[ "$current_iso_path" != "$ISO_DIR" ]]; then
+        log_info "Updating ISO storage pool directory from '$current_iso_path' to '$ISO_DIR'..."
+        if virsh pool-info iso | grep -q "Active: *yes"; then
+            virsh pool-destroy iso || true
+        fi
+        virsh pool-undefine iso || true
+        
+        virsh pool-define-as iso dir - - - - "$ISO_DIR" || true
+        virsh pool-build iso || true
+        virsh pool-start iso || true
+        virsh pool-autostart iso || true
+        log_success "ISO storage pool has been updated, started, and set to autostart at '$ISO_DIR'."
+    else
+        log_info "ISO storage pool is already configured with path '$ISO_DIR'."
+        virsh pool-autostart iso || true
+        if ! virsh pool-info iso | grep -q "Active: *yes"; then
+            log_info "Starting ISO storage pool..."
+            virsh pool-start iso || true
+        fi
+        log_success "ISO storage pool is active and set to autostart."
+    fi
+else
+    log_info "ISO storage pool not found. Defining ISO pool at '$ISO_DIR'..."
+    virsh pool-define-as iso dir - - - - "$ISO_DIR" || true
+    virsh pool-build iso || true
+    virsh pool-start iso || true
+    virsh pool-autostart iso || true
+    log_success "ISO storage pool has been defined, started, and set to autostart."
 fi
 
 # ------------------------------------------------------------------------------
