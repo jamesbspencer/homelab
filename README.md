@@ -19,6 +19,7 @@ Launch the core ingress reverse proxy:
 Deploy applications and user interfaces:
 - **Portainer**: Deploy [portainer/docker-compose.yml](portainer/docker-compose.yml) for container management.
 - **Infisical Secrets Manager**: Deploy [infisical/docker-compose.yml](infisical/docker-compose.yml) to manage platform credentials and secrets.
+- **Open WebUI**: Deploy [openwebui/docker-compose.yml](openwebui/docker-compose.yml) for LLM chat web interface.
 - **Homepage**: Deploy [homepage/docker-compose.yml](homepage/docker-compose.yml) to display the homelab dashboard.
 
 ---
@@ -203,6 +204,39 @@ Docker Compose configuration to deploy the Infisical secret management platform.
 #### Stopping Infisical
 ```bash
 cd infisical
+docker compose down
+```
+
+---
+
+## Open WebUI (`openwebui/docker-compose.yml`)
+
+Docker Compose configuration to deploy the Open WebUI web interface alongside Ollama.
+
+### Features
+- Deploys the Open WebUI client (listens on port 8080 internally, exposed on port 3000 locally).
+- Deploys a local Ollama service for running local large language models.
+- Network isolation: database/backend connections are isolated on the private network `open-webui-net`, while only the UI container is exposed to Traefik's `web` network.
+- Persistent directory storage bind mounts `./open-webui-data` and `./ollama-data`.
+- Includes commented-out Nvidia GPU resource allocation block to enable GPU acceleration in Ollama.
+
+### Usage Examples
+
+#### Starting Open WebUI
+1. Create and configure the environment variables:
+   ```bash
+   cp openwebui/.env.example openwebui/.env
+   # Edit openwebui/.env as needed
+   ```
+2. Start the services:
+   ```bash
+   cd openwebui
+   docker compose up -d
+   ```
+
+#### Stopping Open WebUI
+```bash
+cd openwebui
 docker compose down
 ```
 
