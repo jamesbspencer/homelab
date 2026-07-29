@@ -1,8 +1,28 @@
 # Homelab
 
-Home Lab GitOps & Automation Scripts.
+Homelab GitOps configurations, shell scripts, and infrastructure-as-code automation for managing services on Ubuntu servers.
 
-## Docker Engine Installer (`install-docker.sh`)
+## Getting Started & Installation Order
+
+To configure your homelab environment from scratch, it is recommended to set up services in the following order:
+
+### 1. System Host Setup
+Prepare the underlying virtual machine/container host environments:
+- **Docker Engine Setup**: Run [system-config/install-docker.sh](system-config/install-docker.sh) to install Docker and Docker Compose.
+- **QEMU/libvirt Setup**: Run [system-config/install-qemu.sh](system-config/install-qemu.sh) to configure QEMU, KVM hypervisor capabilities, networks, and storage pools.
+
+### 2. Core Reverse Proxy & Networking
+Launch the core ingress reverse proxy:
+- **Traefik Proxy**: Deploy [traefik/docker-compose.yml](traefik/docker-compose.yml) to handle HTTPS certificates and route incoming subdomains.
+
+### 3. Management & Dashboards
+Deploy applications and user interfaces:
+- **Portainer**: Deploy [portainer/docker-compose.yml](portainer/docker-compose.yml) for container management.
+- **Homepage**: Deploy [homepage/docker-compose.yml](homepage/docker-compose.yml) to display the homelab dashboard.
+
+---
+
+## Docker Engine Installer (`system-config/install-docker.sh`)
 
 Automated script to set up Docker Engine on Ubuntu systems following the official Docker installation documentation.
 
@@ -17,13 +37,59 @@ Automated script to set up Docker Engine on Ubuntu systems following the officia
 
 #### Default Installation
 ```bash
-sudo ./install-docker.sh
+sudo ./system-config/install-docker.sh
 ```
 
 ### Script CLI Options
 
 | Flag | Description |
 | --- | --- |
+| `-h, --help` | Display the help menu |
+
+---
+
+## QEMU/libvirt Installer (`system-config/install-qemu.sh`)
+
+Automated script to install and configure QEMU/KVM and libvirt on Ubuntu systems.
+
+### Features
+- Validates system requirements (supports Ubuntu only and checks for CPU hardware virtualization support).
+- Installs QEMU/KVM hypervisor, libvirt daemon, client tools (`virsh`), and VM installer tools (`virt-install`).
+- Adds the invoking user to `libvirt` and `kvm` groups for passwordless VM administration.
+- Enables and starts the `libvirtd` systemd service automatically.
+- Initializes and activates the default network (NAT by default, or bridged if a host bridge is specified).
+- Initializes and activates the default VM storage pool (customizable path, defaults to `/var/lib/libvirt/images`).
+- Supports an optional flag to configure nested virtualization.
+
+### Usage Examples
+
+#### Default Installation
+```bash
+sudo ./system-config/install-qemu.sh
+```
+
+#### Install with Bridged Networking
+```bash
+sudo ./system-config/install-qemu.sh -b br0
+```
+
+#### Install with Custom Image Directory
+```bash
+sudo ./system-config/install-qemu.sh -d /mnt/storage/vms
+```
+
+#### Install with Nested Virtualization
+```bash
+sudo ./system-config/install-qemu.sh --nested
+```
+
+### Script CLI Options
+
+| Flag | Description |
+| --- | --- |
+| `-b, --bridge NAME` | Configure the default libvirt network to use a host bridge (e.g., `br0`) |
+| `-d, --image-dir PATH` | Custom directory path for the default VM storage pool (default: `/var/lib/libvirt/images`) |
+| `--nested` | Enable nested virtualization configuration for Intel or AMD processors |
 | `-h, --help` | Display the help menu |
 
 ---
