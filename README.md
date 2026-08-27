@@ -10,6 +10,7 @@ This setup provides:
 - **Open WebUI Terminal (Open Terminal)**: Sandboxed web terminal service for executing command tasks directly inside Open WebUI.
 - **SearXNG Search Engine**: Privacy-respecting metasearch engine to give Open WebUI web search integration capabilities.
 - **Valkey**: High-performance in-memory key-value data structure store serving as the caching backend for SearXNG.
+- **Browserless Chrome**: Self-hosted, lightweight headless Chrome browser container configured with Playwright to scrape dynamic, JavaScript-heavy websites.
 
 ---
 
@@ -43,6 +44,9 @@ The reverse proxy serves as the single entry point for all HTTP/HTTPS traffic to
   * Fast caching service backend for SearXNG.
   * Joins the `redis` network.
   * Mounts local volume `./valkey/data` to persist cache database records.
+* **Browserless Chrome Service (Internal/`:3000` internally)**:
+  * Runs a headless Chrome instance inside the isolated `ai` network.
+  * Serving as the backend scraper for Open WebUI's Playwright web loader engine.
 * **Providers**:
   * **Docker Provider**: Automatically registers and routes services using Docker container labels.
   * **File Provider**: Monitors `traefik/dynamic.yml` for static TLS configuration and internal Traefik routing.
@@ -98,6 +102,7 @@ The reverse proxy serves as the single entry point for all HTTP/HTTPS traffic to
 - **Open Terminal** runs on the `ai` network with CPU/memory resource limits to securely process backend terminal tasks.
 - **Valkey** runs on the `redis` network as a fast health-checked cache backend.
 - **SearXNG** joins the `redis` and `ai` networks, acting as a private metasearch engine backend for Open WebUI web search.
+- **Browserless** runs on the `ai` network, serving as a headless browser for rendering dynamic JavaScript-heavy sites for the Open WebUI web loader.
 
 ### 2. Static Configuration
 [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml) configures basic log levels, entrypoints (`web` and `websecure`), the API/Dashboard dashboard, and enables the Docker and File configuration providers.
@@ -199,6 +204,7 @@ If you want to route external network requests to Ollama through Traefik instead
   docker compose logs -f open-terminal
   docker compose logs -f valkey
   docker compose logs -f searxng
+  docker compose logs -f browserless
   ```
 - **Permission Issues on `acme.json`**:
   If using ACME Let's Encrypt, the `acme.json` file must have exact permissions:
@@ -297,4 +303,16 @@ You can check the health and manage models in the Ollama service using these com
   Verify Open WebUI can successfully request search results from SearXNG's JSON endpoint inside the `ai` network:
   ```bash
   docker compose exec open-webui curl "http://searxng:8080/search?q=docker&format=json"
+  ```
+
+### Browserless Verification & Management
+- **Verify Status**:
+  Ensure the browserless service is running:
+  ```bash
+  docker compose ps browserless
+  ```
+- **Test Connection from Open WebUI**:
+  Verify that Open WebUI can reach Browserless over the `ai` network on port `3000`:
+  ```bash
+  docker exec open-webui curl -I http://browserless:3000/
   ```

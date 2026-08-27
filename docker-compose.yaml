@@ -67,6 +67,14 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       - VECTOR_DB=pgvector
       - VECTOR_DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - ENABLE_RAG_WEB_SEARCH=True
+      - RAG_WEB_SEARCH_ENGINE=searxng
+      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
+      - WEB_SEARCH_TRUST_ENV=True
+      - AIOHTTP_CLIENT_ASYNC_DNS_RESOLVER=False
+      - GLOBAL_LOG_LEVEL=DEBUG
+      - RAG_WEB_LOADER_ENGINE=playwright
+      - PLAYWRIGHT_WS_URI=ws://browserless:3000
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.open-webui.rule=Host(`ai.spencer.lan`)"
@@ -76,6 +84,7 @@ services:
     depends_on:
       - ollama
       - db
+      - browserless
   
   open-terminal:
     image: ghcr.io/open-webui/open-terminal:${TERMINAL_DOCKER_TAG-main}
@@ -126,6 +135,15 @@ services:
       - ai
     depends_on:
       - valkey
+
+  browserless:
+    image: browserless/chrome:latest
+    container_name: browserless
+    restart: unless-stopped
+    environment:
+      - MAX_CONCURRENT_SESSIONS=10
+    networks:
+      - ai
 
 networks:
   net1:
