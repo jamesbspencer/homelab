@@ -1,0 +1,140 @@
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+     - 80:80
+     - 443:443
+    networks:
+      - net1
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml
+      - ./traefik/acme.json:/etc/traefik/acme.json
+      - ./traefik/certs:/etc/traefik/certs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+     - 11434:11434
+    networks:
+      - ai
+    volumes:
+      - ./ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  db:
+    image: pgvector/pgvector:${POSTGRES_VERSION}
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    networks:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
+    container_name: open-webui
+    restart: unless-stopped
+    networks:
+      - net1
+      - ai
+      - db
+    volumes:
+      - ./open-webui:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${OPENWEBUI_SECRET_KEY}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - VECTOR_DB=pgvector
+      - VECTOR_DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.open-webui.rule=Host(`ai.spencer.lan`)"
+      - "traefik.http.routers.open-webui.entrypoints=websecure"
+      - "traefik.http.routers.open-webui.tls=true"
+      - "traefik.http.services.open-webui.loadbalancer.server.port=8080"
+    depends_on:
+      - ollama
+      - db
+  
+  open-terminal:
+    image: ghcr.io/open-webui/open-terminal:${TERMINAL_DOCKER_TAG-main}
+    container_name: open-terminal
+    restart: unless-stopped
+    networks:
+      - ai
+    volumes:
+      - ./open-terminal:/home/user
+    environment:
+      - OPEN_TERMINAL_API_KEY=${OPEN_TERMINAL_API_KEY}
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2048M
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+  valkey:
+    image: docker.io/valkey/valkey:9-alpine
+    container_name: valkey
+    restart: unless-stopped
+    volumes:
+      - ./valkey/data:/data
+    command: >
+      valkey-server
+      --save 30 1
+      --loglevel warning
+    networks:
+      - redis
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  searxng:
+    image: docker.io/searxng/searxng:${SEARXNG_VERSION:-latest}
+    container_name: searxng
+    restart: unless-stopped
+    volumes:
+      - ./searxng/config/:/etc/searxng/
+      - ./searxng/data/:/var/cache/searxng/
+    networks:
+      - redis
+      - ai
+    depends_on:
+      - valkey
+
+networks:
+  net1:
+    name: net1
+    driver: bridge
+  ai:
+    name: ai
+  db:
+    name: db
+  redis:
+    name: redis
+

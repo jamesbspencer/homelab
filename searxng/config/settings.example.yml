@@ -1,0 +1,23 @@
+use_default_settings: true
+
+general:
+  debug: false
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "ultrasecretkey"
+  image_proxy: true
+
+network:
+  useragent: "OpenWebUI-Search/1.0 (mailto:email@example.com)"
+
+valkey:
+  url: valkey://valkey:6379/0
+
+search:
+  safe_serach: 0
+  autocomplete: ""
+  formats:
+    - html
+    - json

@@ -1,0 +1,34 @@
+# Environment variables containing credentials/secrets
+.env
+
+# Traefik state and SSL certificates
+traefik/acme.json
+traefik/certs/*
+!traefik/certs/.gitkeep
+
+# Postgres raw database data
+postgres
+postgres/*
+
+# Ollama models, caches, and key pairs
+ollama/*
+!ollama/.gitkeep
+
+
+# Open WebUI state (sqlite databases, vector db, uploads, cache)
+open-webui/*
+!open-webui/.gitkeep
+
+# Valkey state/data
+valkey/*
+!valkey/.gitkeep
+
+
+# Open Terminal state/home directory
+open-terminal/*
+!open-terminal/.gitkeep
+
+# SearXNG data/cache
+searxng/config/settings.yml
+
+
