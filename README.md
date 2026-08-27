@@ -6,7 +6,7 @@ This setup provides:
 - **Traefik Reverse Proxy**: Automatic SSL termination using local TLS certificates, dynamic routing based on Docker container labels, and hosts the Traefik dashboard locally.
 - **Ollama LLM Server**: Local LLM runner with NVIDIA GPU acceleration enabled.
 - **Open WebUI Client**: Premium ChatGPT-style web client interface for interacting with local LLM models, exposed at `https://ai.spencer.lan`.
-- **PostgreSQL Database**: Dedicated persistent database configuration for storing Open WebUI data.
+- **pgvector Database (PostgreSQL)**: Dedicated persistent PostgreSQL database configuration using the `pgvector` image to store Open WebUI relational data and vector embeddings.
 - **Open WebUI Terminal (Open Terminal)**: Sandboxed web terminal service for executing command tasks directly inside Open WebUI.
 - **SearXNG Search Engine**: Privacy-respecting metasearch engine to give Open WebUI web search integration capabilities.
 - **Valkey**: High-performance in-memory key-value data structure store serving as the caching backend for SearXNG.
@@ -25,9 +25,9 @@ The reverse proxy serves as the single entry point for all HTTP/HTTPS traffic to
   * Runs the Ollama server container inside an isolated `ai` network.
   * Configured with GPU pass-through (`nvidia` driver, all GPUs) to accelerate model inference.
   * Mounts local volume `./ollama` to persist downloaded models.
-* **PostgreSQL Database (`:5432` internally)**:
-  * Runs the Postgres database container inside an isolated `db` network.
-  * Mounts local volume `./postgres` to persist database records.
+* **pgvector Database (`:5432` internally)**:
+  * Runs the PostgreSQL database container with `pgvector` enabled inside an isolated `db` network.
+  * Mounts local volume `./postgres` to persist database and vector embedding records.
 * **Open WebUI Service (`:8080` internally)**:
   * Running web UI client.
   * Joins the `net1` network (for Traefik reverse proxy access), the `ai` network (for ollama/terminal access), and the `db` network (to connect to PostgreSQL).
@@ -94,10 +94,10 @@ The reverse proxy serves as the single entry point for all HTTP/HTTPS traffic to
 ## ⚙️ Configuration Files
 
 ### 1. Docker Compose Configuration
-[`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) defines the Traefik, Ollama, Open WebUI, PostgreSQL db, Open Terminal, Valkey, and SearXNG services. 
+[`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) defines the Traefik, Ollama, Open WebUI, pgvector db, Open Terminal, Valkey, and SearXNG services. 
 - **Traefik** binds ports `80` and `443`.
 - **Ollama** exposes port `11434`, mounts the model cache, and requests NVIDIA GPUs on the `ai` network.
-- **PostgreSQL (`db`)** runs on its own isolated `db` network.
+- **pgvector (`db`)** runs a PostgreSQL database container with vector support on its own isolated `db` network.
 - **Open WebUI** joins `net1`, `ai`, and `db` networks, exposing its interface via Traefik at `ai.spencer.lan`.
 - **Open Terminal** runs on the `ai` network with CPU/memory resource limits to securely process backend terminal tasks.
 - **Valkey** runs on the `redis` network as a fast health-checked cache backend.
@@ -214,7 +214,7 @@ If you want to route external network requests to Ollama through Traefik instead
 - **DNS Lookup Failure**:
   Verify DNS resolution by running `ping traefik.spencer.lan` on your local client machine.
 
-### PostgreSQL Verification & Management
+### pgvector/PostgreSQL Verification & Management
 Verify that the database is running properly and ready:
 
 - **Check Database Service Health**:
