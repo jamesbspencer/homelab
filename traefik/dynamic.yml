@@ -1,0 +1,13 @@
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/cert.pem
+      keyFile: /etc/traefik/certs/key.pem
+
+http:
+  routers:
+    traefik-dashboard:
+      rule: "Host(`traefik.spencer.lan`)"
+      service: api@internal
+      entryPoints:
+        - websecure
+      tls: {}
