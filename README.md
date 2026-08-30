@@ -76,7 +76,9 @@ graph TD
 ├── docker-compose.yaml      # Master multi-container Compose manifest
 ├── README.md                # Main system summary and quickstart
 ├── CHANGELOG.md             # Date-based record of environment changes
+├── TODO.md                  # Homelab roadmap and upcoming initiatives
 ├── AGENTS.md                # Workspace operational guidelines for AI agents
+
 ├── .env                     # Local environment secrets and configuration
 ├── .env.example             # Template file with documentation of all variables
 ├── docs/                    # Detailed service documentation
