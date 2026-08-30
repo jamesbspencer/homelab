@@ -150,8 +150,11 @@ services:
     container_name: hermes
     restart: unless-stopped
     command: gateway run
+    ports:
+      - "9119:9119"
     volumes:
       - ./hermes:/opt/data
+
     networks:
       - net1
       - ai
@@ -159,6 +162,8 @@ services:
       - HERMES_DASHBOARD=${HERMES_DASHBOARD}
       - API_SERVER_ENABLED=${API_SERVER_ENABLED}
       - API_SERVER_KEY=${HERMES_API_KEY}
+      - API_SERVER_HOST=0.0.0.0
+      - API_SERVER_PORT=8642
       - HERMES_MODEL=${HERMES_MODEL}
       - HERMES_PROVIDER=${HERMES_PROVIDER}
       - HERMES_MODEL_PROVIDER=${HERMES_PROVIDER}
