@@ -1,318 +1,155 @@
-# Spencer's Homelab Reverse Proxy, Ollama & Open WebUI Setup
+# Spencer's Homelab Reverse Proxy, LLM Runtime & AI Agent Stack
 
-A lightweight, production-grade reverse proxy, LLM runtime, and user interface configuration for a local homelab environment, powered by **Traefik**, **Ollama**, **Open WebUI**, and **Docker Compose**. 
+A production-grade, privacy-first local homelab environment orchestrating edge routing, local LLM inference, autonomous agents, metasearch, headless browser rendering, and web scraping with **Docker Compose**.
 
-This setup provides:
-- **Traefik Reverse Proxy**: Automatic SSL termination using local TLS certificates, dynamic routing based on Docker container labels, and hosts the Traefik dashboard locally.
-- **Ollama LLM Server**: Local LLM runner with NVIDIA GPU acceleration enabled.
-- **Open WebUI Client**: Premium ChatGPT-style web client interface for interacting with local LLM models, exposed at `https://ai.spencer.lan`.
-- **pgvector Database (PostgreSQL)**: Dedicated persistent PostgreSQL database configuration using the `pgvector` image to store Open WebUI relational data and vector embeddings.
-- **Open WebUI Terminal (Open Terminal)**: Sandboxed web terminal service for executing command tasks directly inside Open WebUI.
-- **SearXNG Search Engine**: Privacy-respecting metasearch engine to give Open WebUI web search integration capabilities.
-- **Valkey**: High-performance in-memory key-value data structure store serving as the caching backend for SearXNG.
-- **Browserless Chrome**: Self-hosted, lightweight headless Chrome browser container configured with Playwright to scrape dynamic, JavaScript-heavy websites.
+---
+
+## 🧭 In-Depth Documentation Directory
+
+Detailed architectural designs, configuration options, environment variables, and troubleshooting guides for each individual service are located in the [`docs/`](file:///data/homelab/docs/README.md) directory:
+
+| Service | Role | Ingress & Internal Endpoints | Detailed Guide |
+|---|---|---|---|
+| **Traefik** | Reverse proxy, SSL termination & edge router | `:80`, `:443` (`https://traefik.spencer.lan`) | [Traefik Guide](file:///data/homelab/docs/traefik.md) |
+| **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](file:///data/homelab/docs/ollama.md) |
+| **Open WebUI** | ChatGPT-style web UI, multi-user, RAG & workspace | `https://ai.spencer.lan` | [Open WebUI Guide](file:///data/homelab/docs/open-webui.md) |
+| **PostgreSQL / pgvector** | Relational database & high-dimensional vector store | `db:5432` (Internal `db` network) | [Postgres Guide](file:///data/homelab/docs/postgres.md) |
+| **Hermes Agent** | Autonomous AI agent framework & Web dashboard | `https://hermes.spencer.lan` / `https://hermes-dashboard.spencer.lan` | [Hermes Guide](file:///data/homelab/docs/hermes.md) |
+| **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](file:///data/homelab/docs/firecrawl.md) |
+| **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](file:///data/homelab/docs/searxng.md) |
+| **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](file:///data/homelab/docs/valkey.md) |
+| **Browserless Chrome** | Headless Chromium automation engine for scraping | `ws://browserless:3000` (Internal `ai` network) | [Browserless Guide](file:///data/homelab/docs/browserless.md) |
+| **Open Terminal** | Sandboxed shell environment for code interpreter | `open-terminal:8000` (Internal `ai` network) | [Open Terminal Guide](file:///data/homelab/docs/open-terminal.md) |
 
 ---
 
 ## 🏗️ Architecture Overview
 
-The reverse proxy serves as the single entry point for all HTTP/HTTPS traffic to the homelab:
+```mermaid
+graph TD
+    Client([User / Browser]) -->|HTTPS :443| Traefik[Traefik Reverse Proxy]
+    
+    subgraph Exposed Ingress (net1)
+        Traefik -->|ai.spencer.lan| OpenWebUI[Open WebUI :8080]
+        Traefik -->|hermes.spencer.lan| HermesGateway[Hermes Gateway :8642]
+        Traefik -->|hermes-dashboard.spencer.lan| HermesDashboard[Hermes Dashboard :9119]
+        Traefik -->|traefik.spencer.lan| TraefikDash[Traefik Dashboard]
+    end
 
-* **Entrypoints**:
-  * **HTTP (`:80`)**: Automatic routing (usually redirected to HTTPS, though not enforced globally here).
-  * **HTTPS (`:443`)**: Secured using local TLS certificates.
-* **Ollama Service (`:11434`)**:
-  * Runs the Ollama server container inside an isolated `ai` network.
-  * Configured with GPU pass-through (`nvidia` driver, all GPUs) to accelerate model inference.
-  * Mounts local volume `./ollama` to persist downloaded models.
-* **pgvector Database (`:5432` internally)**:
-  * Runs the PostgreSQL database container with `pgvector` enabled inside an isolated `db` network.
-  * Mounts local volume `./postgres` to persist database and vector embedding records.
-* **Open WebUI Service (`:8080` internally)**:
-  * Running web UI client.
-  * Joins the `net1` network (for Traefik reverse proxy access), the `ai` network (for ollama/terminal access), and the `db` network (to connect to PostgreSQL).
-  * Mounts local volume `./open-webui` to persist user accounts, chat histories, and UI settings.
-* **Open Terminal Service (Internal/Sandboxed)**:
-  * Runs the Open Terminal container on the `ai` network to provide shell access/sandboxed workspace execution environment for Open WebUI.
-  * Configured with CPU (limit: 2, reservation: 0.25) and memory (limit: 2048M, reservation: 512M) resource constraints for safe sandboxing.
-  * Mounts local volume `./open-terminal` to persist workspace files.
-* **SearXNG Service (Internal/`:8080` internally)**:
-  * Privacy-respecting metasearch engine enabling web search capabilities in Open WebUI.
-  * Joins the `redis` and `ai` networks.
-  * Mounts `./searxng/config/` for settings (using Valkey for caching) and `./searxng/data/` for cache directories.
-* **Valkey Service (Internal/`:6379` internally)**:
-  * Fast caching service backend for SearXNG.
-  * Joins the `redis` network.
-  * Mounts local volume `./valkey/data` to persist cache database records.
-* **Browserless Chrome Service (Internal/`:3000` internally)**:
-  * Runs a headless Chrome instance inside the isolated `ai` network.
-  * Serving as the backend scraper for Open WebUI's Playwright web loader engine.
-* **Providers**:
-  * **Docker Provider**: Automatically registers and routes services using Docker container labels.
-  * **File Provider**: Monitors `traefik/dynamic.yml` for static TLS configuration and internal Traefik routing.
-* **Domain Name System (DNS)**:
-  * Tailored for local domains ending in `.spencer.lan`.
-  * The Traefik Dashboard is exposed at `https://traefik.spencer.lan`.
-  * Open WebUI is exposed at `https://ai.spencer.lan`.
-* **Networks**:
-  * **`net1`**: Dedicated bridge network for Traefik routing to exposed web interfaces.
-  * **`ai`**: Dedicated internal bridge network for backend AI and terminal communications.
-  * **`db`**: Dedicated isolated bridge network for database traffic.
-  * **`redis`**: Dedicated internal bridge network for SearXNG and Valkey communication.
+    subgraph Internal AI Network (ai)
+        OpenWebUI -->|LLM Inference| Ollama[Ollama GPU Server :11434]
+        HermesGateway -->|LLM Inference| Ollama
+        OpenWebUI -->|Web Metasearch| SearXNG[SearXNG :8080]
+        HermesGateway -->|Web Search Backend| SearXNG
+        HermesGateway -->|Web Extract Backend| Firecrawl[Firecrawl :3002]
+        Firecrawl -->|Direct Search Backend| SearXNG
+        Firecrawl -->|Chromium Headless| Playwright[Playwright Service :3000]
+        OpenWebUI -->|Playwright RAG| Browserless[Browserless Chrome :3000]
+        OpenWebUI -->|Sandboxed Shell| OpenTerminal[Open Terminal :8000]
+        Firecrawl -->|AMQP Queue Broker| RabbitMQ[RabbitMQ :5672]
+        Firecrawl -->|NuQ Queue DB Schema| NuqPostgres[(NuQ-Postgres :5432)]
+    end
 
----
+    subgraph Isolated Database Network (db)
+        OpenWebUI -->|User data & Vectors| Postgres[(PostgreSQL / pgvector :5432)]
+    end
 
-## 📁 File Structure
-
-```text
-/data/homelab/
-├── docker-compose.yaml      # Docker Compose configuration for Traefik, Ollama, Open WebUI, etc.
-├── README.md                # System documentation
-├── AGENTS.md                # AI Agent guidelines and rules for this workspace
-├── .env                     # Environment variables (contains local secrets like WEBUI_SECRET_KEY, POSTGRES_*, etc.)
-├── ollama/                  # Local directory for stored LLM models (automatically created)
-├── open-terminal/           # Local directory for Open Terminal home folders (automatically created)
-├── open-webui/              # Local directory for Open WebUI database/settings (automatically created)
-├── postgres/                # Local directory for database records (automatically created)
-├── valkey/                  # Local directory for Valkey cache data (automatically created)
-├── searxng/                 # Local directory for SearXNG config and cache data
-│   ├── config/
-│   │   ├── settings.yml     # SearXNG configuration settings (port, secret key, valkey connection)
-│   │   └── limiter.toml     # SearXNG bot detection limiter configuration
-│   └── data/                # Cache data (automatically created)
-└── traefik/
-    ├── traefik.yml          # Static Traefik configuration (entrypoints, providers)
-    ├── dynamic.yml          # Dynamic Traefik configuration (TLS certificates, local dashboard routing)
-    ├── acme.json            # Empty (retained for ACME Let's Encrypt configurations if needed)
-    └── certs/
-        ├── cert.pem         # SSL Certificate for local *.spencer.lan domains
-        └── key.pem          # SSL Private Key for local *.spencer.lan domains
+    subgraph Internal Cache Network (redis)
+        SearXNG -->|Search Cache| Valkey[(Valkey In-Memory :6379)]
+        Firecrawl -->|Session Rate Limits| Valkey
+    end
 ```
 
 ---
 
-## ⚙️ Configuration Files
+## 📁 Repository Structure
 
-### 1. Docker Compose Configuration
-[`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) defines the Traefik, Ollama, Open WebUI, pgvector db, Open Terminal, Valkey, and SearXNG services. 
-- **Traefik** binds ports `80` and `443`.
-- **Ollama** exposes port `11434`, mounts the model cache, and requests NVIDIA GPUs on the `ai` network.
-- **pgvector (`db`)** runs a PostgreSQL database container with vector support on its own isolated `db` network.
-- **Open WebUI** joins `net1`, `ai`, and `db` networks, exposing its interface via Traefik at `ai.spencer.lan`.
-- **Open Terminal** runs on the `ai` network with CPU/memory resource limits to securely process backend terminal tasks.
-- **Valkey** runs on the `redis` network as a fast health-checked cache backend.
-- **SearXNG** joins the `redis` and `ai` networks, acting as a private metasearch engine backend for Open WebUI web search.
-- **Browserless** runs on the `ai` network, serving as a headless browser for rendering dynamic JavaScript-heavy sites for the Open WebUI web loader.
-
-### 2. Static Configuration
-[`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml) configures basic log levels, entrypoints (`web` and `websecure`), the API/Dashboard dashboard, and enables the Docker and File configuration providers.
-
-### 3. Dynamic Configuration
-[`traefik/dynamic.yml`](file:///data/homelab/traefik/dynamic.yml) sets up local TLS certificate registration and configures the router for the internal Traefik API/dashboard, matching the host `traefik.spencer.lan`.
+```text
+/data/homelab/
+├── docker-compose.yaml      # Master multi-container Compose manifest
+├── README.md                # Main system summary and quickstart
+├── CHANGELOG.md             # Date-based record of environment changes
+├── AGENTS.md                # Workspace operational guidelines for AI agents
+├── .env                     # Local environment secrets and configuration
+├── .env.example             # Template file with documentation of all variables
+├── docs/                    # Detailed service documentation
+│   ├── README.md            # Documentation directory index
+│   ├── traefik.md           # Traefik configuration & routing guide
+│   ├── ollama.md            # Ollama setup & GPU acceleration guide
+│   ├── open-webui.md        # Open WebUI features & connections
+│   ├── postgres.md          # PostgreSQL & pgvector schema management
+│   ├── hermes.md            # Hermes Agent runtime & toolsets
+│   ├── firecrawl.md         # Firecrawl architecture, queues & scraping
+│   ├── searxng.md           # SearXNG configuration & JSON engine setup
+│   ├── valkey.md            # Valkey caching & healthcheck operations
+│   ├── browserless.md       # Browserless headless Chrome automation
+│   └── open-terminal.md     # Sandboxed workspace execution setup
+├── hermes/                  # Hermes Agent persistent database, skills, memories
+├── nuq-postgres/            # NuQ PostgreSQL persistent crawl state database
+├── ollama/                  # Cached LLM model weights
+├── open-terminal/           # Sandboxed user home directory
+├── open-webui/              # Open WebUI data and cache files
+├── postgres/                # PostgreSQL pgvector data directory
+├── searxng/                 # SearXNG configuration and cache directories
+├── traefik/                 # Traefik static, dynamic, and TLS cert configurations
+└── valkey/                  # Valkey snapshot persistence directory
+```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
-### Prerequisites
-1. **Docker & Docker Compose**: Ensure Docker and the Compose plugin are installed and running.
-2. **NVIDIA Container Toolkit**: Required for the GPU pass-through on the Ollama service.
-3. **Local DNS Resolution**: Point `*.spencer.lan` (or at least `traefik.spencer.lan`) to your Docker host's local IP address (e.g., using Pi-hole, AdGuard Home, dnsmasq, or local `/etc/hosts` file).
-4. **Local TLS Certificates**: Place your wildcard or domain-specific PEM certificates in `traefik/certs/cert.pem` and `traefik/certs/key.pem`.
+### 1. Prerequisites
+* **Docker & Docker Compose**: Compose v2 installed.
+* **NVIDIA Container Toolkit**: Required for hardware GPU acceleration on Ollama.
+* **Local DNS**: `*.spencer.lan` pointed to your host IP address.
+* **TLS Certificates**: Wildcard certificates in `traefik/certs/cert.pem` and `traefik/certs/key.pem`.
 
-### Starting the Services
-Run the following command from the root `/data/homelab` directory:
+### 2. Environment Setup
+Copy the template and adjust passwords or API keys as needed:
+```bash
+cp .env.example .env
+```
+
+### 3. Start the Stack
 ```bash
 docker compose up -d
 ```
 
-### Accessing the Dashboard
-Open your browser and navigate to `https://traefik.spencer.lan`.
-
----
-
-## 📖 How-To Guides
-
-### 1. Exposing a New Service via Traefik
-To expose a new Docker container through the reverse proxy, add it to your `docker-compose.yaml` (or create a separate one on the same network) and define Traefik labels.
-
-Here is an Nginx web server example:
-
-```yaml
-services:
-  my-app:
-    image: nginx:alpine
-    container_name: my-app
-    restart: unless-stopped
-    networks:
-      - net1
-    labels:
-      - "traefik.enable=true"
-      # Route rule matching your local domain
-      - "traefik.http.routers.myapp.rule=Host(`myapp.spencer.lan`)"
-      # Define the HTTPS entrypoint
-      - "traefik.http.routers.myapp.entrypoints=websecure"
-      # Enable TLS termination
-      - "traefik.http.routers.myapp.tls=true"
-      # Inform Traefik of the port Nginx listens on inside the container
-      - "traefik.http.services.myapp.loadbalancer.server.port=80"
-
-networks:
-  net1:
-    external: true
-```
-
-> [!IMPORTANT]
-> - Ensure the service joins the external network `net1`.
-> - The label `traefik.enable=true` is required because `exposedByDefault` is set to `false` in `traefik.yml`.
-
-### 2. Generating Self-Signed Certificates (Quick Start)
-If you don't have existing certificates, you can generate a self-signed wildcard certificate for `.spencer.lan` using OpenSSL:
-
+### 4. Verify Service Health
 ```bash
-openssl req -x509 -newkey rsa:4096 -sha256 -days 3650 -nodes \
-  -keyout traefik/certs/key.pem -out traefik/certs/cert.pem \
-  -subj "/CN=*.spencer.lan" \
-  -addext "subjectAltName=DNS:*.spencer.lan,DNS:spencer.lan"
-```
-
-Restart Traefik or let the file provider reload to apply the new certificates.
-
-### 3. Exposing Ollama via Traefik
-If you want to route external network requests to Ollama through Traefik instead of direct port exposure, add Traefik labels to the `ollama` service in `docker-compose.yaml`:
-
-```yaml
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.ollama.rule=Host(`ollama.spencer.lan`)"
-      - "traefik.http.routers.ollama.entrypoints=websecure"
-      - "traefik.http.routers.ollama.tls=true"
-      - "traefik.http.services.ollama.loadbalancer.server.port=11434"
+docker compose ps
 ```
 
 ---
 
-## 🛠️ Troubleshooting & Health Checks
+## 🧪 Operational Commands & Health Checks
 
-### General Troubleshooting
-- **Check Container Logs**:
-  ```bash
-  docker compose logs -f traefik
-  docker compose logs -f ollama
-  docker compose logs -f open-webui
-  docker compose logs -f db
-  docker compose logs -f open-terminal
-  docker compose logs -f valkey
-  docker compose logs -f searxng
-  docker compose logs -f browserless
-  ```
-- **Permission Issues on `acme.json`**:
-  If using ACME Let's Encrypt, the `acme.json` file must have exact permissions:
-  ```bash
-  chmod 600 traefik/acme.json
-  ```
-- **DNS Lookup Failure**:
-  Verify DNS resolution by running `ping traefik.spencer.lan` on your local client machine.
+### Check Traefik Routing
+Navigate to `https://traefik.spencer.lan` or check logs:
+```bash
+docker compose logs -f traefik
+```
 
-### pgvector/PostgreSQL Verification & Management
-Verify that the database is running properly and ready:
+### Test Ollama GPU Inference
+```bash
+curl http://localhost:11434/api/tags
+docker compose exec ollama nvidia-smi
+```
 
-- **Check Database Service Health**:
-  Ensure the database container status is healthy:
-  ```bash
-  docker compose ps db
-  ```
-- **Run Readiness Check**:
-  ```bash
-  docker compose exec db pg_isready -U openwebui -d openwebui
-  ```
+### Test Internal Scraping (Firecrawl)
+```bash
+docker compose exec hermes curl -s -X POST http://firecrawl:3002/v1/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+```
 
-### Ollama Verification & Management
-You can check the health and manage models in the Ollama service using these commands:
+### Test Internal Search (SearXNG)
+```bash
+docker compose exec open-webui curl "http://searxng:8080/search?q=docker&format=json"
+```
 
-- **Verify Ollama Service Status**:
-  Ensure the API server is up and responsive:
-  ```bash
-  curl http://localhost:11434/
-  ```
-- **List Installed Models**:
-  ```bash
-  docker compose exec ollama ollama list
-  ```
-- **Check Currently Running Models (Loaded in Memory/VRAM)**:
-  ```bash
-  docker compose exec ollama ollama ps
-  ```
-- **Verify GPU Detection in Ollama Logs**:
-  Ensure Ollama detects the NVIDIA GPU on startup:
-  ```bash
-  docker compose logs ollama | grep -i -E "gpu|cuda"
-  ```
-- **Verify GPU inside Container**:
-  Check if the NVIDIA GPU is correctly passed through and accessible inside the Ollama container:
-  ```bash
-  docker exec -it ollama nvidia-smi
-  ```
-- **Check GPU Status on Host**:
-  Run `nvidia-smi` on the host system to verify overall GPU utilization:
-  ```bash
-  nvidia-smi
-  ```
-- **Download a New Model**:
-  ```bash
-  docker compose exec ollama ollama pull llama3
-  ```
-- **Test Run a Model**:
-  ```bash
-  docker compose exec ollama ollama run llama3 "Hello, tell me a joke."
-  ```
-- **Query Installed Models via API**:
-  ```bash
-  curl http://localhost:11434/api/tags
-  ```
-
-### Open Terminal Verification & Management
-- **Verify Status**:
-  Ensure the open-terminal service is running:
-  ```bash
-  docker compose ps open-terminal
-  ```
-
-### Valkey Verification & Management
-- **Check Valkey Health Status**:
-  Ensure the container status is healthy:
-  ```bash
-  docker compose ps valkey
-  ```
-- **Run Ping Health Check**:
-  Test Valkey responsiveness via CLI:
-  ```bash
-  docker compose exec valkey valkey-cli ping
-  ```
-
-### SearXNG Verification & Management
-- **Check Container Logs**:
-  ```bash
-  docker compose logs -f searxng
-  ```
-- **Verify Status**:
-  ```bash
-  docker compose ps searxng
-  ```
-- **Test Web Search API Connectivity**:
-  Verify Open WebUI can successfully request search results from SearXNG's JSON endpoint inside the `ai` network:
-  ```bash
-  docker compose exec open-webui curl "http://searxng:8080/search?q=docker&format=json"
-  ```
-
-### Browserless Verification & Management
-- **Verify Status**:
-  Ensure the browserless service is running:
-  ```bash
-  docker compose ps browserless
-  ```
-- **Test Connection from Open WebUI**:
-  Verify that Open WebUI can reach Browserless over the `ai` network on port `3000`:
-  ```bash
-  docker exec open-webui curl -I http://browserless:3000/
-  ```
+### Test Database Readiness
+```bash
+docker compose exec db pg_isready -U openwebui -d openwebui
+```

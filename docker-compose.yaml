@@ -145,6 +145,126 @@ services:
     networks:
       - ai
 
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes
+    restart: unless-stopped
+    command: gateway run
+    volumes:
+      - ./hermes:/opt/data
+    networks:
+      - net1
+      - ai
+    environment:
+      - HERMES_DASHBOARD=${HERMES_DASHBOARD}
+      - API_SERVER_ENABLED=${API_SERVER_ENABLED}
+      - API_SERVER_KEY=${HERMES_API_KEY}
+      - HERMES_MODEL=${HERMES_MODEL}
+      - HERMES_PROVIDER=${HERMES_PROVIDER}
+      - HERMES_MODEL_PROVIDER=${HERMES_PROVIDER}
+      - HERMES_BASE_URL=${CUSTOM_BASE_URL}
+      - CUSTOM_BASE_URL=${CUSTOM_BASE_URL}
+      - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=${HERMES_DASHBOARD_BASIC_AUTH_USERNAME}
+      - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH=${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - BROWSER_CDP_URL=${BROWSER_CDP_URL}
+      - GATEWAY_ALLOW_ALL_USERS=${GATEWAY_ALLOW_ALL_USERS}
+      - SEARXNG_URL=${SEARXNG_URL}
+      - FIRECRAWL_API_URL=${FIRECRAWL_API_URL:-http://firecrawl:3002}
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+    depends_on:
+      - firecrawl
+    labels:
+      - "traefik.enable=true"
+      # Gateway routing (port 8642)
+      - "traefik.http.routers.hermes-gateway.rule=Host(`hermes.spencer.lan`)"
+      - "traefik.http.routers.hermes-gateway.entrypoints=websecure"
+      - "traefik.http.routers.hermes-gateway.tls=true"
+      - "traefik.http.routers.hermes-gateway.service=hermes-gateway-svc"
+      - "traefik.http.services.hermes-gateway-svc.loadbalancer.server.port=8642"
+      # Dashboard routing (port 9119)
+      - "traefik.http.routers.hermes-dashboard.rule=Host(`hermes-dashboard.spencer.lan`)"
+      - "traefik.http.routers.hermes-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.hermes-dashboard.tls=true"
+      - "traefik.http.routers.hermes-dashboard.service=hermes-dashboard-svc"
+      - "traefik.http.services.hermes-dashboard-svc.loadbalancer.server.port=9119"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    networks:
+      - ai
+    command: rabbitmq-server
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  nuq-postgres:
+    image: ghcr.io/firecrawl/nuq-postgres:latest
+    container_name: nuq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${FIRECRAWL_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${FIRECRAWL_POSTGRES_DB}
+    volumes:
+      - ./nuq-postgres:/var/lib/postgresql/data
+    networks:
+      - ai
+
+  playwright-service:
+    image: ghcr.io/firecrawl/playwright-service:latest
+    container_name: playwright-service
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      MAX_CONCURRENT_PAGES: ${CRAWL_CONCURRENT_REQUESTS:-10}
+    networks:
+      - ai
+
+  firecrawl:
+    image: ghcr.io/firecrawl/firecrawl:latest
+    container_name: firecrawl
+    restart: unless-stopped
+    command: node dist/src/harness.js --start-docker
+    networks:
+      - ai
+      - redis
+    environment:
+      HOST: "0.0.0.0"
+      PORT: 3002
+      ENV: local
+      REDIS_URL: redis://valkey:6379
+      REDIS_RATE_LIMIT_URL: redis://valkey:6379
+      PLAYWRIGHT_MICROSERVICE_URL: http://playwright-service:3000/scrape
+      NUQ_RABBITMQ_URL: amqp://rabbitmq:5672
+      POSTGRES_HOST: nuq-postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${FIRECRAWL_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${FIRECRAWL_POSTGRES_DB}
+      SEARXNG_ENDPOINT: http://searxng:8080
+      USE_DB_AUTHENTICATION: ${USE_DB_AUTHENTICATION:-false}
+      NUM_WORKERS_PER_QUEUE: ${NUM_WORKERS_PER_QUEUE:-4}
+      CRAWL_CONCURRENT_REQUESTS: ${CRAWL_CONCURRENT_REQUESTS:-10}
+      HARNESS_STARTUP_TIMEOUT_MS: 60000
+    depends_on:
+      valkey:
+        condition: service_started
+      searxng:
+        condition: service_started
+      playwright-service:
+        condition: service_started
+      nuq-postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
 networks:
   net1:
     name: net1
