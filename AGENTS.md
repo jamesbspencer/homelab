@@ -7,16 +7,24 @@ This file defines guidelines, rules, and architecture constraints that AI agents
 ## 🔍 System Context & Architecture
 
 - **Services**:
-  - **Traefik Reverse Proxy**: Single entry point for all HTTP/HTTPS traffic to the homelab.
-  - **Ollama**: Local LLM server configured with GPU hardware acceleration.
+  - **Traefik Reverse Proxy**: Single entry point for all HTTP/HTTPS traffic to the homelab (`traefik.spencer.lan`).
+  - **Ollama**: Local LLM server configured with NVIDIA GPU hardware acceleration.
   - **Open WebUI**: User interface client for interacting with Ollama, serving at `ai.spencer.lan`.
-  - **PostgreSQL Database**: Standalone database container configured to run on the dedicated `db` network.
-- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`).
+  - **Nous Research Hermes Agent**: Autonomous AI agent runtime and management dashboard (`hermes.spencer.lan`, `hermes-dashboard.spencer.lan`).
+  - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
+  - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
+  - **Valkey**: High-performance in-memory key-value cache and rate limiter on internal port `6379`.
+  - **Browserless Chrome**: Headless Chromium browser for Playwright scraping and CDP automation on internal port `3000`.
+  - **Open Terminal**: Sandboxed code execution environment on internal port `8000`.
+  - **PostgreSQL Database (`pgvector`)**: Standalone database container configured to run on the dedicated `db` network.
+- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `ai.spencer.lan`, `hermes.spencer.lan`).
 - **Networking**:
-  - The Traefik container and proxied services requiring external web access (like Open WebUI) must belong to the bridge network named `net1`.
-  - Internal AI communication (e.g., between Open WebUI and Ollama) occurs on the isolated bridge network named `ai`.
-  - Database services (like PostgreSQL) should be isolated on a dedicated bridge network named `db` and must **not** expose ports to the host.
-  - Proxied services should **not** expose ports to the host directly. Instead, expose them internally and let Traefik handle routing via container labels.
+  - The Traefik container and proxied services requiring external web access (Open WebUI, Hermes Gateway, Hermes Dashboard) must belong to the bridge network named `net1`.
+  - Internal AI communication (between Open WebUI, Hermes, Ollama, SearXNG, Firecrawl, Browserless, Open Terminal) occurs on the isolated bridge network named `ai`.
+  - Database services (PostgreSQL) should be isolated on the dedicated bridge network named `db` and must **not** expose ports to the host.
+  - Cache services (Valkey, SearXNG, Firecrawl) communicate on the dedicated bridge network named `redis`.
+  - Internal backend services (Firecrawl, SearXNG, Valkey, Browserless, PostgreSQL) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
+- **Documentation**: Detailed architecture, configuration, and operational guides for every service reside in [`docs/`](file:///data/homelab/docs/README.md). Always update the corresponding service guide when adding or modifying service configurations.
 
 ---
 

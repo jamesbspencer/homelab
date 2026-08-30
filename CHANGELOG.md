@@ -1,0 +1,57 @@
+# Changelog
+
+All notable changes to Spencer's Homelab environment will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to date-based versioning (`YYYY-MM-DD`).
+
+---
+
+## [2026-08-30]
+
+### Added
+- **Firecrawl Scraping & Crawling Engine**:
+  - Deployed unified `firecrawl` container running API, worker, and extract-worker services concurrently on internal port `3002`.
+  - Added `rabbitmq` (`rabbitmq:3-management`) container as the real-time AMQP message broker for NuQ queues.
+  - Added `nuq-postgres` (`ghcr.io/firecrawl/nuq-postgres:latest`) for persistent crawl queue schemas and job history.
+  - Added `playwright-service` (`ghcr.io/firecrawl/playwright-service:latest`) for headless Chromium page rendering.
+- **SearXNG & Hermes Integration**:
+  - Attached Firecrawl directly to SearXNG via `SEARXNG_ENDPOINT: http://searxng:8080` for standalone `/v1/search` queries.
+  - Attached Firecrawl to Hermes Agent via `FIRECRAWL_API_URL: http://firecrawl:3002` and configured `hermes/config.yaml` with `extract_backend: firecrawl` and `search_backend: searxng`.
+- **In-Depth Documentation Directory (`docs/`)**:
+  - Created [`docs/README.md`](file:///data/homelab/docs/README.md) documentation index.
+  - Added 10 individual service guides: `traefik.md`, `ollama.md`, `open-webui.md`, `postgres.md`, `hermes.md`, `firecrawl.md`, `searxng.md`, `valkey.md`, `browserless.md`, and `open-terminal.md`.
+  - Updated root [`README.md`](file:///data/homelab/README.md) with an overview table, updated architecture diagram, and links to all service guides.
+
+### Security
+- Parameterized Firecrawl PostgreSQL credentials (`FIRECRAWL_POSTGRES_USER`, `FIRECRAWL_POSTGRES_PASSWORD`, `FIRECRAWL_POSTGRES_DB`) in `docker-compose.yaml`, `.env`, and `.env.example`.
+- Confirmed zero hardcoded secrets/passwords across all services in `docker-compose.yaml`.
+- Enforced internal-only network isolation for the Firecrawl cluster (`ai` and `redis` networks only; no open host ports or Traefik LAN exposure).
+
+---
+
+## [2026-08-28]
+
+### Added
+- **Nous Research Hermes Agent**:
+  - Deployed `nousresearch/hermes-agent:latest` running gateway and web dashboard under `s6` process supervision.
+  - Added Traefik edge routing for Gateway API (`https://hermes.spencer.lan`) and Web Dashboard (`https://hermes-dashboard.spencer.lan`).
+  - Configured basic authentication for dashboard access and connected Hermes to local Ollama runtime (`http://ollama:11434/v1`).
+
+---
+
+## [2026-08-27]
+
+### Added
+- **Browserless Chrome Service**:
+  - Added `browserless/chrome:latest` container on the `ai` network.
+  - Configured Open WebUI Playwright web loader engine to use `ws://browserless:3000` for rendering JavaScript-heavy websites.
+- **pgvector Database Backend**:
+  - Added `pgvector/pgvector:pg16` database service on an isolated `db` network.
+  - Migrated Open WebUI relational data and document embeddings to PostgreSQL with `pgvector`.
+- **Initial Homelab Architecture**:
+  - Deployed Traefik reverse proxy with local TLS certificate termination and dashboard at `https://traefik.spencer.lan`.
+  - Deployed Ollama LLM runtime with NVIDIA GPU hardware acceleration passthrough.
+  - Deployed Open WebUI interface at `https://ai.spencer.lan`.
+  - Deployed Open Terminal sandboxed code interpreter environment.
+  - Deployed SearXNG privacy metasearch engine with Valkey key-value caching backend.

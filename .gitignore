@@ -31,4 +31,12 @@ open-terminal/*
 # SearXNG data/cache
 searxng/config/settings.yml
 
+# Hermes data
+hermes/*
+!hermes/.gitkeep
+!hermes/config.yaml
+
+# NuQ Postgres data
+nuq-postgres
+nuq-postgres/*
 
