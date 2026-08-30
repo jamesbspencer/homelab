@@ -1,62 +1,68 @@
 model:
-  default: ${HERMES_MODEL}
-  provider: ${HERMES_PROVIDER}
-  base_url: ${CUSTOM_BASE_URL}
+  default: qwen2.5:14b
+  provider: custom
+  base_url: http://ollama:11434/v1
+  context_length: 65536
+  ollama_num_ctx: 65536
 web:
   search_backend: searxng
   extract_backend: firecrawl
+dashboard:
+  theme: default
+skills:
+  disabled:
+    - airtable
+    - arxiv
+    - baoyu-infographic
+    - box
+    - claude-code
+    - claude-design
+    - codex
+    - competitor-news-monitor
+    - computer-use
+    - dogfood
+    - grounded-citations
+    - himalaya
+    - llama-cpp
+    - notion
+    - obsidian
+    - research-paper-writing
+    - songwriting-and-ai-music
+    - teams-meeting-pipeline
+    - youtube-content
 _config_version: 39
 platform_toolsets:
   cli:
-    - browser
-    - clarify
-    - code_execution
-    - computer_use
-    - cronjob
-    - delegation
+    - web
     - file
-    - image_gen
-    - kanban
+    - clarify
     - memory
     - session_search
-    - skills
-    - terminal
     - todo
-    - tts
-    - vision
+  api_server:
     - web
+    - file
+    - clarify
+    - memory
+    - session_search
+    - todo
+  gateway:
+    - web
+    - file
+    - clarify
+    - memory
+    - session_search
+    - todo
 known_plugin_toolsets:
-  cli:
-    - a2a
-    - spotify
+  cli: []
 known_builtin_toolsets:
   cli:
-    - browser
-    - clarify
-    - code_execution
-    - computer_use
-    - context_engine
-    - cronjob
-    - delegation
-    - discord
-    - discord_admin
+    - web
     - file
-    - homeassistant
-    - image_gen
+    - clarify
     - memory
     - session_search
-    - skills
-    - spotify
-    - stt
-    - terminal
     - todo
-    - tts
-    - video
-    - video_gen
-    - vision
-    - web
-    - x_search
-    - yuanbao
 
 # ── Security ──────────────────────────────────────────────────────────
 # Secret redaction is ON by default — strings that look like API keys,

@@ -53,7 +53,7 @@ web:
 | `HERMES_API_KEY` | `${HERMES_API_KEY}` | API Server authentication key |
 | `HERMES_PROVIDER` | `custom` | LLM backend provider type |
 | `CUSTOM_BASE_URL` | `http://ollama:11434/v1` | Ollama OpenAI-compatible endpoint |
-| `HERMES_MODEL` | `qwen3.5:9b` | Default primary agent LLM model |
+| `HERMES_MODEL` | `qwen2.5:14b` | Default primary agent LLM model |
 | `HERMES_DASHBOARD` | `1` | Enables Web UI dashboard |
 | `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` | `spencer` | Dashboard login username |
 | `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH` | `${...}` | Scrypt password hash for authentication |
