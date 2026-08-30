@@ -14,7 +14,8 @@ Detailed architectural designs, configuration options, environment variables, an
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](file:///data/homelab/docs/ollama.md) |
 | **Open WebUI** | ChatGPT-style web UI, multi-user, RAG & workspace | `https://ai.spencer.lan` | [Open WebUI Guide](file:///data/homelab/docs/open-webui.md) |
 | **PostgreSQL / pgvector** | Relational database & high-dimensional vector store | `db:5432` (Internal `db` network) | [Postgres Guide](file:///data/homelab/docs/postgres.md) |
-| **Hermes Agent** | Autonomous AI agent framework & Web dashboard | `https://hermes.spencer.lan` / `https://hermes-dashboard.spencer.lan` | [Hermes Guide](file:///data/homelab/docs/hermes.md) |
+| **Hermes Agent** | Autonomous AI agent framework & Web dashboard | `https://hermes.spencer.lan` / `:9119` (`https://hermes-dashboard.spencer.lan`) | [Hermes Guide](file:///data/homelab/docs/hermes.md) |
+
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](file:///data/homelab/docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](file:///data/homelab/docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](file:///data/homelab/docs/valkey.md) |
@@ -27,38 +28,44 @@ Detailed architectural designs, configuration options, environment variables, an
 
 ```mermaid
 graph TD
-    Client([User / Browser]) -->|HTTPS :443| Traefik[Traefik Reverse Proxy]
+    UserBrowser([Web Browser]) -->|HTTPS :443| Traefik[Traefik Reverse Proxy]
+    HermesDesktop([Hermes Desktop App]) -->|HTTPS :443 / WSS| Traefik
     
-    subgraph Exposed Ingress (net1)
+    subgraph Exposed Ingress Network [net1 Bridge]
         Traefik -->|ai.spencer.lan| OpenWebUI[Open WebUI :8080]
-        Traefik -->|hermes.spencer.lan| HermesGateway[Hermes Gateway :8642]
-        Traefik -->|hermes-dashboard.spencer.lan| HermesDashboard[Hermes Dashboard :9119]
-        Traefik -->|traefik.spencer.lan| TraefikDash[Traefik Dashboard]
+        Traefik -->|hermes.spencer.lan| HermesGateway[Hermes Gateway API :8642]
+        Traefik -->|hermes-dashboard.spencer.lan| HermesDashboard[Hermes Web Dashboard :9119]
+        Traefik -->|traefik.spencer.lan| TraefikDash[Traefik Dashboard :8080]
     end
 
-    subgraph Internal AI Network (ai)
+    subgraph Internal AI Network [ai Bridge]
         OpenWebUI -->|LLM Inference| Ollama[Ollama GPU Server :11434]
-        HermesGateway -->|LLM Inference| Ollama
-        OpenWebUI -->|Web Metasearch| SearXNG[SearXNG :8080]
+        HermesGateway -->|Agent Inference| Ollama
+        HermesDashboard -->|Chat Sessions| Ollama
+        
+        OpenWebUI -->|Metasearch| SearXNG[SearXNG :8080]
         HermesGateway -->|Web Search Backend| SearXNG
-        HermesGateway -->|Web Extract Backend| Firecrawl[Firecrawl :3002]
+        HermesGateway -->|Web Extract Backend| Firecrawl[Firecrawl Cluster :3002]
+        
         Firecrawl -->|Direct Search Backend| SearXNG
-        Firecrawl -->|Chromium Headless| Playwright[Playwright Service :3000]
-        OpenWebUI -->|Playwright RAG| Browserless[Browserless Chrome :3000]
-        OpenWebUI -->|Sandboxed Shell| OpenTerminal[Open Terminal :8000]
-        Firecrawl -->|AMQP Queue Broker| RabbitMQ[RabbitMQ :5672]
-        Firecrawl -->|NuQ Queue DB Schema| NuqPostgres[(NuQ-Postgres :5432)]
+        Firecrawl -->|Task Queue Broker| RabbitMQ[RabbitMQ :5672]
+        Firecrawl -->|Queue Schema DB| NuqPostgres[(NuQ-Postgres :5432)]
+        Firecrawl -->|Chromium Renderer| Playwright[Playwright Service :3000]
+        
+        OpenWebUI -->|Playwright Scraper| Browserless[Browserless Chrome :3000]
+        OpenWebUI -->|Code Interpreter| OpenTerminal[Open Terminal :8000]
     end
 
-    subgraph Isolated Database Network (db)
-        OpenWebUI -->|User data & Vectors| Postgres[(PostgreSQL / pgvector :5432)]
+    subgraph Isolated Database Network [db Bridge]
+        OpenWebUI -->|User Data & Vectors| Postgres[(PostgreSQL / pgvector :5432)]
     end
 
-    subgraph Internal Cache Network (redis)
+    subgraph Internal Cache Network [redis Bridge]
         SearXNG -->|Search Cache| Valkey[(Valkey In-Memory :6379)]
-        Firecrawl -->|Session Rate Limits| Valkey
+        Firecrawl -->|Rate Limiting| Valkey
     end
 ```
+
 
 ---
 

@@ -30,7 +30,11 @@ skills:
     - songwriting-and-ai-music
     - teams-meeting-pipeline
     - youtube-content
+platforms:
+  api_server:
+    enabled: true
 _config_version: 39
+
 platform_toolsets:
   cli:
     - web
