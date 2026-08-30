@@ -48,9 +48,9 @@ deploy:
 
 ### Pulling a Model
 ```bash
-docker compose exec ollama ollama pull qwen3.5:9b
-docker compose exec ollama ollama pull llama3.3:70b
+docker compose exec ollama ollama pull qwen2.5:14b
 docker compose exec ollama ollama pull nomic-embed-text
+
 ```
 
 ### Listing Installed Models

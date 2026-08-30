@@ -23,6 +23,13 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Added 10 individual service guides: `traefik.md`, `ollama.md`, `open-webui.md`, `postgres.md`, `hermes.md`, `firecrawl.md`, `searxng.md`, `valkey.md`, `browserless.md`, and `open-terminal.md`.
   - Updated root [`README.md`](file:///data/homelab/README.md) with an overview table, updated architecture diagram, and links to all service guides.
 
+### Changed
+- **Default LLM Migration to `qwen2.5:14b`**:
+  - Switched default model in Ollama, Hermes, and environment files to `qwen2.5:14b`.
+  - Configured client-level 64K context window (`ollama_num_ctx: 65536`) to satisfy Hermes Agent's operational context requirements.
+  - Streamlined `hermes/config.yaml` platform toolsets to prevent context saturation and enable native OpenAI tool-calling loops for real-time web searches.
+
+
 ### Security
 - Parameterized Firecrawl PostgreSQL credentials (`FIRECRAWL_POSTGRES_USER`, `FIRECRAWL_POSTGRES_PASSWORD`, `FIRECRAWL_POSTGRES_DB`) in `docker-compose.yaml`, `.env`, and `.env.example`.
 - Confirmed zero hardcoded secrets/passwords across all services in `docker-compose.yaml`.

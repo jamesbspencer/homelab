@@ -13,6 +13,7 @@ postgres/*
 # Ollama models, caches, and key pairs
 ollama/*
 !ollama/.gitkeep
+!ollama/Modelfile*
 
 
 # Open WebUI state (sqlite databases, vector db, uploads, cache)
