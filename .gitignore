@@ -10,6 +10,11 @@ traefik/certs/*
 postgres
 postgres/*
 
+# pgvector standalone data
+pgvector/data
+pgvector/data/*
+!pgvector/data/.gitkeep
+
 # Ollama models, caches, and key pairs
 ollama/*
 !ollama/.gitkeep

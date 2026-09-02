@@ -7,6 +7,29 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-09-02]
+
+### Added
+- **Dedicated pgvector Instance (`pgvector`)**:
+  - Added standalone `pgvector` container running `pgvector/pgvector:${PGVECTOR_VERSION:-pg16}` for Hindsight long-term memory engine and future homelab microservices, decoupled from Open WebUI.
+  - Added initialization script (`pgvector/init/01-init-databases.sh`) mounted to `/docker-entrypoint-initdb.d/` to enable `vector` extension on the primary database and auto-provision the `hindsight` database, user role, and vector extension.
+  - Created service documentation in [`docs/pgvector.md`](file:///data/homelab/docs/pgvector.md) detailing architecture, connection strings, vector indexing, and backup operations.
+  - Registered `pgvector` in [`docs/README.md`](file:///data/homelab/docs/README.md).
+- **Environment & Git Configuration**:
+  - Added configuration keys and templates in `.env.example` and configured secure credentials in `.env`.
+  - Added ignore rules for `./pgvector/data/*` in `.gitignore`.
+
+### Changed
+- **Network Architecture & Strict Isolation**:
+  - Bound `pgvector` exclusively to the internal `db` network (no `ai` network interface and no host port exposure).
+  - Codified network requirement in [`AGENTS.md`](file:///data/homelab/AGENTS.md) and [`docs/README.md`](file:///data/homelab/docs/README.md) requiring any service needing vector/relational database access to connect to `db`.
+- **Host UID/GID Mapping (`1000:1000`)**:
+  - Configured dynamic entrypoint mapping in `docker-compose.yaml` to ensure database files in `./pgvector/data` are owned by `suadmin:suadmin` (1000:1000) directly on the host without `sudo`.
+- **Roadmap Tracking**:
+  - Marked Hindsight vector/relational storage backend milestone as complete in [`TODO.md`](file:///data/homelab/TODO.md).
+
+---
+
 ## [2026-08-30]
 
 ### Added

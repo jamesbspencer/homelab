@@ -16,14 +16,14 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **Valkey**: High-performance in-memory key-value cache and rate limiter on internal port `6379`.
   - **Browserless Chrome**: Headless Chromium browser for Playwright scraping and CDP automation on internal port `3000`.
   - **Open Terminal**: Sandboxed code execution environment on internal port `8000`.
-  - **PostgreSQL Database (`pgvector`)**: Standalone database container configured to run on the dedicated `db` network.
+  - **PostgreSQL Database (Legacy `db` & Standalone `pgvector`)**: Database containers configured to run on the dedicated `db` network (`pgvector` for Hindsight and general services; `db` for Open WebUI).
 - **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `ai.spencer.lan`, `hermes.spencer.lan`).
 - **Networking**:
   - The Traefik container and proxied services requiring external web access (Open WebUI, Hermes Gateway, Hermes Dashboard) must belong to the bridge network named `net1`.
   - Internal AI communication (between Open WebUI, Hermes, Ollama, SearXNG, Firecrawl, Browserless, Open Terminal) occurs on the isolated bridge network named `ai`.
-  - Database services (PostgreSQL) should be isolated on the dedicated bridge network named `db` and must **not** expose ports to the host.
+  - Database services (PostgreSQL / `pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network.
   - Cache services (Valkey, SearXNG, Firecrawl) communicate on the dedicated bridge network named `redis`.
-  - Internal backend services (Firecrawl, SearXNG, Valkey, Browserless, PostgreSQL) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
+  - Internal backend services (Firecrawl, SearXNG, Valkey, Browserless, PostgreSQL, pgvector) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
 - **Documentation**: Detailed architecture, configuration, and operational guides for every service reside in [`docs/`](file:///data/homelab/docs/README.md). Always update the corresponding service guide when adding or modifying service configurations.
 
 ---
