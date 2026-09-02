@@ -51,6 +51,37 @@ services:
       timeout: 5s
       retries: 5
 
+  pgvector:
+    image: pgvector/pgvector:${PGVECTOR_VERSION:-pg16}
+    container_name: pgvector
+    restart: unless-stopped
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        usermod -u $${PUID:-1000} postgres 2>/dev/null || true
+        groupmod -g $${PGID:-1000} postgres 2>/dev/null || true
+        exec /usr/local/bin/docker-entrypoint.sh postgres
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      POSTGRES_USER: ${PGVECTOR_USER:-postgres}
+      POSTGRES_PASSWORD: ${PGVECTOR_PASSWORD}
+      POSTGRES_DB: ${PGVECTOR_DB:-postgres}
+      HINDSIGHT_POSTGRES_DB: ${HINDSIGHT_POSTGRES_DB:-hindsight}
+      HINDSIGHT_POSTGRES_USER: ${HINDSIGHT_POSTGRES_USER:-hindsight}
+      HINDSIGHT_POSTGRES_PASSWORD: ${HINDSIGHT_POSTGRES_PASSWORD}
+    volumes:
+      - ./pgvector/data:/var/lib/postgresql/data
+      - ./pgvector/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   open-webui:
     image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
     container_name: open-webui
