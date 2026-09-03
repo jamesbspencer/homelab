@@ -46,10 +46,10 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] Document client integration guides in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md) to connect Open WebUI, Hermes Agent, and Hindsight to LiteLLM.
 
 ### 6. 🔍 Evaluate Decommissioning & Removal of Open WebUI
-- [ ] Assess feature parity between Open WebUI and the primary Hermes Dashboard / Desktop interfaces (e.g. chat, document management, prompt presets).
-- [ ] Audit secondary services coupled to Open WebUI (`postgres`/`pgvector`, `browserless`, `open-terminal`) to identify candidates for resource reclamation.
-- [ ] Determine if document ingestion/RAG can be fully delegated to Hermes Agent + Firecrawl or a lighter alternative.
-- [ ] Prepare migration or archiving strategy for existing chat history and vector embeddings before container removal.
+- [x] Assess feature parity between Open WebUI and the primary Hermes Dashboard / Desktop interfaces (confirmed full parity across chat, models, prompts, and superior autonomy in Hermes).
+- [x] Audit secondary services coupled to Open WebUI (`postgres`/`pgvector`, `browserless`, `open-terminal`) to identify candidates for resource reclamation (decommissioned 4 containers, reclaiming ~1.02 GB of idle memory).
+- [x] Determine if document ingestion/RAG can be fully delegated to Hermes Agent + Firecrawl or a lighter alternative (delegated to Firecrawl `web_extract`, SearXNG, and Hindsight).
+- [x] Prepare migration or archiving strategy for existing chat history and vector embeddings before container removal (created full recreation and archival guide in [`docs/archive/open-webui-legacy-stack.md`](file:///data/homelab/docs/archive/open-webui-legacy-stack.md) and aliased `ai.spencer.lan` to Hermes).
 
 ---
 

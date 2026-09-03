@@ -54,25 +54,6 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-
-  db:
-    image: pgvector/pgvector:${POSTGRES_VERSION}
-    container_name: postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - ./postgres:/var/lib/postgresql/data
-    networks:
-      - db
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   pgvector:
     image: pgvector/pgvector:${PGVECTOR_VERSION:-pg16}
     container_name: pgvector
@@ -103,61 +84,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
-    container_name: open-webui
-    restart: unless-stopped
-    networks:
-      - net1
-      - ai
-      - db
-    volumes:
-      - ./open-webui:/app/backend/data
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - WEBUI_SECRET_KEY=${OPENWEBUI_SECRET_KEY}
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      - VECTOR_DB=pgvector
-      - VECTOR_DB_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      - ENABLE_RAG_WEB_SEARCH=True
-      - RAG_WEB_SEARCH_ENGINE=searxng
-      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
-      - WEB_SEARCH_TRUST_ENV=True
-      - AIOHTTP_CLIENT_ASYNC_DNS_RESOLVER=False
-      - GLOBAL_LOG_LEVEL=INFO
-      - RAG_WEB_LOADER_ENGINE=playwright
-      - PLAYWRIGHT_WS_URI=ws://browserless:3000
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.open-webui.rule=Host(`ai.spencer.lan`)"
-      - "traefik.http.routers.open-webui.entrypoints=websecure"
-      - "traefik.http.routers.open-webui.tls=true"
-      - "traefik.http.services.open-webui.loadbalancer.server.port=8080"
-    depends_on:
-      - ollama
-      - db
-      - browserless
-  
-  open-terminal:
-    image: ghcr.io/open-webui/open-terminal:${TERMINAL_DOCKER_TAG-main}
-    container_name: open-terminal
-    restart: unless-stopped
-    networks:
-      - ai
-    volumes:
-      - ./open-terminal:/home/user
-    environment:
-      - OPEN_TERMINAL_API_KEY=${OPEN_TERMINAL_API_KEY}
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2048M
-        reservations:
-          cpus: '0.25'
-          memory: 512M
-
   valkey:
     image: docker.io/valkey/valkey:9-alpine
     container_name: valkey
@@ -188,16 +114,6 @@ services:
       - ai
     depends_on:
       - valkey
-
-  browserless:
-    image: browserless/chrome:latest
-    container_name: browserless
-    restart: unless-stopped
-    environment:
-      - MAX_CONCURRENT_SESSIONS=10
-    networks:
-      - ai
-
   hindsight:
     image: ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}
     container_name: hindsight
@@ -306,7 +222,6 @@ services:
       - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH=${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH}
       - PUID=${PUID}
       - PGID=${PGID}
-      - BROWSER_CDP_URL=${BROWSER_CDP_URL}
       - GATEWAY_ALLOW_ALL_USERS=${GATEWAY_ALLOW_ALL_USERS}
       - SEARXNG_URL=${SEARXNG_URL}
       - FIRECRAWL_API_URL=${FIRECRAWL_API_URL:-http://firecrawl:3002}
@@ -330,7 +245,7 @@ services:
       - "traefik.http.routers.hermes-gateway.service=hermes-gateway-svc"
       - "traefik.http.services.hermes-gateway-svc.loadbalancer.server.port=8642"
       # Dashboard routing (port 9119)
-      - "traefik.http.routers.hermes-dashboard.rule=Host(`hermes.spencer.lan`) || Host(`hermes-desktop.spencer.lan`) || Host(`hermes-dashboard.spencer.lan`)"
+      - "traefik.http.routers.hermes-dashboard.rule=Host(`hermes.spencer.lan`) || Host(`ai.spencer.lan`) || Host(`hermes-desktop.spencer.lan`) || Host(`hermes-dashboard.spencer.lan`)"
       - "traefik.http.routers.hermes-dashboard.entrypoints=websecure"
       - "traefik.http.routers.hermes-dashboard.tls=true"
       - "traefik.http.routers.hermes-dashboard.service=hermes-dashboard-svc"

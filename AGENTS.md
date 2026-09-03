@@ -10,24 +10,21 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **Traefik Reverse Proxy**: Single entry point for all HTTP/HTTPS traffic to the homelab (`traefik.spencer.lan`).
   - **Ollama**: Local LLM server configured with NVIDIA GPU hardware acceleration.
   - **LiteLLM Proxy**: Unified LLM routing gateway, spend manager, and model fallback router on internal port `4000` and `llm.spencer.lan`.
-  - **Open WebUI**: User interface client for interacting with Ollama, serving at `ai.spencer.lan`.
-  - **Nous Research Hermes Agent**: Autonomous AI agent runtime, management dashboard, and Model Context Protocol (MCP) server (`hermes.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`) with Docker execution sandbox.
+  - **Nous Research Hermes Agent**: Autonomous AI agent runtime, management dashboard, and Model Context Protocol (MCP) server (`hermes.spencer.lan`, `ai.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`) with Docker execution sandbox.
   - **Hindsight Long-Term Memory**: Persistent memory engine for Hermes Agent on internal port `8888` and Control Plane UI on `hindsight.spencer.lan` (`:9999`).
   - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
   - **Valkey**: High-performance in-memory key-value cache and rate limiter on internal port `6379`.
-  - **Browserless Chrome**: Headless Chromium browser for Playwright scraping and CDP automation on internal port `3000`.
-  - **Open Terminal**: Sandboxed code execution environment on internal port `8000`.
   - **CrowdSec & Traefik Bouncer**: Intrusion detection and prevention engine parsing Traefik access logs with in-memory stream mode enforcement via the Traefik bouncer plugin.
-  - **PostgreSQL Database (Legacy `db` & Standalone `pgvector`)**: Database containers configured to run on the dedicated `db` network (`pgvector` for Hindsight, LiteLLM, and general services; `db` for Open WebUI).
-- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `llm.spencer.lan`, `ai.spencer.lan`, `hermes.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`, `hindsight.spencer.lan`).
+  - **PostgreSQL Database (`pgvector`)**: Unified relational and vector database container configured on the isolated `db` network for Hindsight and LiteLLM.
+- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `llm.spencer.lan`, `hermes.spencer.lan`, `ai.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`, `hindsight.spencer.lan`).
 - **Networking**:
-  - The Traefik container and proxied services requiring external web access (Open WebUI, Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, LiteLLM) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
-  - Internal AI communication (between Open WebUI, Hermes, Hindsight, LiteLLM, Ollama, SearXNG, Firecrawl, Browserless, Open Terminal) occurs on the isolated bridge network named `ai`.
-  - Database services (PostgreSQL / `pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network.
+  - The Traefik container and proxied services requiring external web access (Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, LiteLLM) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
+  - Internal AI communication (between Hermes, Hindsight, LiteLLM, Ollama, SearXNG, Firecrawl) occurs on the isolated bridge network named `ai`.
+  - Database services (`pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network.
   - Cache services (Valkey, SearXNG, Firecrawl) communicate on the dedicated bridge network named `redis`.
-  - Internal backend services (Firecrawl, SearXNG, Valkey, Browserless, PostgreSQL, pgvector) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
-- **Documentation**: Detailed architecture, configuration, and operational guides for every service reside in [`docs/`](file:///data/homelab/docs/README.md). Always update the corresponding service guide when adding or modifying service configurations.
+  - Internal backend services (Firecrawl, SearXNG, Valkey, pgvector) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
+- **Documentation**: Detailed architecture, configuration, and operational guides for every service reside in [`docs/`](file:///data/homelab/docs/README.md). Always update the corresponding service guide when adding or modifying service configurations. Legacy/retired stack guides reside in [`docs/archive/`](file:///data/homelab/docs/archive/open-webui-legacy-stack.md).
 
 ---
 

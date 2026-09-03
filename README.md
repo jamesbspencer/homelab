@@ -14,16 +14,13 @@ Detailed architectural designs, configuration options, environment variables, an
 | **CrowdSec** | Intrusion detection & Traefik Bouncer plugin | `:8080` (Internal `net1` network) | [CrowdSec Guide](docs/crowdsec.md) |
 | **LiteLLM Proxy** | LLM routing gateway, spend manager & fallback router | `https://llm.spencer.lan` (:4000) | [LiteLLM Guide](docs/litellm.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
-| **Open WebUI** | ChatGPT-style web UI, multi-user, RAG & workspace | `https://ai.spencer.lan` | [Open WebUI Guide](docs/open-webui.md) |
-| **Hermes Agent** | Autonomous AI agent runtime, dashboard & MCP server | `https://hermes.spencer.lan` / `https://hermes-api.spencer.lan` / `https://mcp.spencer.lan` | [Hermes Guide](docs/hermes.md) |
+| **Hermes Agent** | Autonomous AI agent runtime, dashboard & MCP server | `https://hermes.spencer.lan` / `https://ai.spencer.lan` / `https://mcp.spencer.lan` | [Hermes Guide](docs/hermes.md) |
 | **Hindsight** | Long-term contextual memory engine for agents | `https://hindsight.spencer.lan` (:9999) / `:8888` | [Hindsight Guide](docs/hindsight.md) |
-| **PostgreSQL (Legacy)** | Relational database & vector store for Open WebUI | `db:5432` (Internal `db` network) | [Postgres Guide](docs/postgres.md) |
-| **pgvector (Standalone)** | Dedicated vector & DB instance for Hindsight & LiteLLM | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
+| **pgvector** | Unified vector & relational DB for Hindsight & LiteLLM | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](docs/valkey.md) |
-| **Browserless Chrome** | Headless Chromium automation engine for scraping | `ws://browserless:3000` (Internal `ai` network) | [Browserless Guide](docs/browserless.md) |
-| **Open Terminal** | Sandboxed shell environment for code interpreter | `open-terminal:8000` (Internal `ai` network) | [Open Terminal Guide](docs/open-terminal.md) |
+| *Open WebUI Legacy Stack* | *Archived / Retired (Open WebUI, Postgres db, Open Terminal, Browserless)* | *Reclaimed ~1.02 GB RAM* | [Legacy Stack Archive](docs/archive/open-webui-legacy-stack.md) |
 
 ---
 
@@ -38,8 +35,7 @@ flowchart TD
     AccessLog -.->|Real-Time Acquisition| CrowdSec[CrowdSec Security Engine :8080]
     
     subgraph Exposed Ingress Network [net1 Bridge]
-        Traefik -->|ai.spencer.lan| OpenWebUI[Open WebUI :8080]
-        Traefik -->|hermes.spencer.lan| HermesDashboard[Hermes Web Dashboard :9119]
+        Traefik -->|hermes.spencer.lan / ai.spencer.lan| HermesDashboard[Hermes Web Dashboard :9119]
         Traefik -->|hermes-api.spencer.lan| HermesGateway[Hermes Gateway API :8642]
         Traefik -->|mcp.spencer.lan| HermesMCP[Hermes MCP Server :8765]
         Traefik -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy & UI :4000]
@@ -49,7 +45,6 @@ flowchart TD
 
     subgraph Internal AI Network [ai Bridge]
         HermesGateway -->|Inference Routing| LiteLLM
-        OpenWebUI -->|Inference Routing| LiteLLM
         LiteLLM -->|GPU Accelerated Chat/Embeddings| Ollama[Ollama GPU Server :11434]
         LiteLLM -.->|Optional Cloud Fallbacks| CloudLLM[Groq / OpenRouter / DeepSeek]
         
@@ -59,12 +54,7 @@ flowchart TD
         HermesGateway -->|Tool Execution| HermesMCP
         HermesGateway -->|Web Search Backend| SearXNG[SearXNG :8080]
         HermesGateway -->|Scrape & Crawl| Firecrawl[Firecrawl Cluster :3002]
-        HermesGateway -->|Browser Automation| Browserless[Browserless Chrome :3000]
         HermesGateway -->|Docker Execution Socket| Sandbox[Docker Sandbox Containers]
-        
-        OpenWebUI -->|Metasearch| SearXNG
-        OpenWebUI -->|Playwright Scraper| Browserless
-        OpenWebUI -->|Code Interpreter| OpenTerminal[Open Terminal :8000]
 
         Firecrawl -->|Direct Search Backend| SearXNG
         Firecrawl -->|Task Queue Broker| RabbitMQ[RabbitMQ :5672]
@@ -73,8 +63,7 @@ flowchart TD
     end
 
     subgraph Isolated Database Network [db Bridge]
-        OpenWebUI -->|User Accounts & RAG Vectors| Postgres[(PostgreSQL / pgvector :5432)]
-        Hindsight -->|Vector & Memory Graph DB| PgVector[(pgvector Standalone :5432)]
+        Hindsight -->|Vector & Memory Graph DB| PgVector[(pgvector :5432)]
         LiteLLM -->|Keys, Spend & Audit DB| PgVector
     end
 
