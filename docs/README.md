@@ -8,20 +8,20 @@ This directory contains in-depth documentation, architecture designs, configurat
 
 | Service | Category | Ports & Access | Documentation |
 |---|---|---|---|
-| **Traefik** | Reverse Proxy & Ingress | `:80`, `:443` (Hosts `traefik.spencer.lan`) | [Traefik Guide](file:///data/homelab/docs/traefik.md) |
-| **Ollama** | LLM Engine (GPU Accelerated) | `:11434` (Internal `ai` network) | [Ollama Guide](file:///data/homelab/docs/ollama.md) |
-| **LiteLLM Proxy** | LLM Router & Spend Gateway | `llm.spencer.lan` (:4000) | [LiteLLM Guide](file:///data/homelab/docs/litellm.md) |
-| **Open WebUI** | AI Chat & Workspace Interface | `ai.spencer.lan` via Traefik | [Open WebUI Guide](file:///data/homelab/docs/open-webui.md) |
-| **PostgreSQL / pgvector (Legacy)** | Relational & Vector Database (Open WebUI) | `:5432` (Internal `db` network) | [Postgres Guide](file:///data/homelab/docs/postgres.md) |
-| **pgvector (Standalone)** | Dedicated Vector & DB (Hindsight & Services) | `:5432` (Internal `db` network) | [pgvector Guide](file:///data/homelab/docs/pgvector.md) |
-| **Hindsight** | Agent Long-Term Memory Engine | `:8888` (API), `hindsight.spencer.lan` (:9999) | [Hindsight Guide](file:///data/homelab/docs/hindsight.md) |
-| **Hermes Agent** | Autonomous Agent, Dashboard & Code Sandbox | `hermes.spencer.lan` & `hermes-dashboard.spencer.lan` | [Hermes Guide](file:///data/homelab/docs/hermes.md) |
-| **Firecrawl Stack** | Web Scraper, Crawler & Search | `:3002` (Internal `ai` & `redis` networks) | [Firecrawl Guide](file:///data/homelab/docs/firecrawl.md) |
-| **SearXNG** | Metasearch Engine | `:8080` (Internal `ai` & `redis` networks) | [SearXNG Guide](file:///data/homelab/docs/searxng.md) |
-| **Valkey** | In-Memory Cache & Rate Limiter | `:6379` (Internal `redis` network) | [Valkey Guide](file:///data/homelab/docs/valkey.md) |
-| **Browserless Chrome** | Headless Browser Automation | `:3000` (Internal `ai` network) | [Browserless Guide](file:///data/homelab/docs/browserless.md) |
-| **Open Terminal** | Sandboxed Code Execution | `:8000` (Internal `ai` network) | [Open Terminal Guide](file:///data/homelab/docs/open-terminal.md) |
-| **CrowdSec** | Intrusion Detection & Traefik Bouncer | `:8080` (Internal `net1` network) | [CrowdSec Guide](file:///data/homelab/docs/crowdsec.md) |
+| **Traefik** | Reverse Proxy & Ingress | `:80`, `:443` (Hosts `traefik.spencer.lan`) | [Traefik Guide](traefik.md) |
+| **CrowdSec** | Intrusion Detection & Traefik Bouncer | `:8080` (Internal `net1` network) | [CrowdSec Guide](crowdsec.md) |
+| **LiteLLM Proxy** | LLM Router & Spend Gateway | `llm.spencer.lan` (:4000) | [LiteLLM Guide](litellm.md) |
+| **Ollama** | LLM Engine (GPU Accelerated) | `:11434` (Internal `ai` network) | [Ollama Guide](ollama.md) |
+| **Open WebUI** | AI Chat & Workspace Interface | `ai.spencer.lan` via Traefik | [Open WebUI Guide](open-webui.md) |
+| **Hermes Agent** | Autonomous Agent, Dashboard & Code Sandbox | `hermes.spencer.lan` & `hermes-dashboard.spencer.lan` | [Hermes Guide](hermes.md) |
+| **Hindsight** | Agent Long-Term Memory Engine | `:8888` (API), `hindsight.spencer.lan` (:9999) | [Hindsight Guide](hindsight.md) |
+| **PostgreSQL / pgvector (Legacy)** | Relational & Vector Database (Open WebUI) | `:5432` (Internal `db` network) | [Postgres Guide](postgres.md) |
+| **pgvector (Standalone)** | Dedicated Vector & DB (Hindsight & Services) | `:5432` (Internal `db` network) | [pgvector Guide](pgvector.md) |
+| **Firecrawl Stack** | Web Scraper, Crawler & Search | `:3002` (Internal `ai` & `redis` networks) | [Firecrawl Guide](firecrawl.md) |
+| **SearXNG** | Metasearch Engine | `:8080` (Internal `ai` & `redis` networks) | [SearXNG Guide](searxng.md) |
+| **Valkey** | In-Memory Cache & Rate Limiter | `:6379` (Internal `redis` network) | [Valkey Guide](valkey.md) |
+| **Browserless Chrome** | Headless Browser Automation | `:3000` (Internal `ai` network) | [Browserless Guide](browserless.md) |
+| **Open Terminal** | Sandboxed Code Execution | `:8000` (Internal `ai` network) | [Open Terminal Guide](open-terminal.md) |
 
 ---
 
