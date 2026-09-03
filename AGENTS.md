@@ -11,7 +11,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **Ollama**: Local LLM server configured with NVIDIA GPU hardware acceleration.
   - **LiteLLM Proxy**: Unified LLM routing gateway, spend manager, and model fallback router on internal port `4000` and `llm.spencer.lan`.
   - **Open WebUI**: User interface client for interacting with Ollama, serving at `ai.spencer.lan`.
-  - **Nous Research Hermes Agent**: Autonomous AI agent runtime and management dashboard (`hermes.spencer.lan`, `hermes-dashboard.spencer.lan`) with Docker execution sandbox.
+  - **Nous Research Hermes Agent**: Autonomous AI agent runtime, management dashboard, and Model Context Protocol (MCP) server (`hermes.spencer.lan`, `hermes-dashboard.spencer.lan`, `mcp.spencer.lan`) with Docker execution sandbox.
   - **Hindsight Long-Term Memory**: Persistent memory engine for Hermes Agent on internal port `8888` and Control Plane UI on `hindsight.spencer.lan` (`:9999`).
   - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
@@ -19,9 +19,9 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **Browserless Chrome**: Headless Chromium browser for Playwright scraping and CDP automation on internal port `3000`.
   - **Open Terminal**: Sandboxed code execution environment on internal port `8000`.
   - **PostgreSQL Database (Legacy `db` & Standalone `pgvector`)**: Database containers configured to run on the dedicated `db` network (`pgvector` for Hindsight, LiteLLM, and general services; `db` for Open WebUI).
-- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `llm.spencer.lan`, `ai.spencer.lan`, `hermes.spencer.lan`, `hindsight.spencer.lan`).
+- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `llm.spencer.lan`, `ai.spencer.lan`, `hermes.spencer.lan`, `hermes-dashboard.spencer.lan`, `mcp.spencer.lan`, `hindsight.spencer.lan`).
 - **Networking**:
-  - The Traefik container and proxied services requiring external web access (Open WebUI, Hermes Gateway, Hermes Dashboard, Hindsight UI, LiteLLM) must belong to the bridge network named `net1`.
+  - The Traefik container and proxied services requiring external web access (Open WebUI, Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, LiteLLM) must belong to the bridge network named `net1`.
   - Internal AI communication (between Open WebUI, Hermes, Hindsight, LiteLLM, Ollama, SearXNG, Firecrawl, Browserless, Open Terminal) occurs on the isolated bridge network named `ai`.
   - Database services (PostgreSQL / `pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network.
   - Cache services (Valkey, SearXNG, Firecrawl) communicate on the dedicated bridge network named `redis`.
@@ -64,3 +64,12 @@ This file defines guidelines, rules, and architecture constraints that AI agents
 ### 4. Code Style & Formats
 - Keep YAML documents formatted with **2-space indentations**.
 - Retain comments in YAML files where they describe configuration logic.
+
+### 5. Automated Command Execution & Safety
+- **Read-Only / Non-Modifying Commands**: Gemini and AI agents are explicitly permitted to automatically propose and execute read-only, non-destructive commands without pausing or asking for interactive confirmation. This includes commands such as:
+  - System and container status queries (`docker ps`, `docker inspect`, `docker logs`)
+  - Network and endpoint testing (`curl`, `nc`, `ping`, HTTP status checks)
+  - File viewing, diffing, and searching (`git status`, `git diff`, `grep`, `cat`, `find`)
+  - Diagnostic and inspection scripts that do not alter state
+- **State-Changing / Destructive Commands**: Any command that creates, destroys, modifies, or restarts services (e.g., `docker compose up -d`, `docker compose down`, `rm`, `kill`, schema migrations) should align with the current implementation plan or task scope.
+

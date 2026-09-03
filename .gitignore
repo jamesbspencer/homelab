@@ -40,6 +40,12 @@ searxng/config/settings.yml
 # Hermes data
 hermes/*
 !hermes/config.yaml
+!hermes/scripts/
+hermes/scripts/*
+!hermes/scripts/hermes_mcp_server.py
+!hermes/init/
+hermes/init/*
+!hermes/init/03-mcp-server.sh
 !hermes/hindsight/
 hermes/hindsight/*
 !hermes/hindsight/config.json

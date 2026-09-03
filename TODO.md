@@ -31,10 +31,10 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ---
 
 ### 4. 🔌 Expose Hermes MCP Server
-- [ ] Configure and expose the **Model Context Protocol (MCP)** server from Hermes Agent (`hermes-tools` / `python -m agent.transports.hermes_tools_mcp_server`).
-- [ ] Enable external MCP clients (e.g. Claude Desktop, IDE extensions, Open WebUI MCP connectors) to consume Hermes homelab tools (SearXNG search, Firecrawl scraping, file management).
-- [ ] Define authentication, TLS routing through Traefik (`mcp.spencer.lan` or SSE/stdio bridge), and access control policies.
-- [ ] Add an MCP integration guide to `docs/hermes.md`.
+- [x] Configure and expose the **Model Context Protocol (MCP)** server from Hermes Agent (`hermes/scripts/hermes_mcp_server.py`).
+- [x] Enable external MCP clients (e.g. Claude Desktop, Cursor, Antigravity IDE, Open WebUI MCP connectors) to consume Hermes homelab tools (SearXNG search, Firecrawl scraping, Docker sandbox execution, workspace file management, vision, skills).
+- [x] Define authentication (Bearer token via `HERMES_MCP_KEY`), TLS routing through Traefik (`https://mcp.spencer.lan/sse`), unauthenticated `/health` check, and s6-overlay boot auto-supervision (`hermes/init/03-mcp-server.sh`).
+- [x] Add an MCP integration guide with ready-to-copy client configurations to `docs/hermes.md`.
 
 ---
 
