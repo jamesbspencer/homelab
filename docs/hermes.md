@@ -177,6 +177,57 @@ If running on the same host machine with Docker socket access:
 
 ---
 
+## 🔄 Self-Learning & Adaptive Skill Synthesis
+
+Hermes Agent incorporates autonomous self-learning loops, reflection forks, and skill curation pipelines that allow the agent to improve over time without manual intervention.
+
+### 1. Asynchronous Background Review Fork
+After user turns, Hermes can automatically fork an asynchronous background agent (`auxiliary.background_review`) to evaluate the completed conversation turn:
+* **Token & Latency Isolation**: The review fork runs asynchronously on a separate thread, ensuring it never competes with foreground user responses.
+* **Model Routing**: Configured under `auxiliary.background_review` to use the local LiteLLM proxy (`qwen2.5:14b`) with a token ceiling (`max_input_tokens: 600000`).
+* **Evaluation Objectives**:
+  * Evaluates whether the user provided corrections, style preferences, or workflow adjustments.
+  * Writes durable facts and lessons to **Hindsight** memory.
+  * Calls `skill_manage` to create or patch class-level umbrella skills when novel solutions or tool recipes emerge.
+
+### 2. Autonomous Skill Curator
+Hermes includes an auxiliary-model curator daemon (`curator`) that runs periodically in the background:
+* **Consolidation**: With `curator.consolidate: true`, the curator uses the LLM to inspect agent-created skills in `/opt/data/skills/`, consolidating narrow one-off skills into cohesive class-level umbrellas with supporting files (`references/`, `templates/`, `scripts/`).
+* **Lifecycle Management**: Automatically prunes unused skills (`stale_days: 30`, `archive_days: 90`). Bundled built-in skills are protected and never deleted.
+* **Administration Commands**:
+  ```bash
+  # Check curator status and skill inventory
+  docker exec hermes hermes curator status
+
+  # Run a dry-run curation pass
+  docker exec hermes hermes curator run --dry-run
+
+  # View the mutation audit ledger
+  docker exec hermes hermes curator ledger
+  ```
+
+### 3. Skill Authoring Standards & `/learn`
+Users and the agent can explicitly trigger skill distillation via the `/learn` slash command or the `skill_manage` tool:
+* **Frontmatter Rules**:
+  * `description`: Strictly **<= 60 characters**, one sentence, ending with a period.
+  * `author`: `Hermes Agent` (or human collaborator first).
+  * `platforms`: Declare `[linux, macos, windows]` based on audited tool dependencies.
+* **Standard Structure**:
+  * `## When to Use`: Triggers and anti-patterns.
+  * `## Prerequisites`: Required env vars, tokens, and packages.
+  * `## How to Run`: Canonical invocation.
+  * `## Procedure`: Checkable numbered steps.
+  * `## Pitfalls`: Known limitations.
+  * `## Verification`: Concrete test commands.
+
+### 4. Deepened Hindsight Memory Integration
+The memory engine (`hermes/hindsight/config.json`) is enriched with:
+* **Bank Missions**: Dedicated retain and reflect missions steering the extraction of architectural conventions, tool workarounds, and user preferences.
+* **Multi-Layer Fact Retrieval**: `recall_types: "observation,world,experience"` delivering both consolidated observations and granular facts.
+* **Attribution**: Persistent retention tags (`["homelab", "agent-learning"]`) for cross-session queryability.
+
+---
+
 ## 📁 Mounted Volumes
 
 | Host Path | Container Path | Purpose |
@@ -184,4 +235,5 @@ If running on the same host machine with Docker socket access:
 | `./hermes` | `/opt/data` | Persists agent state, databases (`state.db`, `kanban.db`, `projects.db`), skills, memories, and configuration |
 | `./hermes/init/03-mcp-server.sh` | `/etc/cont-init.d/03-mcp-server` | Read-only s6 initialization script auto-supervising the MCP server on container boot |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | Docker daemon socket allowing Hermes to manage ephemeral sandbox containers |
+
 

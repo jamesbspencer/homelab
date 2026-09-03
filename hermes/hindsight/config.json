@@ -2,7 +2,12 @@
   "mode": "local_external",
   "api_url": "http://hindsight:8888",
   "bank_id": "hermes",
+  "bank_mission": "Reflect on homelab infrastructure, user preferences, tool quirks, autonomous task execution, and reusable workflows.",
+  "bank_retain_mission": "Retain user corrections, architectural conventions, service configurations, debugging steps, and tool execution recipes.",
   "recall_budget": "mid",
+  "recall_types": "observation,world,experience",
   "auto_recall": true,
-  "auto_retain": true
+  "auto_retain": true,
+  "retain_tags": "homelab,agent-learning",
+  "retain_context": "conversation and task execution with Spencer"
 }

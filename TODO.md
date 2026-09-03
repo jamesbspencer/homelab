@@ -23,10 +23,10 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ---
 
 ### 3. 🔄 Explore Hermes Self-Learning & Adaptation
-- [ ] Investigate Hermes Agent recursive learning loops, skill synthesis, and autonomous feedback mechanisms.
-- [ ] Set up memory logging and feedback evaluation pipelines for continuous improvement across sessions.
-- [ ] Experiment with auto-generated skills and tool calibration based on past task execution history.
-- [ ] Document best practices, safety boundaries, and prompt steering techniques for self-learning agents.
+- [x] Investigate Hermes Agent recursive learning loops, skill synthesis, and autonomous feedback mechanisms (enabled `skills` toolset, `creation_nudge_interval`, and `auxiliary.background_review` in `hermes/config.yaml`).
+- [x] Set up memory logging and feedback evaluation pipelines for continuous improvement across sessions (enriched `hermes/hindsight/config.json` with retain/reflect bank missions and multi-layer recall).
+- [x] Experiment with auto-generated skills and tool calibration based on past task execution history (configured `curator.consolidate: true` for autonomous umbrella merging, pruned lifecycle tracking, and ledger auditing).
+- [x] Document best practices, safety boundaries, and prompt steering techniques for self-learning agents (steered via `hermes/SOUL.md` and documented in `docs/hermes.md`).
 
 ---
 

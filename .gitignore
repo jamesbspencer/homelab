@@ -43,6 +43,7 @@ searxng/config/settings.yml
 # Hermes data
 hermes/*
 !hermes/config.yaml
+!hermes/SOUL.md
 !hermes/scripts/
 hermes/scripts/*
 !hermes/scripts/hermes_mcp_server.py
