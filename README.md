@@ -11,11 +11,14 @@ Detailed architectural designs, configuration options, environment variables, an
 | Service | Role | Ingress & Internal Endpoints | Detailed Guide |
 |---|---|---|---|
 | **Traefik** | Reverse proxy, SSL termination & edge router | `:80`, `:443` (`https://traefik.spencer.lan`) | [Traefik Guide](file:///data/homelab/docs/traefik.md) |
+| **CrowdSec** | Intrusion detection & Traefik Bouncer plugin | `:8080` (Internal `net1` network) | [CrowdSec Guide](file:///data/homelab/docs/crowdsec.md) |
+| **LiteLLM Proxy** | LLM routing gateway, spend manager & fallback router | `https://llm.spencer.lan` (:4000) | [LiteLLM Guide](file:///data/homelab/docs/litellm.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](file:///data/homelab/docs/ollama.md) |
 | **Open WebUI** | ChatGPT-style web UI, multi-user, RAG & workspace | `https://ai.spencer.lan` | [Open WebUI Guide](file:///data/homelab/docs/open-webui.md) |
-| **PostgreSQL / pgvector** | Relational database & high-dimensional vector store | `db:5432` (Internal `db` network) | [Postgres Guide](file:///data/homelab/docs/postgres.md) |
-| **Hermes Agent** | Autonomous AI agent framework & Web dashboard | `https://hermes.spencer.lan` / `:9119` (`https://hermes-dashboard.spencer.lan`) | [Hermes Guide](file:///data/homelab/docs/hermes.md) |
-
+| **Hermes Agent** | Autonomous AI agent runtime, dashboard & MCP server | `https://hermes.spencer.lan` / `https://hermes-dashboard.spencer.lan` / `https://mcp.spencer.lan` | [Hermes Guide](file:///data/homelab/docs/hermes.md) |
+| **Hindsight** | Long-term contextual memory engine for agents | `https://hindsight.spencer.lan` (:9999) / `:8888` | [Hindsight Guide](file:///data/homelab/docs/hindsight.md) |
+| **PostgreSQL (Legacy)** | Relational database & vector store for Open WebUI | `db:5432` (Internal `db` network) | [Postgres Guide](file:///data/homelab/docs/postgres.md) |
+| **pgvector (Standalone)** | Dedicated vector & DB instance for Hindsight & LiteLLM | `pgvector:5432` (Internal `db` network) | [pgvector Guide](file:///data/homelab/docs/pgvector.md) |
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](file:///data/homelab/docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](file:///data/homelab/docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](file:///data/homelab/docs/valkey.md) |
@@ -27,37 +30,51 @@ Detailed architectural designs, configuration options, environment variables, an
 ## 🏗️ Architecture Overview
 
 ```mermaid
-graph TD
-    UserBrowser([Web Browser]) -->|HTTPS :443| Traefik[Traefik Reverse Proxy]
-    HermesDesktop([Hermes Desktop App]) -->|HTTPS :443 / WSS| Traefik
+flowchart TD
+    Client([Client Browser / Remote MCP / Desktop App]) -->|HTTPS :443| Traefik[Traefik Reverse Proxy]
+    Traefik <-->|In-Memory Stream Mode| BouncerPlugin[CrowdSec Bouncer Plugin]
+    Traefik -.->|JSON Access Logs| AccessLog["/var/log/traefik/access.log"]
+    AccessLog -.->|Real-Time Acquisition| CrowdSec[CrowdSec Security Engine :8080]
     
     subgraph Exposed Ingress Network [net1 Bridge]
         Traefik -->|ai.spencer.lan| OpenWebUI[Open WebUI :8080]
         Traefik -->|hermes.spencer.lan| HermesGateway[Hermes Gateway API :8642]
         Traefik -->|hermes-dashboard.spencer.lan| HermesDashboard[Hermes Web Dashboard :9119]
-        Traefik -->|traefik.spencer.lan| TraefikDash[Traefik Dashboard :8080]
+        Traefik -->|mcp.spencer.lan| HermesMCP[Hermes MCP Server :8765]
+        Traefik -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy & UI :4000]
+        Traefik -->|hindsight.spencer.lan| HindsightUI[Hindsight Control Plane :9999]
+        Traefik -->|traefik.spencer.lan| TraefikDash[Traefik Dashboard :internal]
     end
 
     subgraph Internal AI Network [ai Bridge]
-        OpenWebUI -->|LLM Inference| Ollama[Ollama GPU Server :11434]
-        HermesGateway -->|Agent Inference| Ollama
-        HermesDashboard -->|Chat Sessions| Ollama
+        HermesGateway -->|Inference Routing| LiteLLM
+        OpenWebUI -->|Inference Routing| LiteLLM
+        LiteLLM -->|GPU Accelerated Chat/Embeddings| Ollama[Ollama GPU Server :11434]
+        LiteLLM -.->|Optional Cloud Fallbacks| CloudLLM[Groq / OpenRouter / DeepSeek]
         
-        OpenWebUI -->|Metasearch| SearXNG[SearXNG :8080]
-        HermesGateway -->|Web Search Backend| SearXNG
-        HermesGateway -->|Web Extract Backend| Firecrawl[Firecrawl Cluster :3002]
+        HermesGateway -->|Persistent Memory| Hindsight[Hindsight Memory Engine :8888]
+        Hindsight -->|Fact Extraction & Reflection| Ollama
         
+        HermesGateway -->|Tool Execution| HermesMCP
+        HermesGateway -->|Web Search Backend| SearXNG[SearXNG :8080]
+        HermesGateway -->|Scrape & Crawl| Firecrawl[Firecrawl Cluster :3002]
+        HermesGateway -->|Browser Automation| Browserless[Browserless Chrome :3000]
+        HermesGateway -->|Docker Execution Socket| Sandbox[Docker Sandbox Containers]
+        
+        OpenWebUI -->|Metasearch| SearXNG
+        OpenWebUI -->|Playwright Scraper| Browserless
+        OpenWebUI -->|Code Interpreter| OpenTerminal[Open Terminal :8000]
+
         Firecrawl -->|Direct Search Backend| SearXNG
         Firecrawl -->|Task Queue Broker| RabbitMQ[RabbitMQ :5672]
         Firecrawl -->|Queue Schema DB| NuqPostgres[(NuQ-Postgres :5432)]
         Firecrawl -->|Chromium Renderer| Playwright[Playwright Service :3000]
-        
-        OpenWebUI -->|Playwright Scraper| Browserless[Browserless Chrome :3000]
-        OpenWebUI -->|Code Interpreter| OpenTerminal[Open Terminal :8000]
     end
 
     subgraph Isolated Database Network [db Bridge]
-        OpenWebUI -->|User Data & Vectors| Postgres[(PostgreSQL / pgvector :5432)]
+        OpenWebUI -->|User Accounts & RAG Vectors| Postgres[(PostgreSQL / pgvector :5432)]
+        Hindsight -->|Vector & Memory Graph DB| PgVector[(pgvector Standalone :5432)]
+        LiteLLM -->|Keys, Spend & Audit DB| PgVector
     end
 
     subgraph Internal Cache Network [redis Bridge]
@@ -65,7 +82,6 @@ graph TD
         Firecrawl -->|Rate Limiting| Valkey
     end
 ```
-
 
 ---
 
@@ -78,29 +94,46 @@ graph TD
 ├── CHANGELOG.md             # Date-based record of environment changes
 ├── TODO.md                  # Homelab roadmap and upcoming initiatives
 ├── AGENTS.md                # Workspace operational guidelines for AI agents
-
 ├── .env                     # Local environment secrets and configuration
 ├── .env.example             # Template file with documentation of all variables
+├── crowdsec/                # CrowdSec intrusion detection configs & databases
+│   ├── config/              # CrowdSec engine & log acquisition rules (acquis.d/)
+│   └── data/                # SQLite event database and local intelligence store
 ├── docs/                    # Detailed service documentation
 │   ├── README.md            # Documentation directory index
-│   ├── traefik.md           # Traefik configuration & routing guide
-│   ├── ollama.md            # Ollama setup & GPU acceleration guide
-│   ├── open-webui.md        # Open WebUI features & connections
-│   ├── postgres.md          # PostgreSQL & pgvector schema management
-│   ├── hermes.md            # Hermes Agent runtime & toolsets
-│   ├── firecrawl.md         # Firecrawl architecture, queues & scraping
-│   ├── searxng.md           # SearXNG configuration & JSON engine setup
-│   ├── valkey.md            # Valkey caching & healthcheck operations
 │   ├── browserless.md       # Browserless headless Chrome automation
-│   └── open-terminal.md     # Sandboxed workspace execution setup
-├── hermes/                  # Hermes Agent persistent database, skills, memories
+│   ├── crowdsec.md          # CrowdSec security engine & Traefik bouncer guide
+│   ├── firecrawl.md         # Firecrawl architecture, queues & scraping
+│   ├── hermes.md            # Hermes Agent runtime, dashboard, sandbox & MCP
+│   ├── hindsight.md         # Hindsight long-term agent memory engine
+│   ├── litellm.md           # LiteLLM Proxy model router & spend tracker
+│   ├── ollama.md            # Ollama setup & GPU acceleration guide
+│   ├── open-terminal.md     # Sandboxed workspace execution setup
+│   ├── open-webui.md        # Open WebUI features & connections
+│   ├── pgvector.md          # Dedicated pgvector database for Hindsight & LiteLLM
+│   ├── postgres.md          # PostgreSQL schema management for Open WebUI
+│   ├── searxng.md           # SearXNG configuration & JSON engine setup
+│   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
+│   └── valkey.md            # Valkey caching & healthcheck operations
+├── hermes/                  # Hermes Agent persistent state, skills, MCP scripts
+│   ├── config.yaml          # Hermes model providers, tools & memory configs
+│   ├── hindsight/           # Profile memory configuration (config.json)
+│   ├── init/                # Container s6 boot supervisor scripts (MCP server)
+│   └── scripts/             # Hermes MCP server implementation (SSE & stdio)
+├── litellm/                 # LiteLLM Proxy configuration (config.yaml)
 ├── nuq-postgres/            # NuQ PostgreSQL persistent crawl state database
 ├── ollama/                  # Cached LLM model weights
 ├── open-terminal/           # Sandboxed user home directory
 ├── open-webui/              # Open WebUI data and cache files
-├── postgres/                # PostgreSQL pgvector data directory
+├── pgvector/                # Dedicated pgvector database data & init scripts
+├── postgres/                # PostgreSQL pgvector data directory (Open WebUI)
 ├── searxng/                 # SearXNG configuration and cache directories
 ├── traefik/                 # Traefik static, dynamic, and TLS cert configurations
+│   ├── certs/               # Wildcard SSL certificates (*.spencer.lan)
+│   ├── dynamic.yml          # Dynamic routers, TLS & bouncer middleware
+│   ├── logs/                # Traefik JSON access log (read by CrowdSec)
+│   ├── traefik.yml          # Static entrypoints, plugins & log declarations
+│   └── crowdsec_bouncer_key # Protected secret key file for bouncer plugin
 └── valkey/                  # Valkey snapshot persistence directory
 ```
 

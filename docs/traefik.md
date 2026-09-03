@@ -1,6 +1,6 @@
 # Traefik Reverse Proxy
 
-Traefik acts as the centralized edge router and reverse proxy for all inbound HTTP/HTTPS traffic to Spencer's Homelab.
+Traefik acts as the centralized edge router, SSL termination gateway, and reverse proxy for all inbound HTTP/HTTPS traffic to Spencer's Homelab, protected by the **CrowdSec Bouncer Plugin**.
 
 ---
 
@@ -12,14 +12,32 @@ Traefik acts as the centralized edge router and reverse proxy for all inbound HT
 * **Network**: `net1` (Bridge network for routed web services)
 * **Bound Host Ports**: `80:80` (HTTP), `443:443` (HTTPS)
 * **Web UI / Dashboard**: `https://traefik.spencer.lan`
+* **Plugins**: `github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin` (`v1.4.1`)
+* **Logging**: Structured JSON access logs written directly to `/var/log/traefik/access.log`.
 
 ```mermaid
-graph LR
-    Client([Client Browser]) -->|HTTP :80 / HTTPS :443| Traefik
-    Traefik -->|ai.spencer.lan| OpenWebUI[Open WebUI :8080]
-    Traefik -->|hermes.spencer.lan| HermesGateway[Hermes Gateway :8642]
-    Traefik -->|hermes-dashboard.spencer.lan| HermesDash[Hermes Dashboard :9119]
-    Traefik -->|traefik.spencer.lan| TraefikDash[Traefik Dashboard]
+flowchart TD
+    Client([Client Browser / API Client]) -->|HTTP :80| Redirect["Port 80 Redirect (to HTTPS :443)"]
+    Client -->|HTTPS :443| Bouncer["CrowdSec Bouncer Plugin\n(Stream Mode Decision Cache)"]
+    
+    subgraph Edge Filtering
+        Bouncer -- "Allowed" --> Router{"Host Header Router"}
+        Bouncer -- "Banned" --> Blocked["403 Forbidden"]
+        Bouncer -.->|Periodic sync :8080| LAPI["CrowdSec LAPI (:8080)"]
+    end
+
+    subgraph Service Routing [*.spencer.lan]
+        Router -->|ai.spencer.lan| OpenWebUI[Open WebUI :8080]
+        Router -->|hermes.spencer.lan| HermesGateway[Hermes Gateway API :8642]
+        Router -->|hermes-dashboard.spencer.lan| HermesDash[Hermes Web Dashboard :9119]
+        Router -->|mcp.spencer.lan| HermesMCP[Hermes MCP Server :8765]
+        Router -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy & UI :4000]
+        Router -->|hindsight.spencer.lan| HindsightUI[Hindsight Control Plane :9999]
+        Router -->|traefik.spencer.lan| TraefikDash[Traefik Dashboard :internal]
+    end
+
+    Router -.->|JSON Access Log| AccessLog["/var/log/traefik/access.log"]
+    AccessLog -.->|Real-Time Acquisition| CrowdSecEngine["CrowdSec Engine (Parser & Scenarios)"]
 ```
 
 ---
@@ -29,12 +47,17 @@ graph LR
 Traefik uses a dual-configuration approach:
 
 ### 1. Static Configuration (`traefik/traefik.yml`)
-Configures global entrypoints, API/Dashboard enablement, logging, and provider declarations:
+Configures global entrypoints, API/Dashboard enablement, access logging, plugin registration, and provider declarations:
 * **Entrypoints**:
-  * `web` on `:80`
-  * `websecure` on `:443`
+  * `web` on `:80` with automatic permanent redirection to `websecure` (:443).
+  * `websecure` on `:443` with `crowdsec-bouncer@file` attached globally to all incoming HTTPS connections.
+* **Access Logging**:
+  * `filePath: /var/log/traefik/access.log`
+  * `format: json`
+* **Experimental Plugins**:
+  * `crowdsec-bouncer`: `github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin` (`v1.4.1`).
 * **Providers**:
-  * `docker`: Watches Docker socket for container labels (`exposedByDefault: false`).
+  * `docker`: Watches Docker socket for container labels (`exposedByDefault: false`, network `net1`).
   * `file`: Dynamically watches `traefik/dynamic.yml` (`watch: true`).
 
 > [!IMPORTANT]
@@ -44,8 +67,11 @@ Configures global entrypoints, API/Dashboard enablement, logging, and provider d
 > ```
 
 ### 2. Dynamic Configuration (`traefik/dynamic.yml`)
-Configures dynamic TLS certificates and internal dashboard routing:
+Configures dynamic TLS certificates, middlewares, and internal dashboard routing:
 * **TLS Certificates**: Loads wildcard certificates from `traefik/certs/cert.pem` and `traefik/certs/key.pem`.
+* **Middlewares**:
+  * `redirect-to-https`: Permanent HTTPS scheme redirection middleware.
+  * `crowdsec-bouncer`: Stream mode middleware pointing to `http://crowdsec:8080`, reading the API key from `/etc/traefik/crowdsec_bouncer_key` with local subnet bypass (`127.0.0.1/32`, `192.168.0.0/16`, `10.0.0.0/8`).
 * **Dashboard Router**: Routes `traefik.spencer.lan` to internal `api@internal` service.
 
 ---
@@ -58,6 +84,8 @@ Configures dynamic TLS certificates and internal dashboard routing:
 | `./traefik/dynamic.yml` | `/etc/traefik/dynamic.yml` | Dynamic configuration & TLS | Read/Write |
 | `./traefik/acme.json` | `/etc/traefik/acme.json` | ACME storage (permissions 600) | Read/Write |
 | `./traefik/certs` | `/etc/traefik/certs` | Wildcard TLS certificates | Read-Only |
+| `./traefik/logs` | `/var/log/traefik` | JSON access log directory (read by CrowdSec) | Read/Write |
+| `./traefik/crowdsec_bouncer_key` | `/etc/traefik/crowdsec_bouncer_key` | Secret key for CrowdSec bouncer authentication | Read-Only |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | Docker provider event socket | Read-Only |
 
 ---
