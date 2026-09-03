@@ -37,6 +37,12 @@ platforms:
     enabled: true
 _config_version: 39
 
+terminal:
+  backend: docker
+  docker_image: nikolaik/python-nodejs:python3.11-nodejs20
+  timeout: 180
+  lifetime_seconds: 300
+
 platform_toolsets:
   cli:
     - web
@@ -45,6 +51,8 @@ platform_toolsets:
     - memory
     - session_search
     - todo
+    - terminal
+    - code_execution
   api_server:
     - web
     - file
@@ -52,6 +60,8 @@ platform_toolsets:
     - memory
     - session_search
     - todo
+    - terminal
+    - code_execution
   gateway:
     - web
     - file
@@ -59,6 +69,8 @@ platform_toolsets:
     - memory
     - session_search
     - todo
+    - terminal
+    - code_execution
 known_plugin_toolsets:
   cli: []
 known_builtin_toolsets:
@@ -69,6 +81,8 @@ known_builtin_toolsets:
     - memory
     - session_search
     - todo
+    - terminal
+    - code_execution
 
 # ── Security ──────────────────────────────────────────────────────────
 # Secret redaction is ON by default — strings that look like API keys,

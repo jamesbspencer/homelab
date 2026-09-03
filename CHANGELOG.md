@@ -23,12 +23,17 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Activated `hindsight` memory provider in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml).
   - Provisioned profile memory config in [`hermes/hindsight/config.json`](file:///data/homelab/hermes/hindsight/config.json) with auto-recall and auto-retain enabled.
   - Updated [`docs/hermes.md`](file:///data/homelab/docs/hermes.md) with memory backend architecture diagram and tool descriptions.
+- **Hermes Agent Docker Sandbox Execution Environment**:
+  - Mounted `/var/run/docker.sock` into the `hermes` container with `TERMINAL_ENV=docker`, `TERMINAL_DOCKER_IMAGE=nikolaik/python-nodejs:python3.11-nodejs20`, and `TERMINAL_CONTAINER_PERSISTENT=false`.
+  - Enabled `terminal`, `process`, and `execute_code` toolsets in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml) across CLI, API server, and Gateway platforms.
+  - Hardened sandbox execution with dropped Linux capabilities (`--cap-drop ALL`), disabled privilege escalation (`--security-opt no-new-privileges`), PID limit ceilings, and in-memory tmpfs scratch filesystems (`/workspace`, `/home`, `/root`).
+  - Documented sandbox architecture and security boundaries in [`docs/hermes.md`](file:///data/homelab/docs/hermes.md).
 
 ### Changed
 - **System Context & Documentation**:
-  - Updated [`AGENTS.md`](file:///data/homelab/AGENTS.md) guidelines to document `hindsight` service and routing rules under `*.spencer.lan`.
-  - Updated roadmap items in [`TODO.md`](file:///data/homelab/TODO.md) reflecting completion of persistent memory integration with Hindsight.
-  - Updated [`.env.example`](file:///data/homelab/.env.example) with Hindsight container settings.
+  - Updated [`AGENTS.md`](file:///data/homelab/AGENTS.md) guidelines and [`docs/README.md`](file:///data/homelab/docs/README.md) to document `hindsight` service and Hermes Docker execution sandbox.
+  - Updated roadmap items in [`TODO.md`](file:///data/homelab/TODO.md) reflecting completion of persistent memory integration with Hindsight and Docker sandboxed execution for Hermes.
+  - Updated [`.env.example`](file:///data/homelab/.env.example) with Hindsight and Hermes terminal sandbox settings.
 
 ---
 

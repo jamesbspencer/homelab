@@ -220,6 +220,7 @@ services:
       - "9119:9119"
     volumes:
       - ./hermes:/opt/data
+      - /var/run/docker.sock:/var/run/docker.sock
 
     networks:
       - net1
@@ -247,6 +248,9 @@ services:
       - HINDSIGHT_MODE=${HINDSIGHT_MODE:-local_external}
       - HINDSIGHT_API_URL=${HINDSIGHT_API_URL:-http://hindsight:8888}
       - HINDSIGHT_BANK_ID=${HINDSIGHT_BANK_ID:-hermes}
+      - TERMINAL_ENV=${HERMES_TERMINAL_ENV:-docker}
+      - TERMINAL_DOCKER_IMAGE=${HERMES_TERMINAL_DOCKER_IMAGE:-nikolaik/python-nodejs:python3.11-nodejs20}
+      - TERMINAL_CONTAINER_PERSISTENT=false
     depends_on:
       - firecrawl
       - hindsight
