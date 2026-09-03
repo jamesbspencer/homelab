@@ -29,6 +29,7 @@ graph TD
         Gateway -->|Scrape & Extract| Firecrawl[Firecrawl :3002]
         Gateway -->|Browser CDP| Browserless[Browserless Chrome :3000]
         Gateway -->|Long-Term Memory| Hindsight[Hindsight :8888]
+        Gateway -->|Docker Socket| Sandbox[Docker Sandbox Containers :nikolaik/python-nodejs]
     end
 ```
 
@@ -37,7 +38,7 @@ graph TD
 ## ⚙️ Configuration & Toolsets
 
 ### 1. `hermes/config.yaml`
-Configured to use **SearXNG** for queries, **Firecrawl** for content extraction, and **Hindsight** for persistent memory:
+Configured to use **SearXNG** for queries, **Firecrawl** for content extraction, **Hindsight** for persistent memory, and **Docker** for sandboxed code execution:
 ```yaml
 model:
   default: ${HERMES_MODEL}
@@ -48,9 +49,26 @@ web:
   extract_backend: firecrawl
 memory:
   provider: hindsight
+terminal:
+  backend: docker
+  docker_image: nikolaik/python-nodejs:python3.11-nodejs20
+  timeout: 180
+  lifetime_seconds: 300
 ```
 
-### 2. Environment Variables (`.env`)
+### 2. Sandboxed Execution Tools
+When Hermes needs to execute shell commands or run scripts, it interacts with disposable Docker containers rather than running directly on the host or in the main container:
+
+* **`terminal` (`terminal_tool`)**: Executes shell commands and scripts in a dedicated container.
+* **`process`**: Spawns, monitors, and terminates background jobs inside the sandbox.
+* **`execute_code`**: Runs Python scripts programmatically to chain tools and evaluate logic in the sandbox.
+* **Security & Isolation**:
+  * **Dropped Capabilities**: `ALL` capabilities dropped, with only minimal required flags added back (`DAC_OVERRIDE`, `CHOWN`, `FOWNER`).
+  * **Privilege Restrictions**: `no-new-privileges` enforced to block privilege escalation.
+  * **Ephemeral Storage**: `/workspace` (10 GB tmpfs), `/home` (1 GB tmpfs), and `/root` (1 GB tmpfs) run in-memory tmpfs scratch spaces that are completely discarded upon session cleanup.
+  * **Process Limits**: PID ceiling (`256`) and shared memory size (`1 GB`).
+
+### 3. Environment Variables (`.env`)
 
 | Variable | Reference / Value | Purpose |
 |---|---|---|
@@ -67,6 +85,8 @@ memory:
 | `HINDSIGHT_MODE` | `local_external` | Memory provider connection mode |
 | `HINDSIGHT_API_URL` | `http://hindsight:8888` | Internal Hindsight service endpoint |
 | `HINDSIGHT_BANK_ID` | `hermes` | Default memory bank identifier |
+| `HERMES_TERMINAL_ENV` | `docker` | Terminal execution environment driver |
+| `HERMES_TERMINAL_DOCKER_IMAGE` | `nikolaik/python-nodejs:python3.11-nodejs20` | Container image used for sandbox execution |
 
 ---
 
@@ -75,3 +95,4 @@ memory:
 | Host Path | Container Path | Purpose |
 |---|---|---|
 | `./hermes` | `/opt/data` | Persists agent state, databases (`state.db`, `kanban.db`, `projects.db`), skills, memories, and configuration |
+| `/var/run/docker.sock` | `/var/run/docker.sock` | Docker daemon socket allowing Hermes to manage ephemeral sandbox containers |

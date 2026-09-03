@@ -14,7 +14,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **PostgreSQL / pgvector (Legacy)** | Relational & Vector Database (Open WebUI) | `:5432` (Internal `db` network) | [Postgres Guide](file:///data/homelab/docs/postgres.md) |
 | **pgvector (Standalone)** | Dedicated Vector & DB (Hindsight & Services) | `:5432` (Internal `db` network) | [pgvector Guide](file:///data/homelab/docs/pgvector.md) |
 | **Hindsight** | Agent Long-Term Memory Engine | `:8888` (API), `hindsight.spencer.lan` (:9999) | [Hindsight Guide](file:///data/homelab/docs/hindsight.md) |
-| **Hermes Agent** | Autonomous Agent & Dashboard | `hermes.spencer.lan` & `hermes-dashboard.spencer.lan` | [Hermes Guide](file:///data/homelab/docs/hermes.md) |
+| **Hermes Agent** | Autonomous Agent, Dashboard & Code Sandbox | `hermes.spencer.lan` & `hermes-dashboard.spencer.lan` | [Hermes Guide](file:///data/homelab/docs/hermes.md) |
 | **Firecrawl Stack** | Web Scraper, Crawler & Search | `:3002` (Internal `ai` & `redis` networks) | [Firecrawl Guide](file:///data/homelab/docs/firecrawl.md) |
 | **SearXNG** | Metasearch Engine | `:8080` (Internal `ai` & `redis` networks) | [SearXNG Guide](file:///data/homelab/docs/searxng.md) |
 | **Valkey** | In-Memory Cache & Rate Limiter | `:6379` (Internal `redis` network) | [Valkey Guide](file:///data/homelab/docs/valkey.md) |

@@ -15,10 +15,10 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ---
 
 ### 2. 📦 Sandboxed Execution Environment for Hermes
-- [ ] Connect Hermes Agent to a secure execution sandbox (e.g. Open Terminal container or isolated Docker-in-Docker / microVM environment).
-- [ ] Configure toolset permissions and security policies for safe code execution.
-- [ ] Enable Hermes to run, debug, and test code snippets inside the isolated runtime without exposing the host system.
-- [ ] Update `docker-compose.yaml` networks and environment variables to bridge Hermes to the sandbox backend.
+- [x] Connect Hermes Agent to a secure execution sandbox (deployed Docker execution backend via `/var/run/docker.sock` with `nikolaik/python-nodejs:python3.11-nodejs20`).
+- [x] Configure toolset permissions and security policies for safe code execution (enabled `terminal`, `process`, and `execute_code` with `--cap-drop ALL`, `--security-opt no-new-privileges`, and in-memory tmpfs).
+- [x] Enable Hermes to run, debug, and test code snippets inside the isolated runtime without exposing the host system.
+- [x] Update `docker-compose.yaml` networks and environment variables to bridge Hermes to the sandbox backend (`TERMINAL_ENV=docker`, `TERMINAL_CONTAINER_PERSISTENT=false`).
 
 ---
 

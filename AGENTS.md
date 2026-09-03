@@ -10,7 +10,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **Traefik Reverse Proxy**: Single entry point for all HTTP/HTTPS traffic to the homelab (`traefik.spencer.lan`).
   - **Ollama**: Local LLM server configured with NVIDIA GPU hardware acceleration.
   - **Open WebUI**: User interface client for interacting with Ollama, serving at `ai.spencer.lan`.
-  - **Nous Research Hermes Agent**: Autonomous AI agent runtime and management dashboard (`hermes.spencer.lan`, `hermes-dashboard.spencer.lan`).
+  - **Nous Research Hermes Agent**: Autonomous AI agent runtime and management dashboard (`hermes.spencer.lan`, `hermes-dashboard.spencer.lan`) with Docker execution sandbox.
   - **Hindsight Long-Term Memory**: Persistent memory engine for Hermes Agent on internal port `8888` and Control Plane UI on `hindsight.spencer.lan` (`:9999`).
   - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
