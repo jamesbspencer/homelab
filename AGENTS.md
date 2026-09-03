@@ -11,7 +11,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **Ollama**: Local LLM server configured with NVIDIA GPU hardware acceleration.
   - **LiteLLM Proxy**: Unified LLM routing gateway, spend manager, and model fallback router on internal port `4000` and `llm.spencer.lan`.
   - **Open WebUI**: User interface client for interacting with Ollama, serving at `ai.spencer.lan`.
-  - **Nous Research Hermes Agent**: Autonomous AI agent runtime, management dashboard, and Model Context Protocol (MCP) server (`hermes.spencer.lan`, `hermes-dashboard.spencer.lan`, `mcp.spencer.lan`) with Docker execution sandbox.
+  - **Nous Research Hermes Agent**: Autonomous AI agent runtime, management dashboard, and Model Context Protocol (MCP) server (`hermes.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`) with Docker execution sandbox.
   - **Hindsight Long-Term Memory**: Persistent memory engine for Hermes Agent on internal port `8888` and Control Plane UI on `hindsight.spencer.lan` (`:9999`).
   - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
@@ -20,7 +20,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **Open Terminal**: Sandboxed code execution environment on internal port `8000`.
   - **CrowdSec & Traefik Bouncer**: Intrusion detection and prevention engine parsing Traefik access logs with in-memory stream mode enforcement via the Traefik bouncer plugin.
   - **PostgreSQL Database (Legacy `db` & Standalone `pgvector`)**: Database containers configured to run on the dedicated `db` network (`pgvector` for Hindsight, LiteLLM, and general services; `db` for Open WebUI).
-- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `llm.spencer.lan`, `ai.spencer.lan`, `hermes.spencer.lan`, `hermes-dashboard.spencer.lan`, `mcp.spencer.lan`, `hindsight.spencer.lan`).
+- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `llm.spencer.lan`, `ai.spencer.lan`, `hermes.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`, `hindsight.spencer.lan`).
 - **Networking**:
   - The Traefik container and proxied services requiring external web access (Open WebUI, Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, LiteLLM) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
   - Internal AI communication (between Open WebUI, Hermes, Hindsight, LiteLLM, Ollama, SearXNG, Firecrawl, Browserless, Open Terminal) occurs on the isolated bridge network named `ai`.

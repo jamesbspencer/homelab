@@ -16,6 +16,8 @@ services:
       - ./traefik/logs:/var/log/traefik
       - ./traefik/crowdsec_bouncer_key:/etc/traefik/crowdsec_bouncer_key:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${ACME_EMAIL:-}
     depends_on:
       - crowdsec
 
@@ -322,17 +324,23 @@ services:
     labels:
       - "traefik.enable=true"
       # Gateway routing (port 8642)
-      - "traefik.http.routers.hermes-gateway.rule=Host(`hermes.spencer.lan`)"
+      - "traefik.http.routers.hermes-gateway.rule=Host(`hermes-api.spencer.lan`)"
       - "traefik.http.routers.hermes-gateway.entrypoints=websecure"
       - "traefik.http.routers.hermes-gateway.tls=true"
       - "traefik.http.routers.hermes-gateway.service=hermes-gateway-svc"
       - "traefik.http.services.hermes-gateway-svc.loadbalancer.server.port=8642"
       # Dashboard routing (port 9119)
-      - "traefik.http.routers.hermes-dashboard.rule=Host(`hermes-dashboard.spencer.lan`)"
+      - "traefik.http.routers.hermes-dashboard.rule=Host(`hermes.spencer.lan`) || Host(`hermes-desktop.spencer.lan`) || Host(`hermes-dashboard.spencer.lan`)"
       - "traefik.http.routers.hermes-dashboard.entrypoints=websecure"
       - "traefik.http.routers.hermes-dashboard.tls=true"
       - "traefik.http.routers.hermes-dashboard.service=hermes-dashboard-svc"
       - "traefik.http.services.hermes-dashboard-svc.loadbalancer.server.port=9119"
+      # Public Dashboard routing (port 9119)
+      - "traefik.http.routers.hermes-dashboard-public.rule=Host(`${HERMES_PUBLIC_DOMAIN:-hermes-public.invalid}`)"
+      - "traefik.http.routers.hermes-dashboard-public.entrypoints=websecure"
+      - "traefik.http.routers.hermes-dashboard-public.tls=true"
+      - "traefik.http.routers.hermes-dashboard-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.hermes-dashboard-public.service=hermes-dashboard-svc"
       # MCP Server routing (port 8765)
       - "traefik.http.routers.hermes-mcp.rule=Host(`mcp.spencer.lan`)"
       - "traefik.http.routers.hermes-mcp.entrypoints=websecure"

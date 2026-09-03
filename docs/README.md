@@ -13,7 +13,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **LiteLLM Proxy** | LLM Router & Spend Gateway | `llm.spencer.lan` (:4000) | [LiteLLM Guide](litellm.md) |
 | **Ollama** | LLM Engine (GPU Accelerated) | `:11434` (Internal `ai` network) | [Ollama Guide](ollama.md) |
 | **Open WebUI** | AI Chat & Workspace Interface | `ai.spencer.lan` via Traefik | [Open WebUI Guide](open-webui.md) |
-| **Hermes Agent** | Autonomous Agent, Dashboard & Code Sandbox | `hermes.spencer.lan` & `hermes-dashboard.spencer.lan` | [Hermes Guide](hermes.md) |
+| **Hermes Agent** | Autonomous Agent, Dashboard & Code Sandbox | `hermes.spencer.lan` & `hermes-api.spencer.lan` | [Hermes Guide](hermes.md) |
 | **Hindsight** | Agent Long-Term Memory Engine | `:8888` (API), `hindsight.spencer.lan` (:9999) | [Hindsight Guide](hindsight.md) |
 | **PostgreSQL / pgvector (Legacy)** | Relational & Vector Database (Open WebUI) | `:5432` (Internal `db` network) | [Postgres Guide](postgres.md) |
 | **pgvector (Standalone)** | Dedicated Vector & DB (Hindsight & Services) | `:5432` (Internal `db` network) | [pgvector Guide](pgvector.md) |

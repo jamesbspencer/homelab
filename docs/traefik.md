@@ -32,8 +32,8 @@ flowchart TD
 
     subgraph Service Routing [*.spencer.lan]
         Router -->|ai.spencer.lan| OpenWebUI[Open WebUI :8080]
-        Router -->|hermes.spencer.lan| HermesGateway[Hermes Gateway API :8642]
-        Router -->|hermes-dashboard.spencer.lan| HermesDash[Hermes Web Dashboard :9119]
+        Router -->|hermes.spencer.lan| HermesDash[Hermes Web Dashboard :9119]
+        Router -->|hermes-api.spencer.lan| HermesGateway[Hermes Gateway API :8642]
         Router -->|mcp.spencer.lan| HermesMCP[Hermes MCP Server :8765]
         Router -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy & UI :4000]
         Router -->|hindsight.spencer.lan| HindsightUI[Hindsight Control Plane :9999]
