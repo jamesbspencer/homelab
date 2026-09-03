@@ -176,6 +176,41 @@ services:
     networks:
       - ai
 
+  hindsight:
+    image: ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}
+    container_name: hindsight
+    restart: unless-stopped
+    networks:
+      - ai
+      - db
+      - net1
+    environment:
+      - HINDSIGHT_API_DATABASE_URL=postgresql://${HINDSIGHT_POSTGRES_USER:-hindsight}:${HINDSIGHT_POSTGRES_PASSWORD}@pgvector:5432/${HINDSIGHT_POSTGRES_DB:-hindsight}
+      - HINDSIGHT_API_VECTOR_EXTENSION=pgvector
+      - HINDSIGHT_API_WORKER_ID=hindsight-worker
+      - HINDSIGHT_API_LLM_PROVIDER=${HINDSIGHT_LLM_PROVIDER:-ollama}
+      - HINDSIGHT_API_LLM_BASE_URL=${HINDSIGHT_LLM_BASE_URL:-http://ollama:11434/v1}
+      - HINDSIGHT_API_LLM_MODEL=${HINDSIGHT_LLM_MODEL:-qwen2.5:14b}
+      - HINDSIGHT_API_LLM_MAX_CONCURRENT=${HINDSIGHT_LLM_MAX_CONCURRENT:-1}
+      - HINDSIGHT_API_EMBEDDINGS_PROVIDER=local
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8888/health')\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hindsight.rule=Host(`hindsight.spencer.lan`)"
+      - "traefik.http.routers.hindsight.entrypoints=websecure"
+      - "traefik.http.routers.hindsight.tls=true"
+      - "traefik.http.services.hindsight.loadbalancer.server.port=9999"
+
   hermes:
     image: nousresearch/hermes-agent:latest
     container_name: hermes
@@ -209,8 +244,12 @@ services:
       - SEARXNG_URL=${SEARXNG_URL}
       - FIRECRAWL_API_URL=${FIRECRAWL_API_URL:-http://firecrawl:3002}
       - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+      - HINDSIGHT_MODE=${HINDSIGHT_MODE:-local_external}
+      - HINDSIGHT_API_URL=${HINDSIGHT_API_URL:-http://hindsight:8888}
+      - HINDSIGHT_BANK_ID=${HINDSIGHT_BANK_ID:-hermes}
     depends_on:
       - firecrawl
+      - hindsight
     labels:
       - "traefik.enable=true"
       # Gateway routing (port 8642)

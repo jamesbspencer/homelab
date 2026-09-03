@@ -7,10 +7,10 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ## 🎯 Active Initiatives & Roadmap
 
 ### 1. 🧠 Persistent Memory with Hindsight
-- [ ] Explore and integrate **Hindsight** / long-term memory engine with Hermes Agent.
+- [x] Explore and integrate **Hindsight** / long-term memory engine with Hermes Agent (deployed `hindsight` container in `ai` and `db` networks).
 - [x] Configure vector/relational storage backend (e.g. pgvector or dedicated service) for user memory embeddings (deployed dedicated `pgvector` container with `hindsight` database on `db` network).
-- [ ] Establish automated memory consolidation and profile-scoped long-term context recall.
-- [ ] Document memory architecture, ingestion pipelines, and configuration options in `docs/`.
+- [x] Establish automated memory consolidation and profile-scoped long-term context recall (`local_external` integration via `hermes/config.yaml` and `hermes/hindsight/config.json`).
+- [x] Document memory architecture, ingestion pipelines, and configuration options in `docs/` (`docs/hindsight.md`).
 
 ---
 

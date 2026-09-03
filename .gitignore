@@ -39,8 +39,10 @@ searxng/config/settings.yml
 
 # Hermes data
 hermes/*
-!hermes/.gitkeep
 !hermes/config.yaml
+!hermes/hindsight/
+hermes/hindsight/*
+!hermes/hindsight/config.json
 
 # NuQ Postgres data
 nuq-postgres
