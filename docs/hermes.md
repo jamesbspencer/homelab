@@ -28,6 +28,7 @@ graph TD
         Gateway -->|Web Search| SearXNG[SearXNG :8080]
         Gateway -->|Scrape & Extract| Firecrawl[Firecrawl :3002]
         Gateway -->|Browser CDP| Browserless[Browserless Chrome :3000]
+        Gateway -->|Long-Term Memory| Hindsight[Hindsight :8888]
     end
 ```
 
@@ -36,7 +37,7 @@ graph TD
 ## ⚙️ Configuration & Toolsets
 
 ### 1. `hermes/config.yaml`
-Configured to use **SearXNG** for queries and **Firecrawl** for content extraction:
+Configured to use **SearXNG** for queries, **Firecrawl** for content extraction, and **Hindsight** for persistent memory:
 ```yaml
 model:
   default: ${HERMES_MODEL}
@@ -45,6 +46,8 @@ model:
 web:
   search_backend: searxng
   extract_backend: firecrawl
+memory:
+  provider: hindsight
 ```
 
 ### 2. Environment Variables (`.env`)
@@ -61,6 +64,9 @@ web:
 | `SEARXNG_URL` | `http://searxng:8080` | SearXNG query endpoint |
 | `FIRECRAWL_API_URL` | `http://firecrawl:3002` | Firecrawl extraction endpoint |
 | `BROWSER_CDP_URL` | `ws://browserless:3000` | Browserless Chrome CDP endpoint |
+| `HINDSIGHT_MODE` | `local_external` | Memory provider connection mode |
+| `HINDSIGHT_API_URL` | `http://hindsight:8888` | Internal Hindsight service endpoint |
+| `HINDSIGHT_BANK_ID` | `hermes` | Default memory bank identifier |
 
 ---
 

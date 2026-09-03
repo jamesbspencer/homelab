@@ -7,6 +7,31 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-09-03]
+
+### Added
+- **Hindsight Long-Term Memory Container (`hindsight`)**:
+  - Deployed `ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}` service dual-homed on `ai` and `db` networks.
+  - Connected Hindsight to the dedicated `pgvector` instance on `db` network (`postgresql://hindsight:...@pgvector:5432/hindsight`) with `pgvector` vector extension.
+  - Connected Hindsight to local Ollama (`qwen2.5:14b`) via `http://ollama:11434/v1` on `ai` network for entity extraction and memory reflection, with concurrency limited to 1.
+  - Added Traefik edge routing on `net1` for Hindsight Control Plane Web UI at `https://hindsight.spencer.lan` (port `9999`).
+  - Added container healthcheck targeting `http://localhost:8888/health`.
+  - Created service documentation in [`docs/hindsight.md`](file:///data/homelab/docs/hindsight.md) and updated service index in [`docs/README.md`](file:///data/homelab/docs/README.md).
+- **Hermes Agent Hindsight Integration**:
+  - Configured `hermes` container with `HINDSIGHT_MODE=local_external`, `HINDSIGHT_API_URL=http://hindsight:8888`, and `HINDSIGHT_BANK_ID=hermes`.
+  - Added `hindsight` to `depends_on` for `hermes` service in `docker-compose.yaml`.
+  - Activated `hindsight` memory provider in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml).
+  - Provisioned profile memory config in [`hermes/hindsight/config.json`](file:///data/homelab/hermes/hindsight/config.json) with auto-recall and auto-retain enabled.
+  - Updated [`docs/hermes.md`](file:///data/homelab/docs/hermes.md) with memory backend architecture diagram and tool descriptions.
+
+### Changed
+- **System Context & Documentation**:
+  - Updated [`AGENTS.md`](file:///data/homelab/AGENTS.md) guidelines to document `hindsight` service and routing rules under `*.spencer.lan`.
+  - Updated roadmap items in [`TODO.md`](file:///data/homelab/TODO.md) reflecting completion of persistent memory integration with Hindsight.
+  - Updated [`.env.example`](file:///data/homelab/.env.example) with Hindsight container settings.
+
+---
+
 ## [2026-09-02]
 
 ### Added
