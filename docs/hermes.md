@@ -82,6 +82,7 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 | Variable | Reference / Value | Purpose |
 |---|---|---|
 | `HERMES_API_KEY` | `${HERMES_API_KEY}` | API Server authentication key |
+| `HERMES_MCP_KEY` | `${HERMES_MCP_KEY}` | MCP Server Bearer authentication token |
 | `HERMES_PROVIDER` | `custom` | LLM backend provider type |
 | `CUSTOM_BASE_URL` | `http://ollama:11434/v1` | Ollama OpenAI-compatible endpoint |
 | `HERMES_MODEL` | `qwen2.5:14b` | Default primary agent LLM model |
@@ -99,9 +100,84 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 
 ---
 
+## 🔌 Model Context Protocol (MCP) Server
+
+Hermes Agent exposes its internal homelab toolsets over the **Model Context Protocol (MCP)**, allowing external AI clients (Claude Desktop, Cursor, Antigravity IDE, Open WebUI MCP connectors, and external agents) to leverage homelab search, scraping, code sandbox, and workspace tools.
+
+### 1. Endpoints & Access
+* **Edge HTTPS URL**: `https://mcp.spencer.lan/sse` (Traefik TLS)
+* **Message Ingress**: `https://mcp.spencer.lan/messages/`
+* **Internal Docker URL**: `http://hermes:8765/sse` (over `ai` or `net1` bridge)
+* **Healthcheck**: `https://mcp.spencer.lan/health` (`GET` — unauthenticated)
+* **Authentication**: Enforces HTTP Bearer token via `Authorization: Bearer <HERMES_MCP_KEY>`.
+
+### 2. Available Tools
+| Tool Name | Backend Service | Description |
+|---|---|---|
+| `web_search` | SearXNG (`:8080`) | Privacy-respecting metasearch queries across search engines |
+| `web_extract` | Firecrawl (`:3002`) | Markdown conversion, web page crawling, and content extraction |
+| `execute_code` | Docker Sandbox | Safe Python script execution inside disposable container |
+| `terminal` | Docker Sandbox | Non-interactive and interactive shell execution inside container sandbox |
+| `process` | Docker Sandbox | Background process lifecycle management inside container |
+| `read_file` | Workspace | Read files from the agent workspace |
+| `write_file` | Workspace | Write files to the agent workspace |
+| `patch` | Workspace | Apply contextual unified diffs to files |
+| `search_files` | Workspace | Grep and regex search across workspace codebase |
+| `vision_analyze` | LiteLLM / Ollama | Analyze images with multimodal vision models |
+| `text_to_speech` | edge-tts | Convert text to speech audio files |
+| `skills_list` | Hermes Registry | Enumerate installed agent skills and capabilities |
+| `skill_view` | Hermes Registry | Inspect instructions and runbooks for a specific skill |
+
+### 3. Client Configuration Examples
+
+#### A. Claude Desktop / Remote SSE Client (`claude_desktop_config.json`)
+```json
+{
+  "mcpServers": {
+    "hermes-homelab": {
+      "url": "https://mcp.spencer.lan/sse",
+      "headers": {
+        "Authorization": "Bearer c4d029f837f1e00d2f32ca233ec5a48e228e4f608ce06ee9c6cbe8b66ba5a779"
+      }
+    }
+  }
+}
+```
+
+#### B. Claude Desktop / Local Host Stdio (`claude_desktop_config.json`)
+If running on the same host machine with Docker socket access:
+```json
+{
+  "mcpServers": {
+    "hermes-homelab-stdio": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "hermes",
+        "python3",
+        "/opt/data/scripts/hermes_mcp_server.py",
+        "--stdio"
+      ]
+    }
+  }
+}
+```
+
+#### C. Open WebUI MCP Connector
+1. Navigate to **Admin Settings > Tools > Valves / MCP**.
+2. Add new MCP server:
+   - **Type**: `SSE`
+   - **Server URL**: `http://hermes:8765/sse` (internal) or `https://mcp.spencer.lan/sse`
+   - **Headers**: `{"Authorization": "Bearer c4d029f837f1e00d2f32ca233ec5a48e228e4f608ce06ee9c6cbe8b66ba5a779"}`
+
+---
+
 ## 📁 Mounted Volumes
 
 | Host Path | Container Path | Purpose |
 |---|---|---|
 | `./hermes` | `/opt/data` | Persists agent state, databases (`state.db`, `kanban.db`, `projects.db`), skills, memories, and configuration |
+| `./hermes/init/03-mcp-server.sh` | `/etc/cont-init.d/03-mcp-server` | Read-only s6 initialization script auto-supervising the MCP server on container boot |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | Docker daemon socket allowing Hermes to manage ephemeral sandbox containers |
+

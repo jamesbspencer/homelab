@@ -10,6 +10,13 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-09-03]
 
 ### Added
+- **Hermes Model Context Protocol (MCP) Server**:
+  - Implemented dual-transport MCP server in [`hermes/scripts/hermes_mcp_server.py`](file:///data/homelab/hermes/scripts/hermes_mcp_server.py) wrapping Hermes `model_tools.handle_function_call`.
+  - Exposes 13 homelab tools to external AI clients: `web_search` (SearXNG), `web_extract` (Firecrawl), `execute_code`, `terminal`, `process` (Docker sandbox), `read_file`, `write_file`, `patch`, `search_files` (workspace), `vision_analyze` (multimodal vision), `text_to_speech` (TTS), and `skills_list` / `skill_view` (Hermes skills).
+  - Integrated into existing `hermes` container via s6-overlay boot script ([`hermes/init/03-mcp-server.sh`](file:///data/homelab/hermes/init/03-mcp-server.sh)) for automatic process supervision, failure recovery, and unified resource footprint without running duplicate containers.
+  - Added Traefik edge routing on `net1` for `https://mcp.spencer.lan/sse` and message ingress at `/messages/` (port `8765`).
+  - Enforced Bearer token authentication via `HERMES_MCP_KEY` with unauthenticated `/health` endpoint for monitoring.
+  - Added client configuration examples for Claude Desktop (SSE and direct Docker stdio), Cursor / IDE extensions, and Open WebUI MCP connectors to [`docs/hermes.md`](file:///data/homelab/docs/hermes.md).
 - **Hindsight Long-Term Memory Container (`hindsight`)**:
   - Deployed `ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}` service dual-homed on `ai` and `db` networks.
   - Connected Hindsight to the dedicated `pgvector` instance on `db` network (`postgresql://hindsight:...@pgvector:5432/hindsight`) with `pgvector` vector extension.
