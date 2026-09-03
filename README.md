@@ -10,7 +10,7 @@ Detailed architectural designs, configuration options, environment variables, an
 
 | Service | Role | Ingress & Internal Endpoints | Detailed Guide |
 |---|---|---|---|
-| **Traefik** | Reverse proxy, SSL termination & edge router | `:80`, `:443` (`https://traefik.spencer.lan`) | [Traefik Guide](docs/traefik.md) |
+| **Traefik** | Reverse proxy, SSL, Geoblock (US Only) & edge router | `:80`, `:443` (`https://traefik.spencer.lan`) | [Traefik Guide](docs/traefik.md) |
 | **CrowdSec** | Intrusion detection & Traefik Bouncer plugin | `:8080` (Internal `net1` network) | [CrowdSec Guide](docs/crowdsec.md) |
 | **LiteLLM Proxy** | LLM routing gateway, spend manager & fallback router | `https://llm.spencer.lan` (:4000) | [LiteLLM Guide](docs/litellm.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
@@ -32,7 +32,8 @@ Detailed architectural designs, configuration options, environment variables, an
 ```mermaid
 flowchart TD
     Client([Client Browser / Remote MCP / Desktop App]) -->|HTTPS :443| Traefik[Traefik Reverse Proxy]
-    Traefik <-->|In-Memory Stream Mode| BouncerPlugin[CrowdSec Bouncer Plugin]
+    Traefik <-->|1. US Allowlist & LAN Bypass| GeoPlugin[Geoblock Plugin]
+    Traefik <-->|2. In-Memory Stream Mode| BouncerPlugin[CrowdSec Bouncer Plugin]
     Traefik -.->|JSON Access Logs| AccessLog["/var/log/traefik/access.log"]
     AccessLog -.->|Real-Time Acquisition| CrowdSec[CrowdSec Security Engine :8080]
     

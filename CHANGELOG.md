@@ -10,6 +10,11 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-09-03]
 
 ### Added
+- **Traefik Inbound Geoblocking Plugin**:
+  - Registered `github.com/PascalMinder/geoblock` (`v0.3.8`) plugin in [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml) to restrict incoming edge connections geographically.
+  - Configured allowlist mode (`blackListMode: false`) permitting only the United States (`US`) with automatic RFC 1918 private IP bypass (`allowLocalRequests: true`) in [`traefik/dynamic.yml`](file:///data/homelab/traefik/dynamic.yml).
+  - Attached `geoblock@file` to entrypoint `websecure` positioned before `crowdsec-bouncer@file`, immediately discarding foreign traffic with HTTP 403 before executing threat intelligence evaluations.
+  - Configured in-memory LRU caching (`cacheSize: 1000`) and reverse proxy header evaluation (`xForwardedForReverseProxy: true`).
 - **CrowdSec Security Engine & Traefik Bouncer**:
   - Deployed `crowdsecurity/crowdsec:latest` container attached to `net1` network for local log ingestion and LAPI serving.
   - Configured real-time Traefik access log acquisition in [`crowdsec/config/acquis.d/traefik.yaml`](file:///data/homelab/crowdsec/config/acquis.d/traefik.yaml) with automatic hub installation of `crowdsecurity/traefik`, `crowdsecurity/http-cve`, and `crowdsecurity/whitelist-good-actors`.

@@ -12,17 +12,21 @@ Traefik acts as the centralized edge router, SSL termination gateway, and revers
 * **Network**: `net1` (Bridge network for routed web services)
 * **Bound Host Ports**: `80:80` (HTTP), `443:443` (HTTPS)
 * **Web UI / Dashboard**: `https://traefik.spencer.lan`
-* **Plugins**: `github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin` (`v1.4.1`)
+* **Plugins**:
+  * `github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin` (`v1.4.1`): Local API threat decision caching and ban enforcement.
+  * `github.com/PascalMinder/geoblock` (`v0.3.8`): Inbound geographic filtering (US only allowlist with local RFC 1918 bypass).
 * **Logging**: Structured JSON access logs written directly to `/var/log/traefik/access.log`.
 
 ```mermaid
 flowchart TD
     Client([Client Browser / API Client]) -->|HTTP :80| Redirect["Port 80 Redirect (to HTTPS :443)"]
-    Client -->|HTTPS :443| Bouncer["CrowdSec Bouncer Plugin\n(Stream Mode Decision Cache)"]
+    Client -->|HTTPS :443| Geo["1. Geoblock Plugin (PascalMinder/geoblock)"]
     
-    subgraph Edge Filtering
+    subgraph Edge Defense Pipeline
+        Geo -- "Blocked (Non-US)" --> GeoBlock["403 Forbidden (Geoblocked)"]
+        Geo -- "Allowed (US / Private LAN)" --> Bouncer["2. CrowdSec Bouncer Plugin (Stream Mode)"]
+        Bouncer -- "Banned (Threat Intel)" --> CSBlock["403 Forbidden (CrowdSec Ban)"]
         Bouncer -- "Allowed" --> Router{"Host Header Router"}
-        Bouncer -- "Banned" --> Blocked["403 Forbidden"]
         Bouncer -.->|Periodic sync :8080| LAPI["CrowdSec LAPI (:8080)"]
     end
 
@@ -50,12 +54,13 @@ Traefik uses a dual-configuration approach:
 Configures global entrypoints, API/Dashboard enablement, access logging, plugin registration, and provider declarations:
 * **Entrypoints**:
   * `web` on `:80` with automatic permanent redirection to `websecure` (:443).
-  * `websecure` on `:443` with `crowdsec-bouncer@file` attached globally to all incoming HTTPS connections.
+  * `websecure` on `:443` with `forwardedHeaders.trustedIPs` configured for private subnets, and global middleware chain `["geoblock@file", "crowdsec-bouncer@file"]` applied in order.
 * **Access Logging**:
   * `filePath: /var/log/traefik/access.log`
   * `format: json`
 * **Experimental Plugins**:
   * `crowdsec-bouncer`: `github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin` (`v1.4.1`).
+  * `geoblock`: `github.com/PascalMinder/geoblock` (`v0.3.8`).
 * **Providers**:
   * `docker`: Watches Docker socket for container labels (`exposedByDefault: false`, network `net1`).
   * `file`: Dynamically watches `traefik/dynamic.yml` (`watch: true`).
@@ -71,6 +76,7 @@ Configures dynamic TLS certificates, middlewares, and internal dashboard routing
 * **TLS Certificates**: Loads wildcard certificates from `traefik/certs/cert.pem` and `traefik/certs/key.pem`.
 * **Middlewares**:
   * `redirect-to-https`: Permanent HTTPS scheme redirection middleware.
+  * `geoblock`: Inbound country allowlist middleware configured with `countries: [US]`, `blackListMode: false`, `allowLocalRequests: true`, `xForwardedForReverseProxy: true`, and in-memory LRU cache (`cacheSize: 1000`).
   * `crowdsec-bouncer`: Stream mode middleware pointing to `http://crowdsec:8080`, reading the API key from `/etc/traefik/crowdsec_bouncer_key` with local subnet bypass (`127.0.0.1/32`, `192.168.0.0/16`, `10.0.0.0/8`).
 * **Dashboard Router**: Routes `traefik.spencer.lan` to internal `api@internal` service.
 

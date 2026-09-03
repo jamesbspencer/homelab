@@ -60,6 +60,16 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] Enforce edge protection globally across the `websecure` entrypoint in [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml).
 - [x] Document CLI administration commands and operational architecture in [`docs/crowdsec.md`](file:///data/homelab/docs/crowdsec.md).
 
+---
+
+### 8. 🌍 Inbound Geoblocking with Traefik
+- [x] Integrate **Traefik Geoblock Plugin** (`github.com/PascalMinder/geoblock` `v0.3.8`) on `websecure` entrypoint.
+- [x] Configure allowlist mode (`blackListMode: false`) restricting ingress to the United States (`US`) while allowing local RFC 1918 traffic (`allowLocalRequests: true`).
+- [x] Order middleware pipeline with `geoblock@file` before `crowdsec-bouncer@file` to drop non-US traffic before threat list evaluation.
+- [x] Configure in-memory LRU caching (`cacheSize: 1000`) and reverse proxy header evaluation (`xForwardedForReverseProxy: true`).
+- [x] Update documentation in [`docs/traefik.md`](file:///data/homelab/docs/traefik.md) and [`README.md`](file:///data/homelab/README.md).
+
+
 
 
 
