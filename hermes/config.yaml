@@ -22,6 +22,7 @@ memory:
 dashboard:
   theme: default
 skills:
+  creation_nudge_interval: 5
   disabled:
     - airtable
     - arxiv
@@ -47,6 +48,23 @@ platforms:
     enabled: true
 _config_version: 39
 
+curator:
+  enabled: true
+  consolidate: true
+  interval_hours: 168
+  stale_days: 30
+  archive_days: 90
+
+auxiliary:
+  background_review:
+    enabled: true
+    max_input_tokens: 600000
+    provider: litellm
+    model: qwen2.5:14b
+  curator:
+    provider: litellm
+    model: qwen2.5:14b
+
 terminal:
   backend: docker
   docker_image: nikolaik/python-nodejs:python3.11-nodejs20
@@ -63,6 +81,7 @@ platform_toolsets:
     - todo
     - terminal
     - code_execution
+    - skills
   api_server:
     - web
     - file
@@ -72,6 +91,7 @@ platform_toolsets:
     - todo
     - terminal
     - code_execution
+    - skills
   gateway:
     - web
     - file
@@ -81,6 +101,7 @@ platform_toolsets:
     - todo
     - terminal
     - code_execution
+    - skills
 known_plugin_toolsets:
   cli: []
 known_builtin_toolsets:
@@ -93,6 +114,7 @@ known_builtin_toolsets:
     - todo
     - terminal
     - code_execution
+    - skills
 
 # ── Security ──────────────────────────────────────────────────────────
 # Secret redaction is ON by default — strings that look like API keys,
