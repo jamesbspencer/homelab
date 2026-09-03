@@ -211,6 +211,43 @@ services:
       - "traefik.http.routers.hindsight.tls=true"
       - "traefik.http.services.hindsight.loadbalancer.server.port=9999"
 
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm
+    restart: unless-stopped
+    networks:
+      - ai
+      - db
+      - net1
+    volumes:
+      - ./litellm/config.yaml:/etc/litellm/config.yaml:ro
+    environment:
+      - PORT=4000
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - DATABASE_URL=postgresql://${LITELLM_POSTGRES_USER:-litellm}:${LITELLM_POSTGRES_PASSWORD}@pgvector:5432/${LITELLM_POSTGRES_DB:-litellm}
+      - STORE_MODEL_IN_DB=False
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    command: ["--config", "/etc/litellm/config.yaml", "--port", "4000"]
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.litellm.rule=Host(`llm.spencer.lan`)"
+      - "traefik.http.routers.litellm.entrypoints=websecure"
+      - "traefik.http.routers.litellm.tls=true"
+      - "traefik.http.services.litellm.loadbalancer.server.port=4000"
+
   hermes:
     image: nousresearch/hermes-agent:latest
     container_name: hermes

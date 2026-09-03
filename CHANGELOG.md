@@ -27,13 +27,18 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Mounted `/var/run/docker.sock` into the `hermes` container with `TERMINAL_ENV=docker`, `TERMINAL_DOCKER_IMAGE=nikolaik/python-nodejs:python3.11-nodejs20`, and `TERMINAL_CONTAINER_PERSISTENT=false`.
   - Enabled `terminal`, `process`, and `execute_code` toolsets in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml) across CLI, API server, and Gateway platforms.
   - Hardened sandbox execution with dropped Linux capabilities (`--cap-drop ALL`), disabled privilege escalation (`--security-opt no-new-privileges`), PID limit ceilings, and in-memory tmpfs scratch filesystems (`/workspace`, `/home`, `/root`).
-  - Documented sandbox architecture and security boundaries in [`docs/hermes.md`](file:///data/homelab/docs/hermes.md).
+- **LiteLLM Proxy Deployment (`litellm`)**:
+  - Deployed `ghcr.io/berriai/litellm:main-latest` container tri-homed on `ai`, `net1`, and `db` networks.
+  - Connected LiteLLM to `pgvector` database backend (`litellm` DB) with automated Prisma migrations for key generation, user management, and spend tracking.
+  - Aggregated local Ollama models (`qwen2.5:14b`, `nomic-embed-text`) alongside optional external fallback providers (Groq, OpenRouter, DeepSeek) in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml).
+  - Added Traefik TLS edge routing at `https://llm.spencer.lan` for OpenAI-compatible API (`/v1`) and web Admin UI (`/ui`).
+  - Added service documentation in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md) and updated service index in [`docs/README.md`](file:///data/homelab/docs/README.md).
 
 ### Changed
 - **System Context & Documentation**:
-  - Updated [`AGENTS.md`](file:///data/homelab/AGENTS.md) guidelines and [`docs/README.md`](file:///data/homelab/docs/README.md) to document `hindsight` service and Hermes Docker execution sandbox.
-  - Updated roadmap items in [`TODO.md`](file:///data/homelab/TODO.md) reflecting completion of persistent memory integration with Hindsight and Docker sandboxed execution for Hermes.
-  - Updated [`.env.example`](file:///data/homelab/.env.example) with Hindsight and Hermes terminal sandbox settings.
+  - Updated [`AGENTS.md`](file:///data/homelab/AGENTS.md) guidelines and [`docs/README.md`](file:///data/homelab/docs/README.md) to document `hindsight`, `litellm`, and Hermes Docker execution sandbox.
+  - Updated roadmap items in [`TODO.md`](file:///data/homelab/TODO.md) reflecting completion of persistent memory with Hindsight, Docker sandboxed execution for Hermes, and LiteLLM proxy deployment.
+  - Updated [`.env.example`](file:///data/homelab/.env.example) with Hindsight, Hermes terminal sandbox, and LiteLLM settings.
 
 ---
 
