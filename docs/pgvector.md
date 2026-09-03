@@ -1,12 +1,12 @@
-# Dedicated pgvector Instance (Hindsight & Shared Services)
+# Dedicated pgvector Instance (Hindsight, LiteLLM & Shared Services)
 
-This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Hindsight** (Hermes long-term memory engine) and future homelab microservices. It is decoupled from the legacy Open WebUI database to ensure long-term stability and independent lifecycles.
+This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Hindsight** (Hermes long-term memory engine), **LiteLLM Proxy** (spend tracking & key persistence), and future homelab microservices. It is decoupled from the legacy Open WebUI database to ensure long-term stability and independent lifecycles.
 
 ---
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Primary vector and relational database for Hindsight and upcoming homelab services.
+* **Role**: Primary vector and relational database for Hindsight, LiteLLM Proxy, and upcoming homelab services.
 * **Container Name**: `pgvector` (Service name: `pgvector`)
 * **Image**: `pgvector/pgvector:${PGVECTOR_VERSION:-pg16}`
 * **Network**: `db` (Strictly isolated database network; does **not** join `ai` or bind to host ports)
@@ -51,6 +51,10 @@ The container mounts `./pgvector/init/01-init-databases.sh` to `/docker-entrypoi
   ```
   postgresql://hindsight:${HINDSIGHT_POSTGRES_PASSWORD}@pgvector:5432/hindsight
   ```
+* **LiteLLM Proxy Service**:
+  ```
+  postgresql://litellm:${LITELLM_POSTGRES_PASSWORD}@pgvector:5432/litellm
+  ```
 * **Administrative / Superuser**:
   ```
   postgresql://postgres:${PGVECTOR_PASSWORD}@pgvector:5432/postgres
@@ -74,6 +78,9 @@ docker compose exec pgvector psql -U postgres -d postgres
 
 # Hindsight database connection
 docker compose exec pgvector psql -U hindsight -d hindsight
+
+# LiteLLM database connection
+docker compose exec pgvector psql -U litellm -d litellm
 ```
 
 ### Verifying pgvector Extension
