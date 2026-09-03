@@ -37,13 +37,13 @@ flowchart TB
     end
 
     %% Exposed Ingress Routes (net1)
-    subgraph Ingress ["🚪 Proxied Ingress Endpoints (net1)"]
-        Traefik -->|hermes.spencer.lan\nai.spencer.lan| HermesDash["Hermes Web Dashboard\n:9119"]
-        Traefik -->|hermes-api.spencer.lan| HermesAPI["Hermes Gateway API\n:8642"]
-        Traefik -->|mcp.spencer.lan| HermesMCP["Hermes MCP Server\n:8765"]
-        Traefik -->|llm.spencer.lan| LiteLLMUI["LiteLLM Gateway & UI\n:4000"]
-        Traefik -->|hindsight.spencer.lan| HindsightUI["Hindsight UI\n:9999"]
-        Traefik -->|traefik.spencer.lan| TraefikDash["Traefik Dashboard\n:internal"]
+    subgraph Ingress ["🚪 Proxied Endpoints (net1)"]
+        Traefik -->|hermes / ai| HermesDash["Dashboard :9119"]
+        Traefik -->|hermes-api| HermesAPI["API :8642"]
+        Traefik -->|mcp| HermesMCP["MCP :8765"]
+        Traefik -->|llm| LiteLLMUI["LiteLLM :4000"]
+        Traefik -->|hindsight| HindsightUI["Hindsight :9999"]
+        Traefik -->|traefik| TraefikDash["Traefik :internal"]
     end
 
     %% AI Agent & Inference Layer
