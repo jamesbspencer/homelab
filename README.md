@@ -27,50 +27,78 @@ Detailed architectural designs, configuration options, environment variables, an
 ## 🏗️ Architecture Overview
 
 ```mermaid
-flowchart TD
-    Client([Client Browser / Remote MCP / Desktop App]) -->|HTTPS :443| Traefik[Traefik Reverse Proxy]
-    Traefik <-->|1. US Allowlist & LAN Bypass| GeoPlugin[Geoblock Plugin]
-    Traefik <-->|2. In-Memory Stream Mode| BouncerPlugin[CrowdSec Bouncer Plugin]
-    Traefik -.->|JSON Access Logs| AccessLog["/var/log/traefik/access.log"]
-    AccessLog -.->|Real-Time Acquisition| CrowdSec[CrowdSec Security Engine :8080]
-    
-    subgraph Exposed Ingress Network [net1 Bridge]
-        Traefik -->|hermes.spencer.lan / ai.spencer.lan| HermesDashboard[Hermes Web Dashboard :9119]
-        Traefik -->|hermes-api.spencer.lan| HermesGateway[Hermes Gateway API :8642]
-        Traefik -->|mcp.spencer.lan| HermesMCP[Hermes MCP Server :8765]
-        Traefik -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy & UI :4000]
-        Traefik -->|hindsight.spencer.lan| HindsightUI[Hindsight Control Plane :9999]
-        Traefik -->|traefik.spencer.lan| TraefikDash[Traefik Dashboard :internal]
+flowchart TB
+    %% External Ingress & Security
+    subgraph Edge ["🌐 Edge Ingress & Security"]
+        Client([External & LAN Clients]) -->|HTTPS :443| Traefik[Traefik Reverse Proxy]
+        Traefik <--> GeoPlugin[Geoblock Plugin\nUS Only & RFC1918]
+        Traefik <--> BouncerPlugin[CrowdSec Bouncer\nStream Mode]
+        Traefik -.->|Access Logs| CrowdSec[CrowdSec Security Engine]
     end
 
-    subgraph Internal AI Network [ai Bridge]
-        HermesGateway -->|Inference Routing| LiteLLM
-        LiteLLM -->|GPU Accelerated Chat/Embeddings| Ollama[Ollama GPU Server :11434]
-        LiteLLM -.->|Optional Cloud Fallbacks| CloudLLM[Groq / OpenRouter / DeepSeek]
-        
-        HermesGateway -->|Persistent Memory| Hindsight[Hindsight Memory Engine :8888]
-        Hindsight -->|Fact Extraction & Reflection| Ollama
-        
-        HermesGateway -->|Tool Execution| HermesMCP
-        HermesGateway -->|Web Search Backend| SearXNG[SearXNG :8080]
-        HermesGateway -->|Scrape & Crawl| Firecrawl[Firecrawl Cluster :3002]
-        HermesGateway -->|Docker Execution Socket| Sandbox[Docker Sandbox Containers]
+    %% Exposed Ingress Routes (net1)
+    subgraph Ingress ["🚪 Proxied Ingress Endpoints (net1)"]
+        Traefik -->|hermes.spencer.lan\nai.spencer.lan| HermesDash["Hermes Web Dashboard\n:9119"]
+        Traefik -->|hermes-api.spencer.lan| HermesAPI["Hermes Gateway API\n:8642"]
+        Traefik -->|mcp.spencer.lan| HermesMCP["Hermes MCP Server\n:8765"]
+        Traefik -->|llm.spencer.lan| LiteLLMUI["LiteLLM Gateway & UI\n:4000"]
+        Traefik -->|hindsight.spencer.lan| HindsightUI["Hindsight UI\n:9999"]
+        Traefik -->|traefik.spencer.lan| TraefikDash["Traefik Dashboard\n:internal"]
+    end
 
+    %% AI Agent & Inference Layer
+    subgraph AICore ["🧠 AI Agent & Inference Layer (ai)"]
+        Hermes["Nous Hermes Agent Runtime\n(Supervised Gateway & Background Review)"]
+        LiteLLM["LiteLLM Proxy\n(Unified Router & Fallbacks)"]
+        Ollama["Ollama (GPU Accelerated)\nqwen2.5:14b | nomic-embed"]
+        Hindsight["Hindsight Memory Engine\n(Long-Term Memory & Graphs)"]
+        Sandbox["Docker Sandbox\n(Ephemeral Container Runtime)"]
+        
+        HermesDash -.- Hermes
+        HermesAPI -.- Hermes
+        HermesMCP -.- Hermes
+
+        Hermes -->|LLM Requests| LiteLLM
+        Hermes -->|Memory Retain / Recall| Hindsight
+        Hermes -->|Code & Process Exec| Sandbox
+        LiteLLM -->|GPU Inference| Ollama
+        LiteLLM -.->|Optional Cloud| CloudLLM[OpenRouter / Groq]
+        Hindsight -->|Fact Extraction| Ollama
+    end
+
+    %% Tools, Search & Scraping Cluster
+    subgraph Tools ["🛠️ Tools, Search & Scraping Cluster"]
+        SearXNG["SearXNG Metasearch\n:8080 (ai / redis)"]
+        
+        subgraph FirecrawlStack ["Firecrawl Scraping Cluster (:3002)"]
+            Firecrawl["Firecrawl Engine"]
+            Playwright["Playwright Service\n:3000"]
+            RabbitMQ["RabbitMQ Broker\n:5672"]
+            NuqPG[("NuQ-Postgres\n:5432")]
+            Firecrawl --> Playwright
+            Firecrawl --> RabbitMQ
+            Firecrawl --> NuqPG
+        end
+
+        Hermes -->|Web Search| SearXNG
+        Hermes -->|Web Scraping & Crawling| Firecrawl
         Firecrawl -->|Direct Search Backend| SearXNG
-        Firecrawl -->|Task Queue Broker| RabbitMQ[RabbitMQ :5672]
-        Firecrawl -->|Queue Schema DB| NuqPostgres[(NuQ-Postgres :5432)]
-        Firecrawl -->|Chromium Renderer| Playwright[Playwright Service :3000]
     end
 
-    subgraph Isolated Database Network [db Bridge]
-        Hindsight -->|Vector & Memory Graph DB| PgVector[(pgvector :5432)]
-        LiteLLM -->|Keys, Spend & Audit DB| PgVector
+    %% Data Plane & Storage
+    subgraph DataPlane ["💾 Data & Caching Plane"]
+        subgraph DBNet ["db Network"]
+            PGVector[("pgvector Database\n(hindsight & litellm)")]
+        end
+        subgraph CacheNet ["redis Network"]
+            Valkey[("Valkey In-Memory Cache\n(Search Cache & Rate Limiting)")]
+        end
     end
 
-    subgraph Internal Cache Network [redis Bridge]
-        SearXNG -->|Search Cache| Valkey[(Valkey In-Memory :6379)]
-        Firecrawl -->|Rate Limiting| Valkey
-    end
+    Hindsight -->|Vectors & Relations| PGVector
+    LiteLLM -->|Keys & Spend Audit| PGVector
+    SearXNG -->|Result Cache| Valkey
+    Firecrawl -->|Rate Limiting| Valkey
 ```
 
 ---
