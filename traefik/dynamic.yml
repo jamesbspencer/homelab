@@ -10,6 +10,22 @@ http:
         scheme: https
         permanent: true
 
+    crowdsec-bouncer:
+      plugin:
+        crowdsec-bouncer:
+          enabled: true
+          crowdsecMode: stream
+          crowdsecLapiScheme: http
+          crowdsecLapiHost: "crowdsec:8080"
+          crowdsecLapiKeyFile: /etc/traefik/crowdsec_bouncer_key
+          updateIntervalSeconds: 60
+          defaultDecisionSeconds: 60
+          clientTrustedIPs:
+            - "127.0.0.1/32"
+            - "192.168.0.0/16"
+            - "10.0.0.0/8"
+
+
   routers:
     traefik-dashboard:
       rule: "Host(`traefik.spencer.lan`)"

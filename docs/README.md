@@ -21,6 +21,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Valkey** | In-Memory Cache & Rate Limiter | `:6379` (Internal `redis` network) | [Valkey Guide](file:///data/homelab/docs/valkey.md) |
 | **Browserless Chrome** | Headless Browser Automation | `:3000` (Internal `ai` network) | [Browserless Guide](file:///data/homelab/docs/browserless.md) |
 | **Open Terminal** | Sandboxed Code Execution | `:8000` (Internal `ai` network) | [Open Terminal Guide](file:///data/homelab/docs/open-terminal.md) |
+| **CrowdSec** | Intrusion Detection & Traefik Bouncer | `:8080` (Internal `net1` network) | [CrowdSec Guide](file:///data/homelab/docs/crowdsec.md) |
 
 ---
 

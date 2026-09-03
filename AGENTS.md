@@ -18,10 +18,11 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **Valkey**: High-performance in-memory key-value cache and rate limiter on internal port `6379`.
   - **Browserless Chrome**: Headless Chromium browser for Playwright scraping and CDP automation on internal port `3000`.
   - **Open Terminal**: Sandboxed code execution environment on internal port `8000`.
+  - **CrowdSec & Traefik Bouncer**: Intrusion detection and prevention engine parsing Traefik access logs with in-memory stream mode enforcement via the Traefik bouncer plugin.
   - **PostgreSQL Database (Legacy `db` & Standalone `pgvector`)**: Database containers configured to run on the dedicated `db` network (`pgvector` for Hindsight, LiteLLM, and general services; `db` for Open WebUI).
 - **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `llm.spencer.lan`, `ai.spencer.lan`, `hermes.spencer.lan`, `hermes-dashboard.spencer.lan`, `mcp.spencer.lan`, `hindsight.spencer.lan`).
 - **Networking**:
-  - The Traefik container and proxied services requiring external web access (Open WebUI, Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, LiteLLM) must belong to the bridge network named `net1`.
+  - The Traefik container and proxied services requiring external web access (Open WebUI, Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, LiteLLM) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
   - Internal AI communication (between Open WebUI, Hermes, Hindsight, LiteLLM, Ollama, SearXNG, Firecrawl, Browserless, Open Terminal) occurs on the isolated bridge network named `ai`.
   - Database services (PostgreSQL / `pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network.
   - Cache services (Valkey, SearXNG, Firecrawl) communicate on the dedicated bridge network named `redis`.

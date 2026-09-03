@@ -45,12 +45,21 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] Configure intelligent request routing, automated database persistence in `pgvector` (`litellm` database), key management, rate limiting, and cost/token tracking.
 - [x] Document client integration guides in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md) to connect Open WebUI, Hermes Agent, and Hindsight to LiteLLM.
 
----
-
 ### 6. 🔍 Evaluate Decommissioning & Removal of Open WebUI
 - [ ] Assess feature parity between Open WebUI and the primary Hermes Dashboard / Desktop interfaces (e.g. chat, document management, prompt presets).
 - [ ] Audit secondary services coupled to Open WebUI (`postgres`/`pgvector`, `browserless`, `open-terminal`) to identify candidates for resource reclamation.
 - [ ] Determine if document ingestion/RAG can be fully delegated to Hermes Agent + Firecrawl or a lighter alternative.
 - [ ] Prepare migration or archiving strategy for existing chat history and vector embeddings before container removal.
+
+---
+
+### 7. 🛡️ CrowdSec Security Engine & Traefik Bouncer
+- [x] Deploy **CrowdSec** security engine (`crowdsecurity/crowdsec:latest`) on `net1` network.
+- [x] Configure real-time log acquisition from Traefik access logs via `crowdsec/config/acquis.d/traefik.yaml` with `crowdsecurity/traefik`, `crowdsecurity/http-cve`, and `crowdsecurity/whitelist-good-actors` collections.
+- [x] Integrate **Traefik Bouncer Plugin** (`github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin`) in `stream` mode using pre-seeded API key and local subnet whitelisting.
+- [x] Enforce edge protection globally across the `websecure` entrypoint in [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml).
+- [x] Document CLI administration commands and operational architecture in [`docs/crowdsec.md`](file:///data/homelab/docs/crowdsec.md).
+
+
 
 
