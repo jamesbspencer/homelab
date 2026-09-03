@@ -4,6 +4,12 @@ tls:
       keyFile: /etc/traefik/certs/key.pem
 
 http:
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
   routers:
     traefik-dashboard:
       rule: "Host(`traefik.spencer.lan`)"

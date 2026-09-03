@@ -34,6 +34,11 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Added Traefik TLS edge routing at `https://llm.spencer.lan` for OpenAI-compatible API (`/v1`) and web Admin UI (`/ui`).
   - Added service documentation in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md) and updated service index in [`docs/README.md`](file:///data/homelab/docs/README.md).
 
+### Fixed
+- **LiteLLM UI Reverse Proxy Redirection**:
+  - Configured `FORWARDED_ALLOW_IPS=*` in LiteLLM container environment so Uvicorn honors `X-Forwarded-Proto: https` from Traefik instead of issuing `http://` 307 redirects.
+  - Configured global HTTP-to-HTTPS entrypoint redirection (`redirections.entryPoint.to: websecure`) in [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml) so all port 80 traffic seamlessly upgrades to TLS port 443 across all homelab services.
+
 ### Changed
 - **System Context & Documentation**:
   - Updated [`AGENTS.md`](file:///data/homelab/AGENTS.md) guidelines and [`docs/README.md`](file:///data/homelab/docs/README.md) to document `hindsight`, `litellm`, and Hermes Docker execution sandbox.
