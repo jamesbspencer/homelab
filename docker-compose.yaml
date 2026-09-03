@@ -269,11 +269,13 @@ services:
       - API_SERVER_KEY=${HERMES_API_KEY}
       - API_SERVER_HOST=0.0.0.0
       - API_SERVER_PORT=8642
-      - HERMES_MODEL=${HERMES_MODEL}
-      - HERMES_PROVIDER=${HERMES_PROVIDER}
-      - HERMES_MODEL_PROVIDER=${HERMES_PROVIDER}
-      - HERMES_BASE_URL=${CUSTOM_BASE_URL}
-      - CUSTOM_BASE_URL=${CUSTOM_BASE_URL}
+      - HERMES_MODEL=${HERMES_MODEL:-qwen2.5:14b}
+      - HERMES_PROVIDER=${HERMES_PROVIDER:-custom}
+      - HERMES_MODEL_PROVIDER=${HERMES_PROVIDER:-custom}
+      - HERMES_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
+      - CUSTOM_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
+      - CUSTOM_API_KEY=${LITELLM_MASTER_KEY}
+      - OPENAI_API_KEY=${LITELLM_MASTER_KEY}
       - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=${HERMES_DASHBOARD_BASIC_AUTH_USERNAME}
       - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH=${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH}
       - PUID=${PUID}
@@ -292,6 +294,7 @@ services:
     depends_on:
       - firecrawl
       - hindsight
+      - litellm
     labels:
       - "traefik.enable=true"
       # Gateway routing (port 8642)

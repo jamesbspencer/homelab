@@ -32,7 +32,11 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Connected LiteLLM to `pgvector` database backend (`litellm` DB) with automated Prisma migrations for key generation, user management, and spend tracking.
   - Aggregated local Ollama models (`qwen2.5:14b`, `nomic-embed-text`) alongside optional external fallback providers (Groq, OpenRouter, DeepSeek) in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml).
   - Added Traefik TLS edge routing at `https://llm.spencer.lan` for OpenAI-compatible API (`/v1`) and web Admin UI (`/ui`).
-  - Added service documentation in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md) and updated service index in [`docs/README.md`](file:///data/homelab/docs/README.md).
+- **Hermes Agent LiteLLM Proxy Integration**:
+  - Connected Hermes Agent to LiteLLM router endpoint at `http://litellm:4000/v1` over internal `ai` network.
+  - Configured `CUSTOM_API_KEY` and `OPENAI_API_KEY` with `${LITELLM_MASTER_KEY}` for seamless authentication.
+  - Declared explicit 64K context window metadata (`max_tokens: 65536`) for `qwen2.5:14b` in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml) and registered `custom_providers` entry in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml).
+  - Verified end-to-end inference routing with automated token tracking and persistence in `pgvector` (`LiteLLM_SpendLogs`).
 
 ### Fixed
 - **LiteLLM UI Reverse Proxy Redirection**:
