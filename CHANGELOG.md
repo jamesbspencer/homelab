@@ -9,7 +9,15 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ## [2026-09-03]
 
+### Changed
+- **Hermes Ingress Route Restructuring**:
+  - Reconfigured Hermes Web Dashboard / Desktop UI routing from `hermes-dashboard.spencer.lan` to primary domain `hermes.spencer.lan` (with aliases `hermes-desktop.spencer.lan` and `hermes-dashboard.spencer.lan` preserved).
+  - Reconfigured Hermes Gateway API routing from `hermes.spencer.lan` to `hermes-api.spencer.lan` on port `8642`.
+
 ### Added
+- **Let's Encrypt (ACME) & Dynamic Public Ingress Routing**:
+  - Configured `certificatesResolvers.letsencrypt` in [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml) using HTTP-01 challenge on entrypoint `web` with storage in `traefik/acme.json`.
+  - Added public routing for Hermes Dashboard in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) driven by environment variables (`HERMES_PUBLIC_DOMAIN`, `ACME_EMAIL`) stored securely in uncommitted `.env`.
 - **Traefik Inbound Geoblocking Plugin**:
   - Registered `github.com/PascalMinder/geoblock` (`v0.3.8`) plugin in [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml) to restrict incoming edge connections geographically.
   - Configured allowlist mode (`blackListMode: false`) permitting only the United States (`US`) with automatic RFC 1918 private IP bypass (`allowLocalRequests: true`) in [`traefik/dynamic.yml`](file:///data/homelab/traefik/dynamic.yml).

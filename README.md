@@ -15,7 +15,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **LiteLLM Proxy** | LLM routing gateway, spend manager & fallback router | `https://llm.spencer.lan` (:4000) | [LiteLLM Guide](docs/litellm.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
 | **Open WebUI** | ChatGPT-style web UI, multi-user, RAG & workspace | `https://ai.spencer.lan` | [Open WebUI Guide](docs/open-webui.md) |
-| **Hermes Agent** | Autonomous AI agent runtime, dashboard & MCP server | `https://hermes.spencer.lan` / `https://hermes-dashboard.spencer.lan` / `https://mcp.spencer.lan` | [Hermes Guide](docs/hermes.md) |
+| **Hermes Agent** | Autonomous AI agent runtime, dashboard & MCP server | `https://hermes.spencer.lan` / `https://hermes-api.spencer.lan` / `https://mcp.spencer.lan` | [Hermes Guide](docs/hermes.md) |
 | **Hindsight** | Long-term contextual memory engine for agents | `https://hindsight.spencer.lan` (:9999) / `:8888` | [Hindsight Guide](docs/hindsight.md) |
 | **PostgreSQL (Legacy)** | Relational database & vector store for Open WebUI | `db:5432` (Internal `db` network) | [Postgres Guide](docs/postgres.md) |
 | **pgvector (Standalone)** | Dedicated vector & DB instance for Hindsight & LiteLLM | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
@@ -39,8 +39,8 @@ flowchart TD
     
     subgraph Exposed Ingress Network [net1 Bridge]
         Traefik -->|ai.spencer.lan| OpenWebUI[Open WebUI :8080]
-        Traefik -->|hermes.spencer.lan| HermesGateway[Hermes Gateway API :8642]
-        Traefik -->|hermes-dashboard.spencer.lan| HermesDashboard[Hermes Web Dashboard :9119]
+        Traefik -->|hermes.spencer.lan| HermesDashboard[Hermes Web Dashboard :9119]
+        Traefik -->|hermes-api.spencer.lan| HermesGateway[Hermes Gateway API :8642]
         Traefik -->|mcp.spencer.lan| HermesMCP[Hermes MCP Server :8765]
         Traefik -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy & UI :4000]
         Traefik -->|hindsight.spencer.lan| HindsightUI[Hindsight Control Plane :9999]

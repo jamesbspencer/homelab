@@ -37,6 +37,13 @@ entryPoints:
         - "crowdsec-bouncer@file"
 
   
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      storage: "/etc/traefik/acme.json"
+      httpChallenge:
+        entryPoint: "web"
+
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
