@@ -39,11 +39,11 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ---
 
 ### 5. 🔀 Self-Hosted Free LLM Router (LiteLLM Proxy / RouteLLM / Portkey)
-- [ ] Evaluate and select an open-source, self-hosted LLM router (e.g. **LiteLLM Proxy**, **RouteLLM**, or **Portkey AI Gateway**).
-- [ ] Deploy the router container on the `ai` network with Traefik routing (`router.spencer.lan` / `llm.spencer.lan`).
-- [ ] Connect local Ollama models (`qwen2.5:14b`, `nomic-embed-text`) alongside optional external providers (OpenRouter, Groq, DeepSeek, Anthropic) under a unified OpenAI-compatible API endpoint.
-- [ ] Configure intelligent request routing, automatic model failover/fallbacks, load balancing, rate limiting, and cost/token tracking.
-- [ ] Point Open WebUI and Hermes Agent to the router endpoint for centralized LLM dispatch and observability.
+- [x] Evaluate and select an open-source, self-hosted LLM router (deployed **LiteLLM Proxy** `ghcr.io/berriai/litellm:main-latest`).
+- [x] Deploy the router container on `ai`, `net1`, and `db` networks with Traefik routing at `https://llm.spencer.lan` and Admin UI at `https://llm.spencer.lan/ui`.
+- [x] Connect local Ollama models (`qwen2.5:14b`, `nomic-embed-text`) alongside optional external providers (OpenRouter, Groq, DeepSeek) under a unified OpenAI-compatible API endpoint.
+- [x] Configure intelligent request routing, automated database persistence in `pgvector` (`litellm` database), key management, rate limiting, and cost/token tracking.
+- [x] Document client integration guides in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md) to connect Open WebUI, Hermes Agent, and Hindsight to LiteLLM.
 
 ---
 

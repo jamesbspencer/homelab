@@ -10,6 +10,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 |---|---|---|---|
 | **Traefik** | Reverse Proxy & Ingress | `:80`, `:443` (Hosts `traefik.spencer.lan`) | [Traefik Guide](file:///data/homelab/docs/traefik.md) |
 | **Ollama** | LLM Engine (GPU Accelerated) | `:11434` (Internal `ai` network) | [Ollama Guide](file:///data/homelab/docs/ollama.md) |
+| **LiteLLM Proxy** | LLM Router & Spend Gateway | `llm.spencer.lan` (:4000) | [LiteLLM Guide](file:///data/homelab/docs/litellm.md) |
 | **Open WebUI** | AI Chat & Workspace Interface | `ai.spencer.lan` via Traefik | [Open WebUI Guide](file:///data/homelab/docs/open-webui.md) |
 | **PostgreSQL / pgvector (Legacy)** | Relational & Vector Database (Open WebUI) | `:5432` (Internal `db` network) | [Postgres Guide](file:///data/homelab/docs/postgres.md) |
 | **pgvector (Standalone)** | Dedicated Vector & DB (Hindsight & Services) | `:5432` (Internal `db` network) | [pgvector Guide](file:///data/homelab/docs/pgvector.md) |
