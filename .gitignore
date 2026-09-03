@@ -5,6 +5,9 @@
 traefik/acme.json
 traefik/certs/*
 !traefik/certs/.gitkeep
+traefik/logs/*
+!traefik/logs/.gitkeep
+traefik/crowdsec_bouncer_key
 
 # Postgres raw database data
 postgres
@@ -53,4 +56,12 @@ hermes/hindsight/*
 # NuQ Postgres data
 nuq-postgres
 nuq-postgres/*
+
+# CrowdSec data and generated configuration
+crowdsec/data/*
+!crowdsec/data/.gitkeep
+crowdsec/config/*
+!crowdsec/config/acquis.d/
+!crowdsec/config/acquis.d/*
+
 

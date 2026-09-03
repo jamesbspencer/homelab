@@ -13,7 +13,27 @@ services:
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml
       - ./traefik/acme.json:/etc/traefik/acme.json
       - ./traefik/certs:/etc/traefik/certs:ro
+      - ./traefik/logs:/var/log/traefik
+      - ./traefik/crowdsec_bouncer_key:/etc/traefik/crowdsec_bouncer_key:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - crowdsec
+
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    restart: unless-stopped
+    environment:
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/whitelist-good-actors"
+      BOUNCER_KEY_TRAEFIK: "${CROWDSEC_BOUNCER_KEY}"
+      CUSTOM_HOSTNAME: "homelab-crowdsec"
+    volumes:
+      - ./crowdsec/config:/etc/crowdsec
+      - ./crowdsec/data:/var/lib/crowdsec/data
+      - ./traefik/logs:/var/log/traefik:ro
+    networks:
+      - net1
+
 
   ollama:
     image: ollama/ollama

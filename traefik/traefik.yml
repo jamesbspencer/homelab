@@ -5,6 +5,10 @@ global:
 log:
   level: "INFO"
 
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  format: json
+
 api:
   dashboard: true
   debug: true
@@ -21,6 +25,9 @@ entryPoints:
           permanent: true
   websecure:
     address: ":443"
+    http:
+      middlewares:
+        - "crowdsec-bouncer@file"
   
 providers:
   docker:
@@ -30,3 +37,9 @@ providers:
   file:
     filename: "/etc/traefik/dynamic.yml"
     watch: true
+
+experimental:
+  plugins:
+    crowdsec-bouncer:
+      moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+      version: "v1.4.1"

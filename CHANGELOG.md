@@ -10,6 +10,12 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-09-03]
 
 ### Added
+- **CrowdSec Security Engine & Traefik Bouncer**:
+  - Deployed `crowdsecurity/crowdsec:latest` container attached to `net1` network for local log ingestion and LAPI serving.
+  - Configured real-time Traefik access log acquisition in [`crowdsec/config/acquis.d/traefik.yaml`](file:///data/homelab/crowdsec/config/acquis.d/traefik.yaml) with automatic hub installation of `crowdsecurity/traefik`, `crowdsecurity/http-cve`, and `crowdsecurity/whitelist-good-actors`.
+  - Registered and loaded **Traefik Bouncer Plugin** (`github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin` `v1.4.1`) in [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml) operating in in-memory `stream` mode.
+  - Enforced global protection on `websecure` entrypoint (`443`) with secure file-based key loading (`traefik/crowdsec_bouncer_key`) and private subnet whitelisting (`127.0.0.1/32`, `192.168.0.0/16`, `10.0.0.0/8`).
+  - Added comprehensive operational guide to [`docs/crowdsec.md`](file:///data/homelab/docs/crowdsec.md) and updated [`docs/README.md`](file:///data/homelab/docs/README.md) and [`AGENTS.md`](file:///data/homelab/AGENTS.md).
 - **Hermes Model Context Protocol (MCP) Server**:
   - Implemented dual-transport MCP server in [`hermes/scripts/hermes_mcp_server.py`](file:///data/homelab/hermes/scripts/hermes_mcp_server.py) wrapping Hermes `model_tools.handle_function_call`.
   - Exposes 13 homelab tools to external AI clients: `web_search` (SearXNG), `web_extract` (Firecrawl), `execute_code`, `terminal`, `process` (Docker sandbox), `read_file`, `write_file`, `patch`, `search_files` (workspace), `vision_analyze` (multimodal vision), `text_to_speech` (TTS), and `skills_list` / `skill_view` (Hermes skills).
@@ -17,6 +23,26 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Added Traefik edge routing on `net1` for `https://mcp.spencer.lan/sse` and message ingress at `/messages/` (port `8765`).
   - Enforced Bearer token authentication via `HERMES_MCP_KEY` with unauthenticated `/health` endpoint for monitoring.
   - Added client configuration examples for Claude Desktop (SSE and direct Docker stdio), Cursor / IDE extensions, and Open WebUI MCP connectors to [`docs/hermes.md`](file:///data/homelab/docs/hermes.md).
+
+---
+
+## [2026-09-02]
+
+### Added
+- **LiteLLM Proxy Deployment (`litellm`)**:
+  - Deployed `ghcr.io/berriai/litellm:main-latest` container tri-homed on `ai`, `net1`, and `db` networks.
+  - Connected LiteLLM to `pgvector` database backend (`litellm` DB) with automated Prisma migrations for key generation, user management, and spend tracking.
+  - Aggregated local Ollama models (`qwen2.5:14b`, `nomic-embed-text`) alongside optional external fallback providers (Groq, OpenRouter, DeepSeek) in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml).
+  - Added Traefik TLS edge routing at `https://llm.spencer.lan` for OpenAI-compatible API (`/v1`) and web Admin UI (`/ui`).
+- **Hermes Agent LiteLLM Proxy Integration**:
+  - Connected Hermes Agent to LiteLLM router endpoint at `http://litellm:4000/v1` over internal `ai` network.
+  - Configured `CUSTOM_API_KEY` and `OPENAI_API_KEY` with `${LITELLM_MASTER_KEY}` for seamless authentication.
+  - Declared explicit 64K context window metadata (`max_tokens: 65536`) for `qwen2.5:14b` in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml) and registered `custom_providers` entry in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml).
+  - Verified end-to-end inference routing with automated token tracking and persistence in `pgvector` (`LiteLLM_SpendLogs`).
+- **Hermes Agent Docker Sandbox Execution Environment**:
+  - Mounted `/var/run/docker.sock` into the `hermes` container with `TERMINAL_ENV=docker`, `TERMINAL_DOCKER_IMAGE=nikolaik/python-nodejs:python3.11-nodejs20`, and `TERMINAL_CONTAINER_PERSISTENT=false`.
+  - Enabled `terminal`, `process`, and `execute_code` toolsets in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml) across CLI, API server, and Gateway platforms.
+  - Hardened sandbox execution with dropped Linux capabilities (`--cap-drop ALL`), disabled privilege escalation (`--security-opt no-new-privileges`), PID limit ceilings, and in-memory tmpfs scratch filesystems (`/workspace`, `/home`, `/root`).
 - **Hindsight Long-Term Memory Container (`hindsight`)**:
   - Deployed `ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}` service dual-homed on `ai` and `db` networks.
   - Connected Hindsight to the dedicated `pgvector` instance on `db` network (`postgresql://hindsight:...@pgvector:5432/hindsight`) with `pgvector` vector extension.
@@ -30,37 +56,6 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Activated `hindsight` memory provider in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml).
   - Provisioned profile memory config in [`hermes/hindsight/config.json`](file:///data/homelab/hermes/hindsight/config.json) with auto-recall and auto-retain enabled.
   - Updated [`docs/hermes.md`](file:///data/homelab/docs/hermes.md) with memory backend architecture diagram and tool descriptions.
-- **Hermes Agent Docker Sandbox Execution Environment**:
-  - Mounted `/var/run/docker.sock` into the `hermes` container with `TERMINAL_ENV=docker`, `TERMINAL_DOCKER_IMAGE=nikolaik/python-nodejs:python3.11-nodejs20`, and `TERMINAL_CONTAINER_PERSISTENT=false`.
-  - Enabled `terminal`, `process`, and `execute_code` toolsets in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml) across CLI, API server, and Gateway platforms.
-  - Hardened sandbox execution with dropped Linux capabilities (`--cap-drop ALL`), disabled privilege escalation (`--security-opt no-new-privileges`), PID limit ceilings, and in-memory tmpfs scratch filesystems (`/workspace`, `/home`, `/root`).
-- **LiteLLM Proxy Deployment (`litellm`)**:
-  - Deployed `ghcr.io/berriai/litellm:main-latest` container tri-homed on `ai`, `net1`, and `db` networks.
-  - Connected LiteLLM to `pgvector` database backend (`litellm` DB) with automated Prisma migrations for key generation, user management, and spend tracking.
-  - Aggregated local Ollama models (`qwen2.5:14b`, `nomic-embed-text`) alongside optional external fallback providers (Groq, OpenRouter, DeepSeek) in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml).
-  - Added Traefik TLS edge routing at `https://llm.spencer.lan` for OpenAI-compatible API (`/v1`) and web Admin UI (`/ui`).
-- **Hermes Agent LiteLLM Proxy Integration**:
-  - Connected Hermes Agent to LiteLLM router endpoint at `http://litellm:4000/v1` over internal `ai` network.
-  - Configured `CUSTOM_API_KEY` and `OPENAI_API_KEY` with `${LITELLM_MASTER_KEY}` for seamless authentication.
-  - Declared explicit 64K context window metadata (`max_tokens: 65536`) for `qwen2.5:14b` in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml) and registered `custom_providers` entry in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml).
-  - Verified end-to-end inference routing with automated token tracking and persistence in `pgvector` (`LiteLLM_SpendLogs`).
-
-### Fixed
-- **LiteLLM UI Reverse Proxy Redirection**:
-  - Configured `FORWARDED_ALLOW_IPS=*` in LiteLLM container environment so Uvicorn honors `X-Forwarded-Proto: https` from Traefik instead of issuing `http://` 307 redirects.
-  - Configured global HTTP-to-HTTPS entrypoint redirection (`redirections.entryPoint.to: websecure`) in [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml) so all port 80 traffic seamlessly upgrades to TLS port 443 across all homelab services.
-
-### Changed
-- **System Context & Documentation**:
-  - Updated [`AGENTS.md`](file:///data/homelab/AGENTS.md) guidelines and [`docs/README.md`](file:///data/homelab/docs/README.md) to document `hindsight`, `litellm`, and Hermes Docker execution sandbox.
-  - Updated roadmap items in [`TODO.md`](file:///data/homelab/TODO.md) reflecting completion of persistent memory with Hindsight, Docker sandboxed execution for Hermes, and LiteLLM proxy deployment.
-  - Updated [`.env.example`](file:///data/homelab/.env.example) with Hindsight, Hermes terminal sandbox, and LiteLLM settings.
-
----
-
-## [2026-09-02]
-
-### Added
 - **Dedicated pgvector Instance (`pgvector`)**:
   - Added standalone `pgvector` container running `pgvector/pgvector:${PGVECTOR_VERSION:-pg16}` for Hindsight long-term memory engine and future homelab microservices, decoupled from Open WebUI.
   - Added initialization script (`pgvector/init/01-init-databases.sh`) mounted to `/docker-entrypoint-initdb.d/` to enable `vector` extension on the primary database and auto-provision the `hindsight` database, user role, and vector extension.
@@ -70,14 +65,22 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Added configuration keys and templates in `.env.example` and configured secure credentials in `.env`.
   - Added ignore rules for `./pgvector/data/*` in `.gitignore`.
 
+### Fixed
+- **LiteLLM UI Reverse Proxy Redirection**:
+  - Configured `FORWARDED_ALLOW_IPS=*` in LiteLLM container environment so Uvicorn honors `X-Forwarded-Proto: https` from Traefik instead of issuing `http://` 307 redirects.
+  - Configured global HTTP-to-HTTPS entrypoint redirection (`redirections.entryPoint.to: websecure`) in [`traefik/traefik.yml`](file:///data/homelab/traefik/traefik.yml) so all port 80 traffic seamlessly upgrades to TLS port 443 across all homelab services.
+
 ### Changed
 - **Network Architecture & Strict Isolation**:
   - Bound `pgvector` exclusively to the internal `db` network (no `ai` network interface and no host port exposure).
   - Codified network requirement in [`AGENTS.md`](file:///data/homelab/AGENTS.md) and [`docs/README.md`](file:///data/homelab/docs/README.md) requiring any service needing vector/relational database access to connect to `db`.
 - **Host UID/GID Mapping (`1000:1000`)**:
   - Configured dynamic entrypoint mapping in `docker-compose.yaml` to ensure database files in `./pgvector/data` are owned by `suadmin:suadmin` (1000:1000) directly on the host without `sudo`.
-- **Roadmap Tracking**:
-  - Marked Hindsight vector/relational storage backend milestone as complete in [`TODO.md`](file:///data/homelab/TODO.md).
+- **System Context & Documentation**:
+  - Updated [`AGENTS.md`](file:///data/homelab/AGENTS.md) guidelines and [`docs/README.md`](file:///data/homelab/docs/README.md) to document `hindsight`, `litellm`, and Hermes Docker execution sandbox.
+  - Updated roadmap items in [`TODO.md`](file:///data/homelab/TODO.md) reflecting completion of persistent memory with Hindsight, Docker sandboxed execution for Hermes, and LiteLLM proxy deployment.
+  - Updated [`.env.example`](file:///data/homelab/.env.example) with Hindsight, Hermes terminal sandbox, and LiteLLM settings.
+
 
 ---
 
