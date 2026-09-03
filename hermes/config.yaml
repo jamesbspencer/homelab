@@ -1,9 +1,19 @@
 model:
   default: qwen2.5:14b
   provider: custom
-  base_url: http://ollama:11434/v1
+  base_url: http://litellm:4000/v1
+  api_key: ${CUSTOM_API_KEY}
   context_length: 65536
   ollama_num_ctx: 65536
+
+custom_providers:
+  - name: litellm
+    base_url: http://litellm:4000/v1
+    api_key: ${CUSTOM_API_KEY}
+    context_length: 65536
+    models:
+      - qwen2.5:14b
+      - default
 web:
   search_backend: searxng
   extract_backend: firecrawl

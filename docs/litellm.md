@@ -66,13 +66,38 @@ Defined in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml):
 ## 🔌 Client Integration
 
 ### 1. Pointing Hermes Agent to LiteLLM
-In `docker-compose.yaml` (or `.env`):
-```yaml
-CUSTOM_BASE_URL=http://litellm:4000/v1
-HERMES_MODEL=qwen2.5:14b
-# Or use the master key / client key
-HERMES_API_KEY=${LITELLM_MASTER_KEY}
-```
+Hermes connects directly to LiteLLM over the internal `ai` Docker network.
+- **In `.env`**:
+  ```bash
+  CUSTOM_BASE_URL=http://litellm:4000/v1
+  HERMES_MODEL=qwen2.5:14b
+  ```
+- **In `docker-compose.yaml`**:
+  ```yaml
+  environment:
+    - CUSTOM_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
+    - CUSTOM_API_KEY=${LITELLM_MASTER_KEY}
+    - OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+  depends_on:
+    - litellm
+  ```
+- **In `hermes/config.yaml`**:
+  ```yaml
+  model:
+    default: qwen2.5:14b
+    provider: custom
+    base_url: http://litellm:4000/v1
+    context_length: 65536
+    ollama_num_ctx: 65536
+  custom_providers:
+    - name: litellm
+      base_url: http://litellm:4000/v1
+      key_env: CUSTOM_API_KEY
+      context_length: 65536
+      models:
+        - qwen2.5:14b
+        - default
+  ```
 
 ### 2. Pointing Open WebUI to LiteLLM
 In Open WebUI settings (`Admin Panel` -> `Connections` -> `OpenAI API`):

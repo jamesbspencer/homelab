@@ -43,7 +43,16 @@ Configured to use **SearXNG** for queries, **Firecrawl** for content extraction,
 model:
   default: ${HERMES_MODEL}
   provider: ${HERMES_PROVIDER}
-  base_url: ${CUSTOM_BASE_URL}
+  base_url: ${CUSTOM_BASE_URL}  # http://litellm:4000/v1
+  context_length: 65536
+  ollama_num_ctx: 65536
+custom_providers:
+  - name: litellm
+    base_url: http://litellm:4000/v1
+    context_length: 65536
+    models:
+      - qwen2.5:14b
+      - default
 web:
   search_backend: searxng
   extract_backend: firecrawl

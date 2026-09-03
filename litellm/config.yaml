@@ -3,11 +3,19 @@ model_list:
     litellm_params:
       model: ollama_chat/qwen2.5:14b
       api_base: http://ollama:11434
+    model_info:
+      max_tokens: 65536
+      max_input_tokens: 65536
+      max_output_tokens: 8192
 
   - model_name: default
     litellm_params:
       model: ollama_chat/qwen2.5:14b
       api_base: http://ollama:11434
+    model_info:
+      max_tokens: 65536
+      max_input_tokens: 65536
+      max_output_tokens: 8192
 
   - model_name: nomic-embed-text
     litellm_params:
