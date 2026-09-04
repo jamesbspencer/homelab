@@ -72,3 +72,10 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - Diagnostic and inspection scripts that do not alter state
 - **State-Changing / Destructive Commands**: Any command that creates, destroys, modifies, or restarts services (e.g., `docker compose up -d`, `docker compose down`, `rm`, `kill`, schema migrations) should align with the current implementation plan or task scope.
 
+### 6. Information Gathering & Inspection Hierarchy
+- When researching service capabilities, schemas, environment variables, or debugging issues, agents **must prioritize information sources in the following order**:
+  1. **Service APIs**: Query service REST/OpenAPI endpoints, discovery metadata, and health/introspection APIs.
+  2. **Local Documentation**: Check workspace architecture and service guides in [`docs/`](file:///data/homelab/docs/README.md) and configuration files.
+  3. **Online Documentation & Web Search**: Consult official product and vendor documentation (e.g., LiteLLM, Authentik, Traefik docs) via web search or public docs.
+  4. **Container Code as Last Resort Only**: Do **not** inspect or grep through application code inside running containers (`docker exec ...`) unless APIs and documentation have been thoroughly exhausted.
+

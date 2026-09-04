@@ -56,9 +56,20 @@ Defined in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml):
 
 1. **Master Key**:
    The admin key configured in `.env` (`LITELLM_MASTER_KEY`) grants full access to the API and Admin UI at `https://llm.spencer.lan/ui`.
-2. **Client API Keys**:
+2. **Authentik OpenID Connect (OIDC) Single Sign-On**:
+   LiteLLM is natively integrated with Authentik IAM via standard Generic OIDC:
+   - **Provider Name**: `LiteLLM Proxy OIDC` (`client_id: litellm`)
+   - **Authorization Endpoint**: `https://<sso-public-domain>/application/o/authorize/`
+   - **Token Endpoint**: `https://<sso-public-domain>/application/o/token/`
+   - **Userinfo Endpoint**: `https://<sso-public-domain>/application/o/userinfo/`
+   - **Redirect URI**: `https://llm.spencer.lan/sso/callback`
+   - **Login Initiation**: `https://llm.spencer.lan/sso/key/generate`
+   - **Scopes**: `openid profile email`
+   - **User ID Claim**: `preferred_username` (or `sub`)
+   Users logging into `https://llm.spencer.lan/ui` authenticate through Authentik without exposing credentials directly to the proxy.
+3. **Client API Keys**:
    You can create scoped, rate-limited, and budget-capped API keys for specific clients or users directly from the Web UI or via the `/key/generate` endpoint.
-3. **Database Schema**:
+4. **Database Schema**:
    All user profiles, keys, spend logs, and audit trails persist in the dedicated `litellm` database on `pgvector`.
 
 ---

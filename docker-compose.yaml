@@ -234,6 +234,8 @@ services:
       - net1
     volumes:
       - ./litellm/config.yaml:/etc/litellm/config.yaml:ro
+    extra_hosts:
+      - "${SSO_PUBLIC_DOMAIN}:host-gateway"
     environment:
       - PORT=4000
       - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
@@ -243,6 +245,16 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      # Authentik OIDC SSO Integration
+      - PROXY_BASE_URL=https://llm.spencer.lan
+      - GENERIC_CLIENT_ID=${LITELLM_OIDC_CLIENT_ID:-litellm}
+      - GENERIC_CLIENT_SECRET=${LITELLM_OIDC_CLIENT_SECRET}
+      - GENERIC_AUTHORIZATION_ENDPOINT=https://${SSO_PUBLIC_DOMAIN}/application/o/authorize/
+      - GENERIC_TOKEN_ENDPOINT=https://${SSO_PUBLIC_DOMAIN}/application/o/token/
+      - GENERIC_USERINFO_ENDPOINT=https://${SSO_PUBLIC_DOMAIN}/application/o/userinfo/
+      - GENERIC_SCOPE=openid profile email
+      - GENERIC_USER_ID_ATTRIBUTE=preferred_username
+      - GENERIC_INCLUDE_CLIENT_ID=false
     command: ["--config", "/etc/litellm/config.yaml", "--port", "4000"]
     depends_on:
       pgvector:
