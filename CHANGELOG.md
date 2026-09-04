@@ -18,6 +18,10 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 - **LiteLLM Spend Logs & Dynamic Model Storage**:
   - Enabled `store_model_in_db: true` and `store_prompts_in_spend_logs: true` in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml) and `STORE_MODEL_IN_DB=True` in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
   - Documented database persistence and spend log tracking in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md).
+- **Hermes Agent Configuration Sync**:
+  - Updated [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml) to Hermes Agent schema v39.
+  - Configured `auxiliary` pipeline routing `curator` and `background_review` through `litellm` (`qwen2.5:14b`).
+  - Synced discovered model registry mapping under `custom_providers` and configured skill curation retention intervals (`stale_days: 30`, `archive_days: 90`).
 
 ---
 
