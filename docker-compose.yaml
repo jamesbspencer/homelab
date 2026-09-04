@@ -277,6 +277,9 @@ services:
     networks:
       - net1
       - ai
+    extra_hosts:
+      - "${SSO_PUBLIC_DOMAIN}:host-gateway"
+      - "${HERMES_PUBLIC_DOMAIN}:host-gateway"
     environment:
       - HERMES_DASHBOARD=${HERMES_DASHBOARD}
       - API_SERVER_ENABLED=${API_SERVER_ENABLED}
