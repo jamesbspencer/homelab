@@ -130,9 +130,10 @@ For applications that natively support OAuth2/OIDC (e.g. Hermes Agent, Nextcloud
 1. In Authentik, an OAuth2/OpenID Provider can be created via Admin UI or programmatically via the **Authentik REST API** (`/api/v3/`):
    - **Endpoint**: `https://<sso-public-domain>/api/v3/providers/oauth2/`
    - **Authorization**: `Bearer <token>`
-   - **Redirect URIs**: `https://<hermes-public-domain>/auth/callback` (Mode: `strict`, Type: `authorization`)
+   - **Grant Types**: `["authorization_code", "refresh_token"]` (Required for standard web SSO code flows)
+   - **Redirect URIs**: Application callback URLs (Mode: `strict`, Type: `authorization`)
    - **Signing Key**: `authentik Self-signed Certificate` (RS256)
-   - **Client ID**: `hermes`
+   - **Client ID & Secret**: Application credentials
 2. **Hermes Agent Integration**:
    - **Issuer URL**: `https://<sso-public-domain>/application/o/hermes/`
    - **Discovery Metadata**: `https://<sso-public-domain>/application/o/hermes/.well-known/openid-configuration`
@@ -140,6 +141,13 @@ For applications that natively support OAuth2/OIDC (e.g. Hermes Agent, Nextcloud
    - **Client Secret**: In `.env` as `HERMES_DASHBOARD_OIDC_CLIENT_SECRET`
    - **Public Callback**: `https://<hermes-public-domain>/auth/callback`
    - Hermes activates its native `self-hosted` OIDC provider plugin, redirecting users seamlessly to Authentik for single sign-on without Traefik proxy middleware interception.
+3. **LiteLLM Proxy Integration**:
+   - **Issuer URL**: `https://<sso-public-domain>/application/o/litellm/`
+   - **Discovery Metadata**: `https://<sso-public-domain>/application/o/litellm/.well-known/openid-configuration`
+   - **Client ID**: `litellm`
+   - **Client Secret**: In `.env` as `LITELLM_OIDC_CLIENT_SECRET`
+   - **Redirect URI**: `https://llm.spencer.lan/sso/callback`
+   - LiteLLM uses standard Generic OIDC SSO environment variables to authenticate users against Authentik for the Web Admin UI, maintaining machine token bypass for `/v1/*` API endpoints.
 
 ---
 
