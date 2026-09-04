@@ -5,28 +5,33 @@ model:
   api_key: ${CUSTOM_API_KEY}
   context_length: 65536
   ollama_num_ctx: 65536
-
-custom_providers:
-  - name: litellm
-    base_url: http://litellm:4000/v1
-    api_key: ${CUSTOM_API_KEY}
-    context_length: 65536
-    models:
-      - qwen2.5:14b
-      - default
+terminal:
+  backend: docker
+  timeout: 180
+  docker_image: nikolaik/python-nodejs:python3.11-nodejs20
+  lifetime_seconds: 300
 web:
   search_backend: searxng
   extract_backend: firecrawl
-memory:
-  provider: hindsight
+auxiliary:
+  curator:
+    provider: litellm
+    model: qwen2.5:14b
+  background_review:
+    enabled: true
+    provider: litellm
+    model: qwen2.5:14b
+    max_input_tokens: 600000
 dashboard:
   theme: default
   oauth:
     self_hosted:
-      issuer: "${HERMES_DASHBOARD_OIDC_ISSUER}"
-      client_id: "${HERMES_DASHBOARD_OIDC_CLIENT_ID}"
-      client_secret: "${HERMES_DASHBOARD_OIDC_CLIENT_SECRET}"
-      scopes: "openid profile email"
+      issuer: ${HERMES_DASHBOARD_OIDC_ISSUER}
+      client_id: ${HERMES_DASHBOARD_OIDC_CLIENT_ID}
+      client_secret: ${HERMES_DASHBOARD_OIDC_CLIENT_SECRET}
+      scopes: openid profile email
+memory:
+  provider: hindsight
 skills:
   creation_nudge_interval: 5
   disabled:
@@ -49,34 +54,29 @@ skills:
     - songwriting-and-ai-music
     - teams-meeting-pipeline
     - youtube-content
+curator:
+  enabled: true
+  interval_hours: 168
+  consolidate: true
+  stale_days: 30
+  archive_days: 90
+_config_version: 39
+custom_providers:
+  - name: litellm
+    base_url: http://litellm:4000/v1
+    api_key: ${CUSTOM_API_KEY}
+    context_length: 65536
+    models:
+      qwen2.5:14b: {}
+      default: {}
+      nomic-embed-text: {}
+      groq/llama-3.3-70b-versatile: {}
+      openrouter/auto: {}
+      deepseek/deepseek-chat: {}
+    models_discovered: true
 platforms:
   api_server:
     enabled: true
-_config_version: 39
-
-curator:
-  enabled: true
-  consolidate: true
-  interval_hours: 168
-  stale_days: 30
-  archive_days: 90
-
-auxiliary:
-  background_review:
-    enabled: true
-    max_input_tokens: 600000
-    provider: litellm
-    model: qwen2.5:14b
-  curator:
-    provider: litellm
-    model: qwen2.5:14b
-
-terminal:
-  backend: docker
-  docker_image: nikolaik/python-nodejs:python3.11-nodejs20
-  timeout: 180
-  lifetime_seconds: 300
-
 platform_toolsets:
   cli:
     - web
