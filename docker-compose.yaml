@@ -183,9 +183,17 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
+      # Local LAN SSO routing
       - "traefik.http.routers.authentik.rule=Host(`sso.spencer.lan`) || Host(`login.spencer.lan`)"
       - "traefik.http.routers.authentik.entrypoints=websecure"
       - "traefik.http.routers.authentik.tls=true"
+      - "traefik.http.routers.authentik.service=authentik"
+      # Public SSO routing (Let's Encrypt)
+      - "traefik.http.routers.authentik-public.rule=Host(`${SSO_PUBLIC_DOMAIN:-sso-public.invalid}`)"
+      - "traefik.http.routers.authentik-public.entrypoints=websecure"
+      - "traefik.http.routers.authentik-public.tls=true"
+      - "traefik.http.routers.authentik-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.authentik-public.service=authentik"
       - "traefik.http.services.authentik.loadbalancer.server.port=9000"
 
   authentik-worker:
@@ -311,18 +319,14 @@ services:
       - "traefik.http.routers.hermes-gateway.tls=true"
       - "traefik.http.routers.hermes-gateway.service=hermes-gateway-svc"
       - "traefik.http.services.hermes-gateway-svc.loadbalancer.server.port=8642"
-      # Dashboard routing (port 9119)
-      - "traefik.http.routers.hermes-dashboard.rule=Host(`hermes.spencer.lan`) || Host(`ai.spencer.lan`) || Host(`hermes-desktop.spencer.lan`) || Host(`hermes-dashboard.spencer.lan`)"
-      - "traefik.http.routers.hermes-dashboard.entrypoints=websecure"
-      - "traefik.http.routers.hermes-dashboard.tls=true"
-      - "traefik.http.routers.hermes-dashboard.service=hermes-dashboard-svc"
-      - "traefik.http.services.hermes-dashboard-svc.loadbalancer.server.port=9119"
-      # Public Dashboard routing (port 9119)
+      # Public Dashboard routing (port 9119, protected by Authentik)
       - "traefik.http.routers.hermes-dashboard-public.rule=Host(`${HERMES_PUBLIC_DOMAIN:-hermes-public.invalid}`)"
       - "traefik.http.routers.hermes-dashboard-public.entrypoints=websecure"
       - "traefik.http.routers.hermes-dashboard-public.tls=true"
       - "traefik.http.routers.hermes-dashboard-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.hermes-dashboard-public.middlewares=authentik@file"
       - "traefik.http.routers.hermes-dashboard-public.service=hermes-dashboard-svc"
+      - "traefik.http.services.hermes-dashboard-svc.loadbalancer.server.port=9119"
       # MCP Server routing (port 8765)
       - "traefik.http.routers.hermes-mcp.rule=Host(`mcp.spencer.lan`)"
       - "traefik.http.routers.hermes-mcp.entrypoints=websecure"

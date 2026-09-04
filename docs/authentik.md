@@ -56,8 +56,9 @@ Authentik is an all-in-one, modern open-source Identity Provider (IdP) and singl
 
 | Endpoint | Purpose | Network |
 |---|---|---|
-| `https://sso.spencer.lan` | Primary User & Admin Authentication Portal | `net1` (:9000) |
-| `https://login.spencer.lan` | Secondary Portal Alias | `net1` (:9000) |
+| `https://sso.spencer.lan` | Primary LAN User & Admin Authentication Portal | `net1` (:9000) |
+| `https://login.spencer.lan` | Secondary LAN Portal Alias | `net1` (:9000) |
+| `https://sso.jamesspencer.me` | Public SSO Authentication Portal (Let's Encrypt) | `net1` (:9000) |
 | `https://sso.spencer.lan/if/flow/initial-setup/` | First-time installation setup wizard (`akadmin`) | `net1` (:9000) |
 | `http://authentik-server:9000/outpost.goauthentik.io/auth/traefik` | Traefik ForwardAuth validation outpost endpoint | Internal `net1` |
 
