@@ -3,6 +3,7 @@ model_list:
     litellm_params:
       model: ollama_chat/qwen2.5:14b
       api_base: http://ollama:11434
+      num_ctx: 65536
     model_info:
       max_tokens: 65536
       max_input_tokens: 65536
@@ -12,6 +13,7 @@ model_list:
     litellm_params:
       model: ollama_chat/qwen2.5:14b
       api_base: http://ollama:11434
+      num_ctx: 65536
     model_info:
       max_tokens: 65536
       max_input_tokens: 65536
@@ -47,4 +49,5 @@ litellm_settings:
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
-  store_model_in_db: false
+  store_model_in_db: true
+  store_prompts_in_spend_logs: true
