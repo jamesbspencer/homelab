@@ -14,14 +14,14 @@ Hermes Agent is an autonomous agent framework and gateway providing tool executi
   * `net1`: Ingress routing from Traefik.
   * `ai`: Connection to LiteLLM, Ollama, SearXNG, Firecrawl, Hindsight, and Browserless.
 * **External Ingress & Ports**:
-  * Dashboard Web UI: `https://hermes.spencer.lan` (`:9119` via Traefik; aliases `hermes-desktop.spencer.lan`, `hermes-dashboard.spencer.lan`)
+  * Dashboard Web UI: `https://<hermes-public-domain>` (`:9119` via Traefik with Let's Encrypt TLS & Authentik OIDC SSO)
   * Gateway API: `https://hermes-api.spencer.lan` (`:8642` via Traefik)
   * MCP Server: `https://mcp.spencer.lan/sse` (`:8765` via Traefik)
   * Direct Host Port: `http://<host-ip>:9119` (Exposed port `9119:9119`)
 
 ```mermaid
 graph TD
-    Traefik[Traefik Proxy] -->|hermes.spencer.lan| Dashboard[Hermes Dashboard :9119]
+    Traefik[Traefik Proxy] -->|<hermes-public-domain>| Dashboard[Hermes Dashboard :9119]
     Traefik -->|hermes-api.spencer.lan| Gateway[Hermes Gateway :8642]
     Traefik -->|mcp.spencer.lan| MCPServer[Hermes MCP Server :8765]
     
@@ -91,8 +91,10 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 | `CUSTOM_BASE_URL` | `http://ollama:11434/v1` | Ollama OpenAI-compatible endpoint |
 | `HERMES_MODEL` | `qwen2.5:14b` | Default primary agent LLM model |
 | `HERMES_DASHBOARD` | `1` | Enables Web UI dashboard |
-| `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` | `spencer` | Dashboard login username |
-| `HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH` | `${...}` | Scrypt password hash for authentication |
+| `HERMES_DASHBOARD_PUBLIC_URL` | `${HERMES_DASHBOARD_PUBLIC_URL}` | Public dashboard callback authority URL |
+| `HERMES_DASHBOARD_OIDC_ISSUER` | `${HERMES_DASHBOARD_OIDC_ISSUER}` | Authentik OpenID Connect issuer endpoint |
+| `HERMES_DASHBOARD_OIDC_CLIENT_ID` | `${HERMES_DASHBOARD_OIDC_CLIENT_ID}` | OIDC Client ID (`hermes`) |
+| `HERMES_DASHBOARD_OIDC_CLIENT_SECRET` | `${HERMES_DASHBOARD_OIDC_CLIENT_SECRET}` | OIDC Client Secret credential |
 | `SEARXNG_URL` | `http://searxng:8080` | SearXNG query endpoint |
 | `FIRECRAWL_API_URL` | `http://firecrawl:3002` | Firecrawl extraction endpoint |
 | `BROWSER_CDP_URL` | `ws://browserless:3000` | Browserless Chrome CDP endpoint |

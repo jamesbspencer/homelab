@@ -189,7 +189,7 @@ services:
       - "traefik.http.routers.authentik.tls=true"
       - "traefik.http.routers.authentik.service=authentik"
       # Public SSO routing (Let's Encrypt)
-      - "traefik.http.routers.authentik-public.rule=Host(`${SSO_PUBLIC_DOMAIN:-sso-public.invalid}`)"
+      - "traefik.http.routers.authentik-public.rule=Host(`${SSO_PUBLIC_DOMAIN}`)"
       - "traefik.http.routers.authentik-public.entrypoints=websecure"
       - "traefik.http.routers.authentik-public.tls=true"
       - "traefik.http.routers.authentik-public.tls.certresolver=letsencrypt"
@@ -293,8 +293,11 @@ services:
       - CUSTOM_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
       - CUSTOM_API_KEY=${LITELLM_MASTER_KEY}
       - OPENAI_API_KEY=${LITELLM_MASTER_KEY}
-      - HERMES_DASHBOARD_BASIC_AUTH_USERNAME=${HERMES_DASHBOARD_BASIC_AUTH_USERNAME}
-      - HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH=${HERMES_DASHBOARD_BASIC_AUTH_PASSWORD_HASH}
+      - HERMES_DASHBOARD_PUBLIC_URL=${HERMES_DASHBOARD_PUBLIC_URL}
+      - HERMES_DASHBOARD_OIDC_ISSUER=${HERMES_DASHBOARD_OIDC_ISSUER}
+      - HERMES_DASHBOARD_OIDC_CLIENT_ID=${HERMES_DASHBOARD_OIDC_CLIENT_ID}
+      - HERMES_DASHBOARD_OIDC_CLIENT_SECRET=${HERMES_DASHBOARD_OIDC_CLIENT_SECRET}
+      - HERMES_DASHBOARD_OIDC_SCOPES=openid profile email
       - PUID=${PUID}
       - PGID=${PGID}
       - GATEWAY_ALLOW_ALL_USERS=${GATEWAY_ALLOW_ALL_USERS}
@@ -319,12 +322,11 @@ services:
       - "traefik.http.routers.hermes-gateway.tls=true"
       - "traefik.http.routers.hermes-gateway.service=hermes-gateway-svc"
       - "traefik.http.services.hermes-gateway-svc.loadbalancer.server.port=8642"
-      # Public Dashboard routing (port 9119, protected by Authentik)
-      - "traefik.http.routers.hermes-dashboard-public.rule=Host(`${HERMES_PUBLIC_DOMAIN:-hermes-public.invalid}`)"
+      # Public Dashboard routing (port 9119, with Hermes native OIDC SSO)
+      - "traefik.http.routers.hermes-dashboard-public.rule=Host(`${HERMES_PUBLIC_DOMAIN}`)"
       - "traefik.http.routers.hermes-dashboard-public.entrypoints=websecure"
       - "traefik.http.routers.hermes-dashboard-public.tls=true"
       - "traefik.http.routers.hermes-dashboard-public.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.hermes-dashboard-public.middlewares=authentik@file"
       - "traefik.http.routers.hermes-dashboard-public.service=hermes-dashboard-svc"
       - "traefik.http.services.hermes-dashboard-svc.loadbalancer.server.port=9119"
       # MCP Server routing (port 8765)

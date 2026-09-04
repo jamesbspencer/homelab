@@ -58,7 +58,7 @@ Authentik is an all-in-one, modern open-source Identity Provider (IdP) and singl
 |---|---|---|
 | `https://sso.spencer.lan` | Primary LAN User & Admin Authentication Portal | `net1` (:9000) |
 | `https://login.spencer.lan` | Secondary LAN Portal Alias | `net1` (:9000) |
-| `https://sso.jamesspencer.me` | Public SSO Authentication Portal (Let's Encrypt) | `net1` (:9000) |
+| `https://<sso-public-domain>` | Public SSO Authentication Portal (Let's Encrypt) | `net1` (:9000) |
 | `https://sso.spencer.lan/if/flow/initial-setup/` | First-time installation setup wizard (`akadmin`) | `net1` (:9000) |
 | `http://authentik-server:9000/outpost.goauthentik.io/auth/traefik` | Traefik ForwardAuth validation outpost endpoint | Internal `net1` |
 
@@ -78,7 +78,7 @@ When the containers start for the first time:
    - Complete the wizard to enter the Authentik Admin Interface.
 3. **Create Regular Accounts**:
    - Navigate to **Directory** ➡️ **Users** ➡️ **Create User**.
-   - Create your personal account (e.g. `jspencer`), specify your email, and set your password or invite link.
+   - Create your personal account (e.g. `admin_user`), specify your email, and set your password or invite link.
    - Add the user to the `authentik Admins` group under **Directory** ➡️ **Groups** if administrative privileges are required.
 
 ---
@@ -125,14 +125,21 @@ labels:
 
 ## 🔌 Integrating OIDC (OpenID Connect) Applications
 
-For applications that natively support OAuth2/OIDC (e.g. Nextcloud, Grafana, LiteLLM):
+For applications that natively support OAuth2/OIDC (e.g. Hermes Agent, Nextcloud, Grafana):
 
-1. In Authentik, go to **Applications** ➡️ **Providers** ➡️ **Create** ➡️ **OAuth2/OpenID Provider**.
-2. Configure **Client ID**, **Client Secret**, and the application's **Redirect URIs**.
-3. In the target application's configuration, set:
-   - **Issuer URL**: `https://sso.spencer.lan/application/o/<app-slug>/`
-   - **Client ID**: Your configured Client ID.
-   - **Client Secret**: Your configured Client Secret.
+1. In Authentik, an OAuth2/OpenID Provider can be created via Admin UI or programmatically via the **Authentik REST API** (`/api/v3/`):
+   - **Endpoint**: `https://<sso-public-domain>/api/v3/providers/oauth2/`
+   - **Authorization**: `Bearer <token>`
+   - **Redirect URIs**: `https://<hermes-public-domain>/auth/callback` (Mode: `strict`, Type: `authorization`)
+   - **Signing Key**: `authentik Self-signed Certificate` (RS256)
+   - **Client ID**: `hermes`
+2. **Hermes Agent Integration**:
+   - **Issuer URL**: `https://<sso-public-domain>/application/o/hermes/`
+   - **Discovery Metadata**: `https://<sso-public-domain>/application/o/hermes/.well-known/openid-configuration`
+   - **Client ID**: `hermes`
+   - **Client Secret**: In `.env` as `HERMES_DASHBOARD_OIDC_CLIENT_SECRET`
+   - **Public Callback**: `https://<hermes-public-domain>/auth/callback`
+   - Hermes activates its native `self-hosted` OIDC provider plugin, redirecting users seamlessly to Authentik for single sign-on without Traefik proxy middleware interception.
 
 ---
 
