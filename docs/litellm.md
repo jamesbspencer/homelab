@@ -69,8 +69,8 @@ Defined in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml):
    Users logging into `https://llm.spencer.lan/ui` authenticate through Authentik without exposing credentials directly to the proxy.
 3. **Client API Keys**:
    You can create scoped, rate-limited, and budget-capped API keys for specific clients or users directly from the Web UI or via the `/key/generate` endpoint.
-4. **Database Schema**:
-   All user profiles, keys, spend logs, and audit trails persist in the dedicated `litellm` database on `pgvector`.
+4. **Database Schema & Dynamic Management**:
+   All user profiles, keys, dynamically managed models (`store_model_in_db: true`), and spend logs with full prompt storage (`store_prompts_in_spend_logs: true`) persist in the dedicated `litellm` database on `pgvector`.
 
 ---
 

@@ -7,6 +7,20 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-09-04]
+
+### Changed
+- **Context Window Restoration (65,536 Tokens Everywhere)**:
+  - Created [`ollama/Modelfile`](file:///data/homelab/ollama/Modelfile) with `PARAMETER num_ctx 65536` and rebuilt the `qwen2.5:14b` model manifest to prevent Ollama from defaulting to 2048/4096 tokens.
+  - Added `OLLAMA_CONTEXT_LENGTH=65536` and enabled `OLLAMA_FLASH_ATTENTION=1` in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
+  - Configured `num_ctx: 65536`, `max_tokens: 65536`, and `max_input_tokens: 65536` under `model_list` in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml).
+  - Synchronized `context_length: 65536` and `ollama_num_ctx: 65536` in [`hermes/config.yaml`](file:///data/homelab/hermes/config.yaml) and [`hermes/context_length_cache.yaml`](file:///data/homelab/hermes/context_length_cache.yaml).
+- **LiteLLM Spend Logs & Dynamic Model Storage**:
+  - Enabled `store_model_in_db: true` and `store_prompts_in_spend_logs: true` in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml) and `STORE_MODEL_IN_DB=True` in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
+  - Documented database persistence and spend log tracking in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md).
+
+---
+
 ## [2026-09-03]
 
 ### Changed
