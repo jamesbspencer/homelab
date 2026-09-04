@@ -65,4 +65,8 @@ crowdsec/config/*
 !crowdsec/config/acquis.d/
 !crowdsec/config/acquis.d/*
 
-
+# Authentik runtime media and templates
+authentik/media/*
+!authentik/media/.gitkeep
+authentik/custom-templates/*
+!authentik/custom-templates/.gitkeep

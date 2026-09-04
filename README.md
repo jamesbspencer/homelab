@@ -20,6 +20,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](docs/valkey.md) |
+| **Authentik** | Centralized IAM, SSO, OIDC & Proxy Outposts | `https://sso.spencer.lan` / `https://login.spencer.lan` (:9000) | [Authentik Guide](docs/authentik.md) |
 | *Open WebUI Legacy Stack* | *Archived / Retired (Open WebUI, Postgres db, Open Terminal, Browserless)* | *Reclaimed ~1.02 GB RAM* | [Legacy Stack Archive](docs/archive/open-webui-legacy-stack.md) |
 
 ---
@@ -34,10 +35,12 @@ flowchart TB
         Traefik <--> GeoPlugin[Geoblock Plugin\nUS Only & RFC1918]
         Traefik <--> BouncerPlugin[CrowdSec Bouncer\nStream Mode]
         Traefik -.->|Access Logs| CrowdSec[CrowdSec Security Engine]
+        Traefik <-->|ForwardAuth| Authentik[Authentik Server\nIAM & Outpost :9000]
     end
 
     %% Exposed Ingress Routes (net1)
     subgraph Ingress ["🚪 Proxied Endpoints (net1)"]
+        Traefik -->|sso / login| Authentik
         Traefik -->|hermes / ai| HermesDash["Dashboard :9119"]
         Traefik -->|hermes-api| HermesAPI["API :8642"]
         Traefik -->|mcp| HermesMCP["MCP :8765"]

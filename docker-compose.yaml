@@ -74,6 +74,9 @@ services:
       HINDSIGHT_POSTGRES_DB: ${HINDSIGHT_POSTGRES_DB:-hindsight}
       HINDSIGHT_POSTGRES_USER: ${HINDSIGHT_POSTGRES_USER:-hindsight}
       HINDSIGHT_POSTGRES_PASSWORD: ${HINDSIGHT_POSTGRES_PASSWORD}
+      AUTHENTIK_POSTGRES_DB: ${AUTHENTIK_POSTGRES_DB:-authentik}
+      AUTHENTIK_POSTGRES_USER: ${AUTHENTIK_POSTGRES_USER:-authentik}
+      AUTHENTIK_POSTGRES_PASSWORD: ${AUTHENTIK_POSTGRES_PASSWORD}
     volumes:
       - ./pgvector/data:/var/lib/postgresql/data
       - ./pgvector/init:/docker-entrypoint-initdb.d:ro
@@ -147,7 +150,71 @@ services:
       - "traefik.http.routers.hindsight.rule=Host(`hindsight.spencer.lan`)"
       - "traefik.http.routers.hindsight.entrypoints=websecure"
       - "traefik.http.routers.hindsight.tls=true"
+      - "traefik.http.routers.hindsight.middlewares=authentik@file"
       - "traefik.http.services.hindsight.loadbalancer.server.port=9999"
+
+  authentik-server:
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_VERSION:-2026.8.1}
+    container_name: authentik-server
+    restart: unless-stopped
+    command: server
+    environment:
+      AUTHENTIK_REDIS__HOST: valkey
+      AUTHENTIK_REDIS__PORT: 6379
+      AUTHENTIK_POSTGRESQL__HOST: pgvector
+      AUTHENTIK_POSTGRESQL__NAME: ${AUTHENTIK_POSTGRES_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__USER: ${AUTHENTIK_POSTGRES_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_POSTGRES_PASSWORD}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      AUTHENTIK_DISABLE_UPDATE_CHECK: "true"
+      AUTHENTIK_DISABLE_STARTUP_ANALYTICS: "true"
+    volumes:
+      - ./authentik/media:/media
+      - ./authentik/custom-templates:/templates
+    networks:
+      - net1
+      - db
+      - redis
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.authentik.rule=Host(`sso.spencer.lan`) || Host(`login.spencer.lan`)"
+      - "traefik.http.routers.authentik.entrypoints=websecure"
+      - "traefik.http.routers.authentik.tls=true"
+      - "traefik.http.services.authentik.loadbalancer.server.port=9000"
+
+  authentik-worker:
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_VERSION:-2026.8.1}
+    container_name: authentik-worker
+    restart: unless-stopped
+    command: worker
+    environment:
+      AUTHENTIK_REDIS__HOST: valkey
+      AUTHENTIK_REDIS__PORT: 6379
+      AUTHENTIK_POSTGRESQL__HOST: pgvector
+      AUTHENTIK_POSTGRESQL__NAME: ${AUTHENTIK_POSTGRES_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__USER: ${AUTHENTIK_POSTGRES_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_POSTGRES_PASSWORD}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      AUTHENTIK_DISABLE_UPDATE_CHECK: "true"
+      AUTHENTIK_DISABLE_STARTUP_ANALYTICS: "true"
+    volumes:
+      - ./authentik/media:/media
+      - ./authentik/custom-templates:/templates
+    networks:
+      - db
+      - redis
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
 
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
