@@ -18,6 +18,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Firecrawl Stack** | Web Scraper, Crawler & Search | `:3002` (Internal `ai` & `redis` networks) | [Firecrawl Guide](firecrawl.md) |
 | **SearXNG** | Metasearch Engine | `:8080` (Internal `ai` & `redis` networks) | [SearXNG Guide](searxng.md) |
 | **Valkey** | In-Memory Cache & Rate Limiter | `:6379` (Internal `redis` network) | [Valkey Guide](valkey.md) |
+| **Authentik** | Centralized IAM, SSO, OIDC & Outposts | `sso.spencer.lan`, `login.spencer.lan` (:9000) | [Authentik Guide](authentik.md) |
 | *Open WebUI Stack* | *Archived Legacy Stack* | *Retired (Open WebUI, postgres, open-terminal, browserless)* | [Legacy Stack Archive](archive/open-webui-legacy-stack.md) |
 
 ---

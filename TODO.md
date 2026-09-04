@@ -69,7 +69,12 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] Configure in-memory LRU caching (`cacheSize: 1000`) and reverse proxy header evaluation (`xForwardedForReverseProxy: true`).
 - [x] Update documentation in [`docs/traefik.md`](file:///data/homelab/docs/traefik.md) and [`README.md`](file:///data/homelab/README.md).
 
+---
 
-
-
-
+### 9. 🔐 Centralized Identity & Access Management (IAM) with Authentik
+- [x] Migrate from lightweight proxy gatekeeper (Authelia) to **Authentik** (`ghcr.io/goauthentik/server:2026.8.1`) for visual IAM, customizable flows, and native OIDC/SAML support.
+- [x] Deploy `authentik-server` and `authentik-worker` services connected to existing `pgvector` database (`authentik` database) on `db` network and `valkey` cache on `redis` network.
+- [x] Configure dedicated SSO portal routing on `sso.spencer.lan` and `login.spencer.lan` (avoiding existing `auth.spencer.lan`).
+- [x] Establish Traefik `ForwardAuth` Outpost middleware (`authentik@file` pointing to `http://authentik-server:9000/outpost.goauthentik.io/auth/traefik`) protecting internal dashboards (`traefik.spencer.lan`, `hindsight.spencer.lan`).
+- [x] Maintain bypass access rules for machine-to-machine APIs (`mcp.spencer.lan`, `hermes-api.spencer.lan`, `llm.spencer.lan/v1/*`, health endpoints).
+- [x] Create comprehensive operations, Proxy Provider, and Outpost guide in [`docs/authentik.md`](file:///data/homelab/docs/authentik.md).

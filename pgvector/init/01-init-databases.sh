@@ -57,4 +57,24 @@ EOSQL
 EOSQL
 fi
 
+# Conditionally provision dedicated database & user for Authentik
+if [ -n "$AUTHENTIK_POSTGRES_DB" ]; then
+    AUTHENTIK_USER="${AUTHENTIK_POSTGRES_USER:-authentik}"
+    AUTHENTIK_PASS="${AUTHENTIK_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"
+
+    echo "Provisioning dedicated user '$AUTHENTIK_USER' and database '$AUTHENTIK_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        DO \$\$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$AUTHENTIK_USER') THEN
+                CREATE ROLE "$AUTHENTIK_USER" WITH LOGIN PASSWORD '$AUTHENTIK_PASS';
+            END IF;
+        END
+        \$\$;
+        SELECT 'CREATE DATABASE "$AUTHENTIK_POSTGRES_DB" OWNER "$AUTHENTIK_USER"'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$AUTHENTIK_POSTGRES_DB')\gexec
+        GRANT ALL PRIVILEGES ON DATABASE "$AUTHENTIK_POSTGRES_DB" TO "$AUTHENTIK_USER";
+EOSQL
+fi
+
 echo "pgvector initialization completed successfully."
