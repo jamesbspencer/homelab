@@ -7,8 +7,9 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ## 🎯 Active Initiatives & Roadmap
 
 ### 1. 🛡️ Deep Agent Vault Integration & Secret Brokering
-- [ ] **Wire Hermes Agent to Agent Vault MITM Proxy**: Mount `./agent-vault/data/ca.pem` into the `hermes` container and configure proxy environment variables (`HTTP_PROXY`, `HTTPS_PROXY` pointing to `http://<token>@agent-vault:14322`) alongside CA trust bundles (`REQUESTS_CA_BUNDLE`, `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`, `CURL_CA_BUNDLE`).
-- [ ] **Define Placeholder Credential Schemas**: Replace direct cloud API keys (e.g., Anthropic, OpenAI, GitHub, Telegram) with placeholder tokens (e.g., `__anthropic_api_key__`, `__github_token__`) to ensure zero raw credentials exist in Hermes prompt contexts or container environments.
+- [x] **Wire Hermes Agent to Agent Vault MITM Proxy**: Mount `./agent-vault/data/ca.pem` into the `hermes` container and configure proxy environment variables (`HTTP_PROXY`, `HTTPS_PROXY` pointing to `http://<token>@agent-vault:14322`) alongside CA trust bundles (`REQUESTS_CA_BUNDLE`, `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`, `CURL_CA_BUNDLE`).
+- [x] **Wire Egress Services to Agent Vault (SearXNG, Firecrawl & Playwright, LiteLLM)**: Route all outbound internet search queries, web scraping/crawling, and upstream cloud LLM requests through Agent Vault's MITM proxy (`agent-vault:14322`) with root CA mounts and internal `NO_PROXY` bypassing.
+- [x] **Define Placeholder Credential Schemas**: Replace direct cloud API keys (e.g., Anthropic, OpenAI, OpenRouter, GitHub, Telegram) with placeholder tokens (e.g., `__anthropic_api_key__`, `OPENROUTER_API_KEY=OPENROUTER_API_KEY`) to ensure zero raw credentials exist in agent prompts or container environments.
 - [ ] **End-to-End Validation**: Verify outbound requests through the MITM proxy successfully substitute secrets and validate that audit logs in Agent Vault record brokered traffic.
 
 ---

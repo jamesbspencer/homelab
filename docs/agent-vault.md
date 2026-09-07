@@ -119,15 +119,71 @@ To route Hermes Agent traffic through Agent Vault:
    environment:
      - HTTP_PROXY=http://<AGENT_TOKEN>@agent-vault:14322
      - HTTPS_PROXY=http://<AGENT_TOKEN>@agent-vault:14322
+     - NO_PROXY=localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,.spencer.lan
      - REQUESTS_CA_BUNDLE=/opt/data/ca.pem
      - SSL_CERT_FILE=/opt/data/ca.pem
      - NODE_EXTRA_CA_CERTS=/opt/data/ca.pem
      - CURL_CA_BUNDLE=/opt/data/ca.pem
    volumes:
      - ./agent-vault/data/ca.pem:/opt/data/ca.pem:ro
+     - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
    ```
 
-### B. Claude Code / Cursor on Developer Laptop (LAN)
+### B. LiteLLM Proxy (Cloud Fallback Credential Brokering)
+LiteLLM routes external provider calls (OpenRouter, Groq, DeepSeek) through Agent Vault:
+```yaml
+environment:
+  - HTTP_PROXY=http://${LITELLM_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+  - HTTPS_PROXY=http://${LITELLM_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+  - NO_PROXY=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,.spencer.lan
+  - REQUESTS_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
+  - SSL_CERT_FILE=/etc/ssl/certs/agent-vault-ca.pem
+  - CURL_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
+volumes:
+  - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
+```
+Dummy API keys configured in `.env` (e.g. `OPENROUTER_API_KEY=OPENROUTER_API_KEY`) are dynamically replaced with real keys when LiteLLM calls upstream endpoints.
+
+### C. SearXNG Metasearch Engine
+Outbound search queries to upstream search engines are routed through Agent Vault:
+```yaml
+environment:
+  - HTTP_PROXY=http://${SEARXNG_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+  - HTTPS_PROXY=http://${SEARXNG_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+  - NO_PROXY=localhost,127.0.0.1,valkey,agent-vault,.spencer.lan
+  - REQUESTS_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
+  - SSL_CERT_FILE=/etc/ssl/certs/agent-vault-ca.pem
+  - CURL_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
+volumes:
+  - ./agent-vault/data/ca.pem:/etc/searxng/ca.pem:ro
+  - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
+```
+
+### D. Firecrawl & Playwright Scraping Stack
+Scraping web pages and headless Chromium browser instances route outbound fetches through Agent Vault to mitigate SSRF:
+```yaml
+# playwright-service
+environment:
+  - PROXY_SERVER=http://agent-vault:14322
+  - PROXY_USERNAME=${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}
+  - HTTP_PROXY=http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+  - HTTPS_PROXY=http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+  - NO_PROXY=localhost,127.0.0.1,agent-vault,.spencer.lan
+  - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/agent-vault-ca.pem
+volumes:
+  - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
+
+# firecrawl
+environment:
+  - HTTP_PROXY=http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+  - HTTPS_PROXY=http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+  - NO_PROXY=localhost,127.0.0.1,valkey,rabbitmq,nuq-postgres,playwright-service,searxng,agent-vault,pgvector,ollama,litellm,traefik,.spencer.lan
+  - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/agent-vault-ca.pem
+volumes:
+  - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
+```
+
+### E. Claude Code / Cursor on Developer Laptop (LAN)
 1. Download the Agent Vault CA certificate:
    ```bash
    curl -O https://vault.spencer.lan/v1/mitm/ca.pem
@@ -147,6 +203,7 @@ To route Hermes Agent traffic through Agent Vault:
    ```
 
 ---
+
 
 ## 🩺 Operational Checks & Maintenance
 
