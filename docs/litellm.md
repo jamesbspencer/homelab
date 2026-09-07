@@ -117,6 +117,14 @@ HINDSIGHT_API_LLM_BASE_URL=http://litellm:4000/v1
 HINDSIGHT_API_LLM_MODEL=qwen2.5:14b
 ```
 
+## 🛡️ Agent Vault Credential Injection & Egress Proxy
+
+LiteLLM routes all external upstream provider traffic (e.g. OpenRouter, Groq, DeepSeek) through **Agent Vault** (`agent-vault:14322`).
+
+* **Zero-Secret Storage**: Upstream API keys can be specified as dummy placeholders in `.env` (such as `OPENROUTER_API_KEY=OPENROUTER_API_KEY`). When LiteLLM dispatches requests to upstream endpoints, Agent Vault intercepts the outbound request, injects the real credential from its encrypted vault, and forwards the request over TLS.
+* **Root CA Trust**: LiteLLM mounts Agent Vault's CA certificate at `/etc/ssl/certs/agent-vault-ca.pem` and sets `REQUESTS_CA_BUNDLE`, `SSL_CERT_FILE`, and `CURL_CA_BUNDLE` so Python HTTP clients (`httpx`, `requests`, `aiohttp`) transparently trust MITM TLS interception.
+* **Internal Bypass**: All internal services (`ollama`, `pgvector`, `searxng`, `firecrawl`, `hindsight`, `authentik-server`, `traefik`, `.spencer.lan`) are exempted via `NO_PROXY`, ensuring fast, zero-latency direct communication within the Docker network.
+
 ---
 
 ## 📁 Mounted Volumes & Configuration Files
@@ -124,3 +132,5 @@ HINDSIGHT_API_LLM_MODEL=qwen2.5:14b
 | Host Path | Container Path | Purpose |
 |---|---|---|
 | `./litellm/config.yaml` | `/etc/litellm/config.yaml:ro` | Declarative model catalog, router rules, and settings |
+| `./agent-vault/data/ca.pem` | `/etc/ssl/certs/agent-vault-ca.pem:ro` | Agent Vault root CA certificate for outbound TLS proxy trust |
+

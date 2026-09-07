@@ -39,6 +39,8 @@ open-terminal/*
 
 # SearXNG data/cache
 searxng/config/settings.yml
+searxng/config/ca.pem
+
 
 # Hermes data
 hermes/*

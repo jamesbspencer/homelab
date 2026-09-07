@@ -118,11 +118,23 @@ services:
     volumes:
       - ./searxng/config/:/etc/searxng/
       - ./searxng/data/:/var/cache/searxng/
+      - ./agent-vault/data/ca.pem:/etc/searxng/ca.pem:ro
+      - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
+    environment:
+      - HTTP_PROXY=http://${SEARXNG_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+      - HTTPS_PROXY=http://${SEARXNG_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+      - NO_PROXY=localhost,127.0.0.1,valkey,agent-vault,.spencer.lan
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
+      - SSL_CERT_FILE=/etc/ssl/certs/agent-vault-ca.pem
+      - CURL_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
     networks:
       - redis
       - ai
     depends_on:
-      - valkey
+      valkey:
+        condition: service_started
+      agent-vault:
+        condition: service_started
   hindsight:
     image: ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}
     container_name: hindsight
@@ -275,6 +287,7 @@ services:
       - net1
     volumes:
       - ./litellm/config.yaml:/etc/litellm/config.yaml:ro
+      - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
     extra_hosts:
       - "${SSO_PUBLIC_DOMAIN}:host-gateway"
     environment:
@@ -286,6 +299,13 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      # Agent Vault Credential Broker & CA Trust
+      - HTTP_PROXY=http://${LITELLM_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+      - HTTPS_PROXY=http://${LITELLM_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+      - NO_PROXY=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,.spencer.lan
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
+      - SSL_CERT_FILE=/etc/ssl/certs/agent-vault-ca.pem
+      - CURL_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
       # Authentik OIDC SSO Integration
       - PROXY_BASE_URL=https://llm.spencer.lan
       - GENERIC_CLIENT_ID=${LITELLM_OIDC_CLIENT_ID:-litellm}
@@ -301,6 +321,8 @@ services:
       pgvector:
         condition: service_healthy
       ollama:
+        condition: service_started
+      agent-vault:
         condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')\" || exit 1"]
@@ -325,6 +347,8 @@ services:
     volumes:
       - ./hermes:/opt/data
       - ./hermes/init/03-mcp-server.sh:/etc/cont-init.d/03-mcp-server:ro
+      - ./agent-vault/data/ca.pem:/opt/data/ca.pem:ro
+      - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
       - /var/run/docker.sock:/var/run/docker.sock
 
     networks:
@@ -348,7 +372,9 @@ services:
       - HERMES_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
       - CUSTOM_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
       - CUSTOM_API_KEY=${LITELLM_MASTER_KEY}
-      - OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-${LITELLM_MASTER_KEY}}
+      - OPEN_API_KEY=${OPEN_API_KEY:-${OPENAI_API_KEY}}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - HERMES_DASHBOARD_PUBLIC_URL=${HERMES_DASHBOARD_PUBLIC_URL}
       - HERMES_DASHBOARD_OIDC_ISSUER=${HERMES_DASHBOARD_OIDC_ISSUER}
       - HERMES_DASHBOARD_OIDC_CLIENT_ID=${HERMES_DASHBOARD_OIDC_CLIENT_ID}
@@ -366,10 +392,19 @@ services:
       - TERMINAL_ENV=${HERMES_TERMINAL_ENV:-docker}
       - TERMINAL_DOCKER_IMAGE=${HERMES_TERMINAL_DOCKER_IMAGE:-nikolaik/python-nodejs:python3.11-nodejs20}
       - TERMINAL_CONTAINER_PERSISTENT=false
+      # Agent Vault Credential Broker & CA Trust
+      - HTTP_PROXY=${HERMES_HTTP_PROXY:-}
+      - HTTPS_PROXY=${HERMES_HTTPS_PROXY:-}
+      - NO_PROXY=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,.spencer.lan}
+      - REQUESTS_CA_BUNDLE=/opt/data/ca.pem
+      - SSL_CERT_FILE=/opt/data/ca.pem
+      - NODE_EXTRA_CA_CERTS=/opt/data/ca.pem
+      - CURL_CA_BUNDLE=/opt/data/ca.pem
     depends_on:
       - firecrawl
       - hindsight
       - litellm
+      - agent-vault
     labels:
       - "traefik.enable=true"
       # Gateway routing (port 8642)
@@ -423,17 +458,30 @@ services:
     image: ghcr.io/firecrawl/playwright-service:latest
     container_name: playwright-service
     restart: unless-stopped
+    volumes:
+      - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
     environment:
       PORT: 3000
       MAX_CONCURRENT_PAGES: ${CRAWL_CONCURRENT_REQUESTS:-10}
+      PROXY_SERVER: http://agent-vault:14322
+      PROXY_USERNAME: ${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}
+      HTTP_PROXY: http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+      HTTPS_PROXY: http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+      NO_PROXY: localhost,127.0.0.1,agent-vault,.spencer.lan
+      NODE_EXTRA_CA_CERTS: /etc/ssl/certs/agent-vault-ca.pem
     networks:
       - ai
+    depends_on:
+      agent-vault:
+        condition: service_started
 
   firecrawl:
     image: ghcr.io/firecrawl/firecrawl:latest
     container_name: firecrawl
     restart: unless-stopped
     command: node dist/src/harness.js --start-docker
+    volumes:
+      - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
     networks:
       - ai
       - redis
@@ -455,6 +503,10 @@ services:
       NUM_WORKERS_PER_QUEUE: ${NUM_WORKERS_PER_QUEUE:-4}
       CRAWL_CONCURRENT_REQUESTS: ${CRAWL_CONCURRENT_REQUESTS:-10}
       HARNESS_STARTUP_TIMEOUT_MS: 60000
+      HTTP_PROXY: http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+      HTTPS_PROXY: http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
+      NO_PROXY: localhost,127.0.0.1,valkey,rabbitmq,nuq-postgres,playwright-service,searxng,agent-vault,pgvector,ollama,litellm,traefik,.spencer.lan
+      NODE_EXTRA_CA_CERTS: /etc/ssl/certs/agent-vault-ca.pem
     depends_on:
       valkey:
         condition: service_started
@@ -466,6 +518,8 @@ services:
         condition: service_started
       rabbitmq:
         condition: service_healthy
+      agent-vault:
+        condition: service_started
 
 networks:
   net1:

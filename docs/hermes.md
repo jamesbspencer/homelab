@@ -33,6 +33,8 @@ graph TD
         Gateway -->|Scrape & Extract| Firecrawl[Firecrawl :3002]
         Gateway -->|Long-Term Memory| Hindsight[Hindsight :8888]
         Gateway -->|Docker Socket| Sandbox[Docker Sandbox Containers :nikolaik/python-nodejs]
+        Gateway -.->|Brokered Proxy :14322| AgentVault[Agent Vault MITM Proxy]
+        AgentVault -.->|Injected Credentials| ExternalAPIs[External Cloud APIs]
     end
 ```
 
@@ -101,8 +103,21 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 | `HINDSIGHT_BANK_ID` | `hermes` | Default memory bank identifier |
 | `HERMES_TERMINAL_ENV` | `docker` | Terminal execution environment driver |
 | `HERMES_TERMINAL_DOCKER_IMAGE` | `nikolaik/python-nodejs:python3.11-nodejs20` | Container image used for sandbox execution |
+| `HERMES_AGENT_VAULT_TOKEN` | `${HERMES_AGENT_VAULT_TOKEN}` | Agent token (`av_agt_...`) authenticating to Agent Vault |
+| `HTTP_PROXY` / `HTTPS_PROXY` | `http://<token>@agent-vault:14322` | Outbound proxy for transparent credential injection |
+| `NO_PROXY` | Internal hostnames | Bypasses local homelab containers and `.spencer.lan` |
+| `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` | `/opt/data/ca.pem` | Root CA certificate for MITM SSL inspection trust |
 
 ---
+
+## 🔒 Agent Vault Credential Brokering & Zero-Exfiltration Security
+
+Hermes connects to [Infisical Agent Vault](agent-vault.md) (`agent-vault:14322`) as an egress HTTP/HTTPS proxy:
+
+1. **Zero Secret Exfiltration**: Hermes is configured with placeholder values (e.g., `ANTHROPIC_API_KEY=__anthropic_api_key__`, `GITHUB_TOKEN=__github_token__`). Real API keys never touch Hermes prompts, container memory, or task scratchpads.
+2. **On-the-Fly Secret Injection**: When Hermes makes outbound API calls, Agent Vault intercepts requests, verifies the agent token, and replaces placeholder tokens with the real keys stored encrypted in `pgvector`.
+3. **CA Certificate Trust**: The Agent Vault Root CA certificate is mounted to `/opt/data/ca.pem` and `/etc/ssl/certs/agent-vault-ca.pem`, trusted across Python (`requests`, `urllib`), Node.js (`NODE_EXTRA_CA_CERTS`), and cURL (`CURL_CA_BUNDLE`).
+4. **Internal Bypass (`NO_PROXY`)**: Direct inter-container communication (Ollama, LiteLLM, SearXNG, Firecrawl, Hindsight) bypasses the proxy to ensure zero latency overhead and prevent circular proxying.
 
 ## 🔌 Model Context Protocol (MCP) Server
 
