@@ -12,7 +12,7 @@ Hermes Agent is an autonomous agent framework and gateway providing tool executi
 * **Command**: `gateway run` (supervised under `s6`)
 * **Networks**:
   * `net1`: Ingress routing from Traefik.
-  * `ai`: Connection to LiteLLM, Ollama, SearXNG, Firecrawl, Hindsight, and Browserless.
+  * `ai`: Connection to LiteLLM, Ollama, SearXNG, Firecrawl, and Hindsight.
 * **External Ingress & Ports**:
   * Dashboard Web UI: `https://<hermes-public-domain>` (`:9119` via Traefik with Let's Encrypt TLS & Authentik OIDC SSO)
   * Gateway API: `https://hermes-api.spencer.lan` (`:8642` via Traefik)
@@ -31,7 +31,6 @@ graph TD
         MCPServer -->|Tool Execution| Gateway
         Gateway -->|Web Search| SearXNG[SearXNG :8080]
         Gateway -->|Scrape & Extract| Firecrawl[Firecrawl :3002]
-        Gateway -->|Browser CDP| Browserless[Browserless Chrome :3000]
         Gateway -->|Long-Term Memory| Hindsight[Hindsight :8888]
         Gateway -->|Docker Socket| Sandbox[Docker Sandbox Containers :nikolaik/python-nodejs]
     end
@@ -97,7 +96,6 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 | `HERMES_DASHBOARD_OIDC_CLIENT_SECRET` | `${HERMES_DASHBOARD_OIDC_CLIENT_SECRET}` | OIDC Client Secret credential |
 | `SEARXNG_URL` | `http://searxng:8080` | SearXNG query endpoint |
 | `FIRECRAWL_API_URL` | `http://firecrawl:3002` | Firecrawl extraction endpoint |
-| `BROWSER_CDP_URL` | `ws://browserless:3000` | Browserless Chrome CDP endpoint |
 | `HINDSIGHT_MODE` | `local_external` | Memory provider connection mode |
 | `HINDSIGHT_API_URL` | `http://hindsight:8888` | Internal Hindsight service endpoint |
 | `HINDSIGHT_BANK_ID` | `hermes` | Default memory bank identifier |
@@ -108,7 +106,7 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 
 ## 🔌 Model Context Protocol (MCP) Server
 
-Hermes Agent exposes its internal homelab toolsets over the **Model Context Protocol (MCP)**, allowing external AI clients (Claude Desktop, Cursor, Antigravity IDE, Open WebUI MCP connectors, and external agents) to leverage homelab search, scraping, code sandbox, and workspace tools.
+Hermes Agent exposes its internal homelab toolsets over the **Model Context Protocol (MCP)**, allowing external AI clients (Claude Desktop, Cursor, Antigravity IDE, and external agents) to leverage homelab search, scraping, code sandbox, and workspace tools.
 
 ### 1. Endpoints & Access
 * **Edge HTTPS URL**: `https://mcp.spencer.lan/sse` (Traefik TLS)
@@ -169,13 +167,6 @@ If running on the same host machine with Docker socket access:
   }
 }
 ```
-
-#### C. Open WebUI MCP Connector
-1. Navigate to **Admin Settings > Tools > Valves / MCP**.
-2. Add new MCP server:
-   - **Type**: `SSE`
-   - **Server URL**: `http://hermes:8765/sse` (internal) or `https://mcp.spencer.lan/sse`
-   - **Headers**: `{"Authorization": "Bearer c4d029f837f1e00d2f32ca233ec5a48e228e4f608ce06ee9c6cbe8b66ba5a779"}`
 
 ---
 

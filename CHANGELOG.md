@@ -53,7 +53,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Integrated into existing `hermes` container via s6-overlay boot script ([`hermes/init/03-mcp-server.sh`](file:///data/homelab/hermes/init/03-mcp-server.sh)) for automatic process supervision, failure recovery, and unified resource footprint without running duplicate containers.
   - Added Traefik edge routing on `net1` for `https://mcp.spencer.lan/sse` and message ingress at `/messages/` (port `8765`).
   - Enforced Bearer token authentication via `HERMES_MCP_KEY` with unauthenticated `/health` endpoint for monitoring.
-  - Added client configuration examples for Claude Desktop (SSE and direct Docker stdio), Cursor / IDE extensions, and Open WebUI MCP connectors to [`docs/hermes.md`](file:///data/homelab/docs/hermes.md).
+  - Added client configuration examples for Claude Desktop (SSE and direct Docker stdio), Cursor / IDE extensions, and external MCP clients to [`docs/hermes.md`](file:///data/homelab/docs/hermes.md).
 
 ---
 
@@ -88,7 +88,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Provisioned profile memory config in [`hermes/hindsight/config.json`](file:///data/homelab/hermes/hindsight/config.json) with auto-recall and auto-retain enabled.
   - Updated [`docs/hermes.md`](file:///data/homelab/docs/hermes.md) with memory backend architecture diagram and tool descriptions.
 - **Dedicated pgvector Instance (`pgvector`)**:
-  - Added standalone `pgvector` container running `pgvector/pgvector:${PGVECTOR_VERSION:-pg16}` for Hindsight long-term memory engine and future homelab microservices, decoupled from Open WebUI.
+  - Added standalone `pgvector` container running `pgvector/pgvector:${PGVECTOR_VERSION:-pg16}` for Hindsight long-term memory engine and future homelab microservices, decoupled from legacy databases.
   - Added initialization script (`pgvector/init/01-init-databases.sh`) mounted to `/docker-entrypoint-initdb.d/` to enable `vector` extension on the primary database and auto-provision the `hindsight` database, user role, and vector extension.
   - Created service documentation in [`docs/pgvector.md`](file:///data/homelab/docs/pgvector.md) detailing architecture, connection strings, vector indexing, and backup operations.
   - Registered `pgvector` in [`docs/README.md`](file:///data/homelab/docs/README.md).
@@ -128,7 +128,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Attached Firecrawl to Hermes Agent via `FIRECRAWL_API_URL: http://firecrawl:3002` and configured `hermes/config.yaml` with `extract_backend: firecrawl` and `search_backend: searxng`.
 - **In-Depth Documentation Directory (`docs/`)**:
   - Created [`docs/README.md`](file:///data/homelab/docs/README.md) documentation index.
-  - Added 10 individual service guides: `traefik.md`, `ollama.md`, `open-webui.md`, `postgres.md`, `hermes.md`, `firecrawl.md`, `searxng.md`, `valkey.md`, `browserless.md`, and `open-terminal.md`.
+  - Added individual service guides: `traefik.md`, `ollama.md`, `hermes.md`, `firecrawl.md`, `searxng.md`, and `valkey.md`.
   - Updated root [`README.md`](file:///data/homelab/README.md) with an overview table, updated architecture diagram, and links to all service guides.
 
 ### Changed
@@ -160,13 +160,13 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ### Added
 - **Browserless Chrome Service**:
   - Added `browserless/chrome:latest` container on the `ai` network.
-  - Configured Open WebUI Playwright web loader engine to use `ws://browserless:3000` for rendering JavaScript-heavy websites.
+  - Configured Playwright web loader engine to use `ws://browserless:3000` for rendering JavaScript-heavy websites.
 - **pgvector Database Backend**:
   - Added `pgvector/pgvector:pg16` database service on an isolated `db` network.
-  - Migrated Open WebUI relational data and document embeddings to PostgreSQL with `pgvector`.
+  - Migrated relational data and document embeddings to PostgreSQL with `pgvector`.
 - **Initial Homelab Architecture**:
   - Deployed Traefik reverse proxy with local TLS certificate termination and dashboard at `https://traefik.spencer.lan`.
   - Deployed Ollama LLM runtime with NVIDIA GPU hardware acceleration passthrough.
-  - Deployed Open WebUI interface at `https://ai.spencer.lan`.
-  - Deployed Open Terminal sandboxed code interpreter environment.
+  - Deployed initial chat interface at `https://ai.spencer.lan`.
+  - Deployed sandboxed code interpreter environment.
   - Deployed SearXNG privacy metasearch engine with Valkey key-value caching backend.
