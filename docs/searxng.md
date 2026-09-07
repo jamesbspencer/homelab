@@ -6,18 +6,17 @@ SearXNG is a privacy-respecting metasearch engine aggregating search results acr
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Centralized search query backend for Open WebUI, Hermes Agent, and Firecrawl.
+* **Role**: Centralized search query backend for Hermes Agent and Firecrawl.
 * **Container Name**: `searxng`
 * **Image**: `docker.io/searxng/searxng:${SEARXNG_VERSION:-latest}`
 * **Internal Port**: `8080`
 * **Networks**:
-  * `ai`: Available to Open WebUI, Hermes Agent, and Firecrawl.
+  * `ai`: Available to Hermes Agent and Firecrawl.
   * `redis`: Connected to Valkey for search query and engine response caching.
 
 ```mermaid
 graph LR
     Hermes[Hermes Agent] -->|Search Query| SearXNG[SearXNG :8080]
-    OpenWebUI[Open WebUI] -->|RAG Web Search| SearXNG
     Firecrawl[Firecrawl] -->|SEARXNG_ENDPOINT| SearXNG
     SearXNG -->|Result Cache| Valkey[(Valkey Cache)]
 ```

@@ -6,7 +6,7 @@ Ollama provides local large language model inference with NVIDIA GPU acceleratio
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Local LLM execution engine serving Open WebUI, Hermes Agent, and terminal tools.
+* **Role**: Local LLM execution engine serving Hermes Agent, LiteLLM Proxy, and terminal tools.
 * **Container Name**: `ollama`
 * **Image**: `ollama/ollama`
 * **Network**: `ai` (Internal AI communication network)

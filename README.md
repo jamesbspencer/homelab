@@ -21,7 +21,8 @@ Detailed architectural designs, configuration options, environment variables, an
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](docs/valkey.md) |
 | **Authentik** | Centralized IAM, SSO, OIDC & Proxy Outposts | `https://sso.spencer.lan` / `https://login.spencer.lan` (:9000) | [Authentik Guide](docs/authentik.md) |
-| *Open WebUI Legacy Stack* | *Archived / Retired (Open WebUI, Postgres db, Open Terminal, Browserless)* | *Reclaimed ~1.02 GB RAM* | [Legacy Stack Archive](docs/archive/open-webui-legacy-stack.md) |
+| **Agent Vault** | AI Agent Credential Proxy & Broker | `https://vault.spencer.lan` (:14321), `:14322` | [Agent Vault Guide](docs/agent-vault.md) |
+| *Legacy Stack* | *Archived / Retired Legacy Services* | *Reclaimed ~1.02 GB RAM* | [Legacy Stack Archive](docs/archive/open-webui-legacy-stack.md) |
 
 ---
 
@@ -122,20 +123,20 @@ flowchart TB
 │   └── data/                # SQLite event database and local intelligence store
 ├── docs/                    # Detailed service documentation
 │   ├── README.md            # Documentation directory index
-│   ├── browserless.md       # Browserless headless Chrome automation
+│   ├── agent-vault.md       # Agent Vault credential broker & MITM proxy guide
+│   ├── authentik.md         # Authentik centralized IAM & SSO guide
 │   ├── crowdsec.md          # CrowdSec security engine & Traefik bouncer guide
 │   ├── firecrawl.md         # Firecrawl architecture, queues & scraping
 │   ├── hermes.md            # Hermes Agent runtime, dashboard, sandbox & MCP
 │   ├── hindsight.md         # Hindsight long-term agent memory engine
 │   ├── litellm.md           # LiteLLM Proxy model router & spend tracker
 │   ├── ollama.md            # Ollama setup & GPU acceleration guide
-│   ├── open-terminal.md     # Sandboxed workspace execution setup
-│   ├── open-webui.md        # Open WebUI features & connections
-│   ├── pgvector.md          # Dedicated pgvector database for Hindsight & LiteLLM
-│   ├── postgres.md          # PostgreSQL schema management for Open WebUI
+│   ├── pgvector.md          # Dedicated pgvector database for Hindsight, LiteLLM, Authentik & Vault
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
 │   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
 │   └── valkey.md            # Valkey caching & healthcheck operations
+├── agent-vault/             # Agent Vault runtime data and certificates
+├── authentik/               # Authentik configuration, media and templates
 ├── hermes/                  # Hermes Agent persistent state, skills, MCP scripts
 │   ├── config.yaml          # Hermes model providers, tools & memory configs
 │   ├── hindsight/           # Profile memory configuration (config.json)
@@ -144,10 +145,7 @@ flowchart TB
 ├── litellm/                 # LiteLLM Proxy configuration (config.yaml)
 ├── nuq-postgres/            # NuQ PostgreSQL persistent crawl state database
 ├── ollama/                  # Cached LLM model weights
-├── open-terminal/           # Sandboxed user home directory
-├── open-webui/              # Open WebUI data and cache files
 ├── pgvector/                # Dedicated pgvector database data & init scripts
-├── postgres/                # PostgreSQL pgvector data directory (Open WebUI)
 ├── searxng/                 # SearXNG configuration and cache directories
 ├── traefik/                 # Traefik static, dynamic, and TLS cert configurations
 │   ├── certs/               # Wildcard SSL certificates (*.spencer.lan)
@@ -209,10 +207,10 @@ docker compose exec hermes curl -s -X POST http://firecrawl:3002/v1/scrape \
 
 ### Test Internal Search (SearXNG)
 ```bash
-docker compose exec open-webui curl "http://searxng:8080/search?q=docker&format=json"
+docker compose exec hermes curl -s "http://searxng:8080/search?q=docker&format=json"
 ```
 
 ### Test Database Readiness
 ```bash
-docker compose exec db pg_isready -U openwebui -d openwebui
+docker compose exec pgvector pg_isready -U postgres -d postgres
 ```

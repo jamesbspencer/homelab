@@ -4,7 +4,7 @@ Hermes Agent Model Context Protocol (MCP) Server.
 
 Exposes homelab tools (SearXNG search, Firecrawl scraping, Docker sandbox execution,
 workspace files, vision analysis, and skills) via:
-  1. HTTP/SSE transport (default): For network MCP clients (Open WebUI, remote IDEs)
+  1. HTTP/SSE transport (default): For network MCP clients (remote IDEs, external agents)
      routed via Traefik (https://mcp.spencer.lan/sse).
   2. Stdio transport (--stdio): For local MCP clients (Claude Desktop, Cursor)
      spawned directly via `docker exec -i`.

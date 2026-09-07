@@ -11,7 +11,7 @@ LiteLLM Proxy provides a unified, OpenAI-compatible proxy gateway and router for
 * **Image**: `ghcr.io/berriai/litellm:main-latest`
 * **Networks**:
   * `net1`: Traefik reverse proxy ingress (`llm.spencer.lan`).
-  * `ai`: Internal communication with Ollama (`ollama:11434`), Hermes Agent, Open WebUI, and Hindsight.
+  * `ai`: Internal communication with Ollama (`ollama:11434`), Hermes Agent, and Hindsight.
   * `db`: PostgreSQL connection to `pgvector` for key management, spend tracking, and audit logging.
 * **External Ingress & Ports**:
   * API Endpoint: `https://llm.spencer.lan/v1`
@@ -23,9 +23,9 @@ graph TD
     Traefik[Traefik Proxy] -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy :4000]
     
     subgraph Clients
-        OpenWebUI[Open WebUI] -->|http://litellm:4000/v1| LiteLLM
         Hermes[Hermes Agent] -->|http://litellm:4000/v1| LiteLLM
         Hindsight[Hindsight Memory] -->|http://litellm:4000/v1| LiteLLM
+        LAN[LAN Clients / IDEs] -->|https://llm.spencer.lan/v1| LiteLLM
     end
 
     subgraph Backends & Storage
@@ -110,12 +110,7 @@ Hermes connects directly to LiteLLM over the internal `ai` Docker network.
         - default
   ```
 
-### 2. Pointing Open WebUI to LiteLLM
-In Open WebUI settings (`Admin Panel` -> `Connections` -> `OpenAI API`):
-- **API Base URL**: `http://litellm:4000/v1`
-- **API Key**: `${LITELLM_MASTER_KEY}`
-
-### 3. Pointing Hindsight to LiteLLM
+### 2. Pointing Hindsight to LiteLLM
 In `docker-compose.yaml`:
 ```yaml
 HINDSIGHT_API_LLM_BASE_URL=http://litellm:4000/v1

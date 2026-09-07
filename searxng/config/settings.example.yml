@@ -10,7 +10,7 @@ server:
   image_proxy: true
 
 network:
-  useragent: "OpenWebUI-Search/1.0 (mailto:email@example.com)"
+  useragent: "Homelab-Search/1.0 (mailto:email@example.com)"
 
 valkey:
   url: valkey://valkey:6379/0

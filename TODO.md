@@ -32,7 +32,7 @@ This file tracks upcoming features, architectural improvements, and exploration 
 
 ### 4. 🔌 Expose Hermes MCP Server
 - [x] Configure and expose the **Model Context Protocol (MCP)** server from Hermes Agent (`hermes/scripts/hermes_mcp_server.py`).
-- [x] Enable external MCP clients (e.g. Claude Desktop, Cursor, Antigravity IDE, Open WebUI MCP connectors) to consume Hermes homelab tools (SearXNG search, Firecrawl scraping, Docker sandbox execution, workspace file management, vision, skills).
+- [x] Enable external MCP clients (e.g. Claude Desktop, Cursor, Antigravity IDE, external agents) to consume Hermes homelab tools (SearXNG search, Firecrawl scraping, Docker sandbox execution, workspace file management, vision, skills).
 - [x] Define authentication (Bearer token via `HERMES_MCP_KEY`), TLS routing through Traefik (`https://mcp.spencer.lan/sse`), unauthenticated `/health` check, and s6-overlay boot auto-supervision (`hermes/init/03-mcp-server.sh`).
 - [x] Add an MCP integration guide with ready-to-copy client configurations to `docs/hermes.md`.
 
@@ -43,11 +43,11 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] Deploy the router container on `ai`, `net1`, and `db` networks with Traefik routing at `https://llm.spencer.lan` and Admin UI at `https://llm.spencer.lan/ui`.
 - [x] Connect local Ollama models (`qwen2.5:14b`, `nomic-embed-text`) alongside optional external providers (OpenRouter, Groq, DeepSeek) under a unified OpenAI-compatible API endpoint.
 - [x] Configure intelligent request routing, automated database persistence in `pgvector` (`litellm` database), key management, rate limiting, and cost/token tracking.
-- [x] Document client integration guides in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md) to connect Open WebUI, Hermes Agent, and Hindsight to LiteLLM.
+- [x] Document client integration guides in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md) to connect Hermes Agent and Hindsight to LiteLLM.
 
-### 6. 🔍 Evaluate Decommissioning & Removal of Open WebUI
-- [x] Assess feature parity between Open WebUI and the primary Hermes Dashboard / Desktop interfaces (confirmed full parity across chat, models, prompts, and superior autonomy in Hermes).
-- [x] Audit secondary services coupled to Open WebUI (`postgres`/`pgvector`, `browserless`, `open-terminal`) to identify candidates for resource reclamation (decommissioned 4 containers, reclaiming ~1.02 GB of idle memory).
+### 6. 🔍 Evaluate Decommissioning & Removal of Legacy Chat Stack
+- [x] Assess feature parity between legacy chat services and the primary Hermes Dashboard / Desktop interfaces (confirmed full parity across chat, models, prompts, and superior autonomy in Hermes).
+- [x] Audit secondary legacy services (`postgres`/`pgvector`, `browserless`, `open-terminal`) to identify candidates for resource reclamation (decommissioned 4 containers, reclaiming ~1.02 GB of idle memory).
 - [x] Determine if document ingestion/RAG can be fully delegated to Hermes Agent + Firecrawl or a lighter alternative (delegated to Firecrawl `web_extract`, SearXNG, and Hindsight).
 - [x] Prepare migration or archiving strategy for existing chat history and vector embeddings before container removal (created full recreation and archival guide in [`docs/archive/open-webui-legacy-stack.md`](file:///data/homelab/docs/archive/open-webui-legacy-stack.md) and aliased `ai.spencer.lan` to Hermes).
 

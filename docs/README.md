@@ -20,7 +20,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Valkey** | In-Memory Cache & Rate Limiter | `:6379` (Internal `redis` network) | [Valkey Guide](valkey.md) |
 | **Agent Vault** | AI Agent Credential Proxy & Broker | `vault.spencer.lan` (:14321), `:14322` (MITM Proxy) | [Agent Vault Guide](agent-vault.md) |
 | **Authentik** | Centralized IAM, SSO, OIDC & Outposts | `sso.spencer.lan`, `login.spencer.lan` (:9000) | [Authentik Guide](authentik.md) |
-| *Open WebUI Stack* | *Archived Legacy Stack* | *Retired (Open WebUI, postgres, open-terminal, browserless)* | [Legacy Stack Archive](archive/open-webui-legacy-stack.md) |
+| *Legacy Services* | *Archived Legacy Stack* | *Retired (legacy chat, database, terminal, browserless)* | [Legacy Stack Archive](archive/open-webui-legacy-stack.md) |
 
 ---
 
