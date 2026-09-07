@@ -70,3 +70,8 @@ authentik/media/*
 !authentik/media/.gitkeep
 authentik/custom-templates/*
 !authentik/custom-templates/.gitkeep
+
+# Agent Vault runtime data
+agent-vault/data/*
+!agent-vault/data/.gitkeep
+!agent-vault/data/ca.pem
