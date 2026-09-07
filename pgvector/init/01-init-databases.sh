@@ -75,6 +75,24 @@ if [ -n "$AUTHENTIK_POSTGRES_DB" ]; then
         WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$AUTHENTIK_POSTGRES_DB')\gexec
         GRANT ALL PRIVILEGES ON DATABASE "$AUTHENTIK_POSTGRES_DB" TO "$AUTHENTIK_USER";
 EOSQL
+# Conditionally provision dedicated database & user for Agent Vault
+if [ -n "$AGENTVAULT_POSTGRES_DB" ]; then
+    AGENTVAULT_USER="${AGENTVAULT_POSTGRES_USER:-agentvault}"
+    AGENTVAULT_PASS="${AGENTVAULT_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"
+
+    echo "Provisioning dedicated user '$AGENTVAULT_USER' and database '$AGENTVAULT_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        DO \$\$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$AGENTVAULT_USER') THEN
+                CREATE ROLE "$AGENTVAULT_USER" WITH LOGIN PASSWORD '$AGENTVAULT_PASS';
+            END IF;
+        END
+        \$\$;
+        SELECT 'CREATE DATABASE "$AGENTVAULT_POSTGRES_DB" OWNER "$AGENTVAULT_USER"'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$AGENTVAULT_POSTGRES_DB')\gexec
+        GRANT ALL PRIVILEGES ON DATABASE "$AGENTVAULT_POSTGRES_DB" TO "$AGENTVAULT_USER";
+EOSQL
 fi
 
 echo "pgvector initialization completed successfully."

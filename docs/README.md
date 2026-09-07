@@ -18,6 +18,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Firecrawl Stack** | Web Scraper, Crawler & Search | `:3002` (Internal `ai` & `redis` networks) | [Firecrawl Guide](firecrawl.md) |
 | **SearXNG** | Metasearch Engine | `:8080` (Internal `ai` & `redis` networks) | [SearXNG Guide](searxng.md) |
 | **Valkey** | In-Memory Cache & Rate Limiter | `:6379` (Internal `redis` network) | [Valkey Guide](valkey.md) |
+| **Agent Vault** | AI Agent Credential Proxy & Broker | `vault.spencer.lan` (:14321), `:14322` (MITM Proxy) | [Agent Vault Guide](agent-vault.md) |
 | **Authentik** | Centralized IAM, SSO, OIDC & Outposts | `sso.spencer.lan`, `login.spencer.lan` (:9000) | [Authentik Guide](authentik.md) |
 | *Open WebUI Stack* | *Archived Legacy Stack* | *Retired (Open WebUI, postgres, open-terminal, browserless)* | [Legacy Stack Archive](archive/open-webui-legacy-stack.md) |
 
@@ -25,7 +26,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 
 ## 🌐 Network Topologies
 
-1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Hermes Gateway, Hermes Dashboard, Hindsight UI, LiteLLM, Traefik API).
-2. **`ai`**: Private high-speed network for inter-service communication (Hermes, Hindsight, Ollama, LiteLLM, SearXNG, Firecrawl).
-3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db`.
-4. **`redis`**: Dedicated caching network shared between Valkey, SearXNG, and Firecrawl.
+1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Hermes Gateway, Hermes Dashboard, Hindsight UI, LiteLLM, Agent Vault, Authentik Server, Traefik API).
+2. **`ai`**: Private high-speed network for inter-service communication (Hermes, Hindsight, Ollama, LiteLLM, SearXNG, Firecrawl, Agent Vault).
+3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Hindsight, LiteLLM, Authentik, Agent Vault).
+4. **`redis`**: Dedicated caching network shared between Valkey, SearXNG, Firecrawl, and Authentik (sessions and task queue).

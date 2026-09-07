@@ -16,12 +16,13 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
   - **Valkey**: High-performance in-memory key-value cache and rate limiter on internal port `6379`.
   - **CrowdSec & Traefik Bouncer**: Intrusion detection and prevention engine parsing Traefik access logs with in-memory stream mode enforcement via the Traefik bouncer plugin.
+  - **Agent Vault**: HTTP credential broker and transparent MITM proxy for AI agents on internal port `14321` (`vault.spencer.lan`, `agent-vault.spencer.lan`) and MITM proxy port `14322`.
   - **Authentik**: Centralized identity provider, single sign-on (SSO), OIDC/SAML provider, and visual flow engine (`sso.spencer.lan`, `login.spencer.lan`) protecting internal dashboards via Traefik ForwardAuth Outpost.
-  - **PostgreSQL Database (`pgvector`)**: Unified relational and vector database container configured on the isolated `db` network for Hindsight, LiteLLM, and Authentik.
-- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `sso.spencer.lan`, `login.spencer.lan`, `llm.spencer.lan`, `hermes.spencer.lan`, `ai.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`, `hindsight.spencer.lan`).
+  - **PostgreSQL Database (`pgvector`)**: Unified relational and vector database container configured on the isolated `db` network for Hindsight, LiteLLM, Authentik, and Agent Vault.
+- **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `sso.spencer.lan`, `login.spencer.lan`, `llm.spencer.lan`, `hermes.spencer.lan`, `ai.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`, `hindsight.spencer.lan`, `vault.spencer.lan`, `agent-vault.spencer.lan`).
 - **Networking**:
-  - The Traefik container and proxied services requiring external web access (Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, LiteLLM, Authentik Server) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
-  - Internal AI communication (between Hermes, Hindsight, LiteLLM, Ollama, SearXNG, Firecrawl) occurs on the isolated bridge network named `ai`.
+  - The Traefik container and proxied services requiring external web access (Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, LiteLLM, Authentik Server, Agent Vault) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
+  - Internal AI communication (between Hermes, Hindsight, LiteLLM, Ollama, SearXNG, Firecrawl, Agent Vault) occurs on the isolated bridge network named `ai`.
   - Database services (`pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network.
   - Cache services (Valkey, SearXNG, Firecrawl, Authentik sessions & queue) communicate on the dedicated bridge network named `redis`.
   - Internal backend services (Firecrawl, SearXNG, Valkey, pgvector) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
