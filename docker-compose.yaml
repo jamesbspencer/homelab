@@ -331,7 +331,8 @@ services:
       # Agent Vault Credential Broker & CA Trust
       - HTTP_PROXY=http://${LITELLM_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
       - HTTPS_PROXY=http://${LITELLM_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
-      - NO_PROXY=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,.spencer.lan
+      - NO_PROXY=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.jamesspencer.me
+      - no_proxy=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.jamesspencer.me
       - REQUESTS_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
       - SSL_CERT_FILE=/etc/ssl/certs/agent-vault-ca.pem
       - CURL_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
@@ -424,7 +425,8 @@ services:
       # Agent Vault Credential Broker & CA Trust
       - HTTP_PROXY=${HERMES_HTTP_PROXY:-}
       - HTTPS_PROXY=${HERMES_HTTPS_PROXY:-}
-      - NO_PROXY=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,.spencer.lan}
+      - NO_PROXY=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.jamesspencer.me}
+      - no_proxy=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.jamesspencer.me}
       - REQUESTS_CA_BUNDLE=/opt/data/ca.pem
       - SSL_CERT_FILE=/opt/data/ca.pem
       - NODE_EXTRA_CA_CERTS=/opt/data/ca.pem
