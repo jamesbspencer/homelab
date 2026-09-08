@@ -120,13 +120,14 @@ services:
       - ./searxng/data/:/var/cache/searxng/
       - ./agent-vault/data/ca.pem:/etc/searxng/ca.pem:ro
       - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
+      - ./agent-vault/data/ca-bundle.crt:/etc/ssl/certs/ca-bundle.crt:ro
     environment:
       - HTTP_PROXY=http://${SEARXNG_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
       - HTTPS_PROXY=http://${SEARXNG_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
       - NO_PROXY=localhost,127.0.0.1,valkey,agent-vault,.spencer.lan
-      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
-      - SSL_CERT_FILE=/etc/ssl/certs/agent-vault-ca.pem
-      - CURL_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+      - SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
+      - CURL_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
     networks:
       - redis
       - ai
@@ -317,6 +318,7 @@ services:
     volumes:
       - ./litellm/config.yaml:/etc/litellm/config.yaml:ro
       - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
+      - ./agent-vault/data/ca-bundle.crt:/etc/ssl/certs/ca-bundle.crt:ro
     extra_hosts:
       - "${SSO_PUBLIC_DOMAIN}:host-gateway"
     environment:
@@ -333,9 +335,9 @@ services:
       - HTTPS_PROXY=http://${LITELLM_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
       - NO_PROXY=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.example.com
       - no_proxy=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.example.com
-      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
-      - SSL_CERT_FILE=/etc/ssl/certs/agent-vault-ca.pem
-      - CURL_CA_BUNDLE=/etc/ssl/certs/agent-vault-ca.pem
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+      - SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
+      - CURL_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
       # Authentik OIDC SSO Integration
       - PROXY_BASE_URL=https://llm.spencer.lan
       - GENERIC_CLIENT_ID=${LITELLM_OIDC_CLIENT_ID:-litellm}
@@ -379,6 +381,8 @@ services:
       - ./hermes/init/03-mcp-server.sh:/etc/cont-init.d/03-mcp-server:ro
       - ./agent-vault/data/ca.pem:/opt/data/ca.pem:ro
       - ./agent-vault/data/ca.pem:/etc/ssl/certs/agent-vault-ca.pem:ro
+      - ./agent-vault/data/ca-bundle.crt:/opt/data/ca-bundle.crt:ro
+      - ./agent-vault/data/ca-bundle.crt:/etc/ssl/certs/ca-bundle.crt:ro
       - /var/run/docker.sock:/var/run/docker.sock
 
     networks:
@@ -427,10 +431,10 @@ services:
       - HTTPS_PROXY=${HERMES_HTTPS_PROXY:-}
       - NO_PROXY=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.example.com}
       - no_proxy=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.example.com}
-      - REQUESTS_CA_BUNDLE=/opt/data/ca.pem
-      - SSL_CERT_FILE=/opt/data/ca.pem
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+      - SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
       - NODE_EXTRA_CA_CERTS=/opt/data/ca.pem
-      - CURL_CA_BUNDLE=/opt/data/ca.pem
+      - CURL_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
     depends_on:
       - firecrawl
       - hindsight

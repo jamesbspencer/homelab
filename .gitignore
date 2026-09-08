@@ -77,3 +77,5 @@ authentik/custom-templates/*
 agent-vault/data/*
 !agent-vault/data/.gitkeep
 !agent-vault/data/ca.pem
+!agent-vault/data/ca-bundle.crt
+
