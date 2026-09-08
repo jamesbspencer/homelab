@@ -19,6 +19,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **SearXNG** | Metasearch Engine | `:8080` (Internal `ai` & `redis` networks) | [SearXNG Guide](searxng.md) |
 | **Valkey** | In-Memory Cache & Rate Limiter | `:6379` (Internal `redis` network) | [Valkey Guide](valkey.md) |
 | **Agent Vault** | AI Agent Credential Proxy & Broker | `vault.spencer.lan` (:14321), `:14322` (MITM Proxy) | [Agent Vault Guide](agent-vault.md) |
+| **Infisical** | Centralized Secret Management Server | `secrets.spencer.lan`, `infisical.spencer.lan` (:8080) | [Infisical Guide](infisical.md) |
 | **Authentik** | Centralized IAM, SSO, OIDC & Outposts | `sso.spencer.lan`, `login.spencer.lan` (:9000) | [Authentik Guide](authentik.md) |
 | **Dozzle** | Real-Time Container Log Viewer & Streamer | `logs.spencer.lan`, `dozzle.spencer.lan` (:8080) | [Dozzle Guide](dozzle.md) |
 | *Legacy Services* | *Archived Legacy Stack* | *Retired (legacy chat, database, terminal, browserless)* | [Legacy Stack Archive](archive/open-webui-legacy-stack.md) |
