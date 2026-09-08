@@ -51,9 +51,10 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ---
 
 ### 7. 📜 Browser-Based Real-Time Log Viewer (Dozzle)
-- [ ] **Deploy Dozzle**: Run `amir20/dozzle` mounted to `/var/run/docker.sock` in read-only mode for instant browser-based log streaming across all containers.
-- [ ] **SSO Ingress Protection**: Route through Traefik at `logs.spencer.lan` protected by Authentik ForwardAuth for seamless, secure access.
-- [ ] **Live Log Filtering & Search**: Enable multi-container live aggregation, search, and regex streaming for debugging agent interactions and proxy requests.
+- [x] **Deploy Dozzle**: Run `amir20/dozzle` mounted to `/var/run/docker.sock` in read-only mode for instant browser-based log streaming across all containers.
+- [x] **SSO Ingress Protection**: Route through Traefik at `logs.spencer.lan` protected by Authentik ForwardAuth for seamless, secure access.
+- [x] **Live Log Filtering & Search**: Enable multi-container live aggregation, search, and regex streaming for debugging agent interactions and proxy requests.
+
 
 ---
 

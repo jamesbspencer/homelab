@@ -277,6 +277,35 @@ services:
       valkey:
         condition: service_healthy
 
+  dozzle:
+    image: amir20/dozzle:${DOZZLE_VERSION:-latest}
+    container_name: dozzle
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - net1
+    environment:
+      - DOZZLE_NO_ANALYTICS=true
+      - DOZZLE_LEVEL=info
+      - DOZZLE_AUTH_PROVIDER=forward-proxy
+      - DOZZLE_AUTH_HEADER_USER=X-authentik-username
+      - DOZZLE_AUTH_HEADER_EMAIL=X-authentik-email
+      - DOZZLE_AUTH_HEADER_NAME=X-authentik-name
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dozzle.rule=Host(`logs.spencer.lan`) || Host(`dozzle.spencer.lan`)"
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
+      - "traefik.http.routers.dozzle.tls=true"
+      - "traefik.http.routers.dozzle.middlewares=authentik@file"
+      - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
+
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
     container_name: litellm
