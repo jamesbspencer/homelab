@@ -24,3 +24,15 @@ if os.path.exists(path):
     if old in c:
         open(path, "w").write(c.replace(old, new, 1))
 '
+
+# Append Agent Vault Root CA to system and virtualenv cert stores if not already present
+if [ -f /opt/data/ca.pem ] && ! grep -q "Agent Vault Root CA" /etc/ssl/certs/ca-certificates.crt 2>/dev/null; then
+    cat /opt/data/ca.pem >> /etc/ssl/certs/ca-certificates.crt
+fi
+CERTIFI_FILE="$(/opt/hermes/.venv/bin/python3 -m certifi 2>/dev/null || true)"
+if [ -f /opt/data/ca.pem ] && [ -n "$CERTIFI_FILE" ] && [ -f "$CERTIFI_FILE" ]; then
+    if ! grep -q "Agent Vault Root CA" "$CERTIFI_FILE" 2>/dev/null; then
+        cat /opt/data/ca.pem >> "$CERTIFI_FILE"
+    fi
+fi
+
