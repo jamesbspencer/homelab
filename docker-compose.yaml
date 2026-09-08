@@ -83,6 +83,9 @@ services:
       AGENTVAULT_POSTGRES_DB: ${AGENTVAULT_POSTGRES_DB:-agentvault}
       AGENTVAULT_POSTGRES_USER: ${AGENTVAULT_POSTGRES_USER:-agentvault}
       AGENTVAULT_POSTGRES_PASSWORD: ${AGENTVAULT_POSTGRES_PASSWORD}
+      INFISICAL_POSTGRES_DB: ${INFISICAL_POSTGRES_DB:-infisical}
+      INFISICAL_POSTGRES_USER: ${INFISICAL_POSTGRES_USER:-infisical}
+      INFISICAL_POSTGRES_PASSWORD: ${INFISICAL_POSTGRES_PASSWORD}
     volumes:
       - ./pgvector/data:/var/lib/postgresql/data
       - ./pgvector/init:/docker-entrypoint-initdb.d:ro
@@ -206,6 +209,41 @@ services:
       - "traefik.http.routers.agent-vault.tls=true"
       - "traefik.http.routers.agent-vault.service=agent-vault-svc"
       - "traefik.http.services.agent-vault-svc.loadbalancer.server.port=14321"
+
+  infisical:
+    image: infisical/infisical:${INFISICAL_VERSION:-latest}
+    container_name: infisical
+    restart: unless-stopped
+    networks:
+      - net1
+      - db
+      - redis
+    environment:
+      - ENCRYPTION_KEY=${INFISICAL_ENCRYPTION_KEY}
+      - AUTH_SECRET=${INFISICAL_AUTH_SECRET}
+      - DB_CONNECTION_URI=postgresql://${INFISICAL_POSTGRES_USER:-infisical}:${INFISICAL_POSTGRES_PASSWORD}@pgvector:5432/${INFISICAL_POSTGRES_DB:-infisical}?sslmode=disable
+      - REDIS_URL=redis://valkey:6379
+      - SITE_URL=${INFISICAL_SITE_URL:-https://secrets.spencer.lan}
+      - TELEMETRY_ENABLED=false
+      - PORT=8080
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.infisical.rule=Host(`secrets.spencer.lan`) || Host(`infisical.spencer.lan`)"
+      - "traefik.http.routers.infisical.entrypoints=websecure"
+      - "traefik.http.routers.infisical.tls=true"
+      - "traefik.http.routers.infisical.service=infisical-svc"
+      - "traefik.http.services.infisical-svc.loadbalancer.server.port=8080"
 
   authentik-server:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_VERSION:-2026.8.1}
