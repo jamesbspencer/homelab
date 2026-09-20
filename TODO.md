@@ -7,9 +7,6 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ## 🎯 Active Initiatives & Roadmap
 
 ### 1. 🛡️ Deep Agent Vault Integration & Secret Brokering
-- [x] **Wire Hermes Agent to Agent Vault MITM Proxy**: Mount `./agent-vault/data/ca.pem` into the `hermes` container and configure proxy environment variables (`HTTP_PROXY`, `HTTPS_PROXY` pointing to `http://<token>@agent-vault:14322`) alongside CA trust bundles (`REQUESTS_CA_BUNDLE`, `NODE_EXTRA_CA_CERTS`, `SSL_CERT_FILE`, `CURL_CA_BUNDLE`).
-- [x] **Wire Egress Services to Agent Vault (SearXNG, Firecrawl & Playwright, LiteLLM)**: Route all outbound internet search queries, web scraping/crawling, and upstream cloud LLM requests through Agent Vault's MITM proxy (`agent-vault:14322`) with root CA mounts and internal `NO_PROXY` bypassing.
-- [x] **Define Placeholder Credential Schemas**: Replace direct cloud API keys (e.g., Anthropic, OpenAI, OpenRouter, GitHub, Telegram) with placeholder tokens (e.g., `__anthropic_api_key__`, `OPENROUTER_API_KEY=OPENROUTER_API_KEY`) to ensure zero raw credentials exist in agent prompts or container environments.
 - [ ] **End-to-End Validation**: Verify outbound requests through the MITM proxy successfully substitute secrets and validate that audit logs in Agent Vault record brokered traffic.
 
 ---
@@ -50,21 +47,13 @@ This file tracks upcoming features, architectural improvements, and exploration 
 
 ---
 
-### 7. 📜 Browser-Based Real-Time Log Viewer (Dozzle)
-- [x] **Deploy Dozzle**: Run `amir20/dozzle` mounted to `/var/run/docker.sock` in read-only mode for instant browser-based log streaming across all containers.
-- [x] **SSO Ingress Protection**: Route through Traefik at `logs.spencer.lan` protected by Authentik ForwardAuth for seamless, secure access.
-- [x] **Live Log Filtering & Search**: Enable multi-container live aggregation, search, and regex streaming for debugging agent interactions and proxy requests.
-
-
----
-
-### 8. 🎙️ Fully Offline Voice & Speech AI Stack (Piper & Faster-Whisper)
+### 7. 🎙️ Fully Offline Voice & Speech AI Stack (Piper & Faster-Whisper)
 - [ ] **Local Text-to-Speech (Piper)**: Deploy a containerized Piper TTS server on the `ai` network for low-latency neural speech generation.
 - [ ] **Local Speech-to-Text (Faster-Whisper)**: Deploy a GPU-accelerated Whisper endpoint on the `ai` network for local speech transcription.
 - [ ] **Hermes Audio Tools Integration**: Route Hermes's voice and audio tools to local Piper and Whisper endpoints instead of cloud APIs.
 
 ---
 
-### 9. 🔍 Periodic Database & Vector Maintenance Automation
+### 8. 🔍 Periodic Database & Vector Maintenance Automation
 - [ ] **Automated Vector Index Optimization**: Implement scheduled maintenance jobs to rebuild and optimize HNSW vector indexes as Hindsight memory entries grow.
 - [ ] **Session & Spend Log Rotation**: Configure automated vacuuming, pruning, and archiving for aged LiteLLM spend logs and ephemeral task states in `pgvector`.
