@@ -1,0 +1,32 @@
+# ntfy configuration file
+# Spencer's Homelab Push Notification Gateway
+
+# Public base URL (for notification links, attachments, and web-app)
+base-url: "https://push.spencer.lan"
+
+# Listen port inside container
+listen-http: ":80"
+
+# Behind reverse proxy (Traefik) - trusts X-Forwarded-For for accurate rate-limiting
+behind-proxy: true
+
+# Message persistence & cache
+cache-file: "/var/cache/ntfy/cache.db"
+cache-duration: "24h"
+
+# Attachment configuration
+attachment-cache-dir: "/var/cache/ntfy/attachments"
+attachment-total-size-limit: "1G"
+attachment-file-size-limit: "15M"
+attachment-expiry-duration: "24h"
+
+# User authentication & permissions
+auth-file: "/var/lib/ntfy/auth.db"
+auth-default-access: "read-write"
+enable-login: true
+
+# Upstream APNs relay for instant iOS background push notifications
+upstream-base-url: "https://ntfy.sh"
+
+# Web push storage
+web-push-file: "/var/cache/ntfy/webpush.db"

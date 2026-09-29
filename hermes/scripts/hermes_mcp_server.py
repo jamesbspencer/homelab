@@ -156,7 +156,42 @@ def build_mcp_server() -> Any:
 
         registered_count += 1
 
-    logger.info("Hermes MCP server registered %d/%d tools", registered_count, len(tools_to_expose))
+    def _send_notification(
+        message: str,
+        topic: str = "hermes",
+        title: str = "",
+        priority: int = 3,
+        tags: str = "",
+    ) -> str:
+        """Dispatch a push notification to user devices via the homelab ntfy gateway."""
+        import urllib.request
+        import urllib.error
+        endpoint = os.environ.get("NTFY_URL", "http://ntfy:80").rstrip("/") + f"/{topic}"
+        req = urllib.request.Request(endpoint, data=message.encode("utf-8"), method="POST")
+        if title:
+            req.add_header("Title", title)
+        if priority:
+            req.add_header("Priority", str(priority))
+        if tags:
+            req.add_header("Tags", tags)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return json.dumps({"status": "success", "response": resp.read().decode("utf-8")})
+        except Exception as exc:
+            return json.dumps({"status": "error", "message": str(exc)})
+
+    try:
+        mcp.add_tool(
+            _send_notification,
+            name="send_notification",
+            description="Dispatch a push notification to user devices via the homelab ntfy gateway.",
+        )
+        registered_count += 1
+    except TypeError:
+        _send_notification = mcp.tool(name="send_notification", description="Dispatch a push notification to user devices via the homelab ntfy gateway.")(_send_notification)
+        registered_count += 1
+
+    logger.info("Hermes MCP server registered %d tools (including send_notification)", registered_count)
     return mcp
 
 

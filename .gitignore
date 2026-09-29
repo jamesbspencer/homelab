@@ -1,5 +1,7 @@
 # Environment variables containing credentials/secrets
 .env
+.env.*
+!.env.example
 
 # Traefik state and SSL certificates
 traefik/acme.json
@@ -49,6 +51,13 @@ hermes/*
 !hermes/scripts/
 hermes/scripts/*
 !hermes/scripts/hermes_mcp_server.py
+!hermes/scripts/notify.sh
+!hermes/skills/
+hermes/skills/*
+!hermes/skills/productivity/
+hermes/skills/productivity/*
+!hermes/skills/productivity/push-notifications/
+!hermes/skills/productivity/push-notifications/*
 !hermes/init/
 hermes/init/*
 !hermes/init/03-mcp-server.sh
@@ -66,6 +75,10 @@ crowdsec/data/*
 crowdsec/config/*
 !crowdsec/config/acquis.d/
 !crowdsec/config/acquis.d/*
+!crowdsec/config/profiles.yaml
+!crowdsec/config/notifications/
+crowdsec/config/notifications/*
+!crowdsec/config/notifications/ntfy.yaml
 
 # Authentik runtime media and templates
 authentik/media/*
@@ -78,4 +91,10 @@ agent-vault/data/*
 !agent-vault/data/.gitkeep
 !agent-vault/data/ca.pem
 !agent-vault/data/ca-bundle.crt
+
+# ntfy runtime data and message cache
+ntfy/data/*
+!ntfy/data/.gitkeep
+ntfy/cache/*
+!ntfy/cache/.gitkeep
 
