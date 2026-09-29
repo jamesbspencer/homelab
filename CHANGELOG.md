@@ -7,6 +7,20 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-09-29]
+
+### Removed
+- **Infisical Secret Manager & Agent Vault Retirement**:
+  - Removed `infisical` and `agent-vault` service definitions and Traefik routing rules from [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
+  - Reverted HTTP/HTTPS egress proxying (`HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY`), custom root CA bundle mounts (`ca.pem`, `ca-bundle.crt`), and service dependencies across downstream containers: [`searxng`](file:///data/homelab/docker-compose.yaml), [`litellm`](file:///data/homelab/docker-compose.yaml), [`hermes`](file:///data/homelab/docker-compose.yaml), [`playwright-service`](file:///data/homelab/docker-compose.yaml), and [`firecrawl`](file:///data/homelab/docker-compose.yaml), fixing Playwright proxy authentication (HTTP 407) restart loops.
+  - Removed conditional role and database creation routines for `agentvault` and `infisical` from [`pgvector/init/01-init-databases.sh`](file:///data/homelab/pgvector/init/01-init-databases.sh).
+  - Stripped all `INFISICAL_*`, `AGENTVAULT_*`, `AGENT_VAULT_*`, and agent proxy token variables from [`.env.example`](file:///data/homelab/.env.example) and local [`.env`](file:///data/homelab/.env).
+  - Cleaned up the `agent-vault/` volume directory, certificates, and `.gitignore` patterns.
+  - Archived service documentation to [`docs/archive/infisical.md`](file:///data/homelab/docs/archive/infisical.md) and [`docs/archive/agent-vault.md`](file:///data/homelab/docs/archive/agent-vault.md).
+  - Updated architecture indexes, service catalogs, and operational guides across [`README.md`](file:///data/homelab/README.md), [`AGENTS.md`](file:///data/homelab/AGENTS.md), [`TODO.md`](file:///data/homelab/TODO.md), and [`docs/`](file:///data/homelab/docs/README.md).
+
+---
+
 ## [2026-09-04]
 
 ### Changed
