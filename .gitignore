@@ -26,18 +26,9 @@ ollama/*
 !ollama/Modelfile*
 
 
-# Open WebUI state (sqlite databases, vector db, uploads, cache)
-open-webui/*
-!open-webui/.gitkeep
-
 # Valkey state/data
 valkey/*
 !valkey/.gitkeep
-
-
-# Open Terminal state/home directory
-open-terminal/*
-!open-terminal/.gitkeep
 
 # SearXNG data/cache
 searxng/config/settings.yml
