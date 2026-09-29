@@ -8,8 +8,11 @@ model:
 terminal:
   backend: docker
   timeout: 180
-  docker_image: nikolaik/python-nodejs:python3.11-nodejs20
+  docker_image: hermes-terminal:latest
   lifetime_seconds: 300
+  singularity_image: docker://hermes-terminal:latest
+  modal_image: hermes-terminal:latest
+  daytona_image: hermes-terminal:latest
 web:
   search_backend: searxng
   extract_backend: firecrawl
