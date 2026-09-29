@@ -20,9 +20,9 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ---
 
 ### 3. 📲 Self-Hosted Push Notifications & System Alerts (ntfy / Gotify)
-- [ ] **Deploy Notification Gateway**: Run a lightweight notification server (`ntfy` or `gotify`) behind Traefik (`push.spencer.lan`) with Authentik ForwardAuth protecting the web interface.
-- [ ] **Backup & Security Event Dispatch**: Configure local NAS backup scripts, CrowdSec IP ban events, and Authentik security notifications to push directly to mobile devices.
-- [ ] **Hermes Notification Webhook**: Provide Hermes Agent with a direct notification tool to dispatch urgent alerts and task completions to user devices.
+- [x] **Deploy Notification Gateway**: Run a lightweight notification server (`ntfy` or `gotify`) behind Traefik (`push.spencer.lan`) with Authentik ForwardAuth protecting the web interface.
+- [ ] **Backup & Security Event Dispatch**: Configured CrowdSec IP ban alerts and Authentik security events to dispatch to ntfy; pending local NAS backup script wiring in Phase 2.
+- [x] **Hermes Notification Webhook**: Provided Hermes Agent with the `push-notifications` skill, helper script (`/opt/data/scripts/notify.sh`), and `send_notification` MCP tool to dispatch alerts to `http://ntfy:80/hermes`.
 
 ---
 

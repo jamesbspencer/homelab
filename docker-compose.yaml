@@ -310,6 +310,7 @@ services:
     networks:
       - db
       - redis
+      - net1
     depends_on:
       pgvector:
         condition: service_healthy
@@ -345,6 +346,60 @@ services:
       - "traefik.http.routers.dozzle.middlewares=authentik@file"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
+  ntfy:
+    image: binwiederhier/ntfy:${NTFY_VERSION:-latest}
+    container_name: ntfy
+    restart: unless-stopped
+    command: serve
+    user: "${PUID:-1000}:${PGID:-1000}"
+    networks:
+      - net1
+      - ai
+    volumes:
+      - ./ntfy/server.yml:/etc/ntfy/server.yml:ro
+      - ./ntfy/data:/var/lib/ntfy
+      - ./ntfy/cache:/var/cache/ntfy
+    environment:
+      - NTFY_BASE_URL=https://${NTFY_PUBLIC_DOMAIN:-push.spencer.lan}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -q '\"healthy\":true' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      # Internal LAN Router - API & Mobile app bypass (Priority 100)
+      - "traefik.http.routers.ntfy-api.rule=(Host(`push.spencer.lan`) || Host(`ntfy.spencer.lan`)) && (Method(`POST`) || Method(`PUT`) || HeaderRegexp(`Authorization`, `.+`))"
+      - "traefik.http.routers.ntfy-api.entrypoints=websecure"
+      - "traefik.http.routers.ntfy-api.tls=true"
+      - "traefik.http.routers.ntfy-api.priority=100"
+      - "traefik.http.routers.ntfy-api.service=ntfy-svc"
+      # Internal LAN Router - Web UI with Authentik ForwardAuth SSO (Priority 50)
+      - "traefik.http.routers.ntfy-web.rule=Host(`push.spencer.lan`) || Host(`ntfy.spencer.lan`)"
+      - "traefik.http.routers.ntfy-web.entrypoints=websecure"
+      - "traefik.http.routers.ntfy-web.tls=true"
+      - "traefik.http.routers.ntfy-web.priority=50"
+      - "traefik.http.routers.ntfy-web.middlewares=authentik@file"
+      - "traefik.http.routers.ntfy-web.service=ntfy-svc"
+      # Public WAN Router - API & Mobile app bypass (Priority 100)
+      - "traefik.http.routers.ntfy-public-api.rule=Host(`${NTFY_PUBLIC_DOMAIN}`) && (Method(`POST`) || Method(`PUT`) || HeaderRegexp(`Authorization`, `.+`))"
+      - "traefik.http.routers.ntfy-public-api.entrypoints=websecure"
+      - "traefik.http.routers.ntfy-public-api.tls=true"
+      - "traefik.http.routers.ntfy-public-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ntfy-public-api.priority=100"
+      - "traefik.http.routers.ntfy-public-api.service=ntfy-svc"
+      # Public WAN Router - Web UI with Authentik ForwardAuth SSO (Priority 50)
+      - "traefik.http.routers.ntfy-public-web.rule=Host(`${NTFY_PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.ntfy-public-web.entrypoints=websecure"
+      - "traefik.http.routers.ntfy-public-web.tls=true"
+      - "traefik.http.routers.ntfy-public-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.ntfy-public-web.priority=50"
+      - "traefik.http.routers.ntfy-public-web.middlewares=authentik@file"
+      - "traefik.http.routers.ntfy-public-web.service=ntfy-svc"
+      # Load balancer service
+      - "traefik.http.services.ntfy-svc.loadbalancer.server.port=80"
+
   litellm:
     image: ghcr.io/berriai/litellm:main-latest
     container_name: litellm
@@ -371,8 +426,8 @@ services:
       # Agent Vault Credential Broker & CA Trust
       - HTTP_PROXY=http://${LITELLM_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
       - HTTPS_PROXY=http://${LITELLM_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
-      - NO_PROXY=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.example.com
-      - no_proxy=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.example.com
+      - NO_PROXY=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,dozzle,ntfy,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},${NTFY_PUBLIC_DOMAIN:-push.spencer.lan},.spencer.lan
+      - no_proxy=localhost,127.0.0.1,ollama,searxng,firecrawl,hindsight,pgvector,valkey,authentik-server,agent-vault,traefik,dozzle,ntfy,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},${NTFY_PUBLIC_DOMAIN:-push.spencer.lan},.spencer.lan
       - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
       - SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
       - CURL_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
@@ -467,8 +522,8 @@ services:
       # Agent Vault Credential Broker & CA Trust
       - HTTP_PROXY=${HERMES_HTTP_PROXY:-}
       - HTTPS_PROXY=${HERMES_HTTPS_PROXY:-}
-      - NO_PROXY=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.example.com}
-      - no_proxy=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,dozzle,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},.spencer.lan,.example.com}
+      - NO_PROXY=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,dozzle,ntfy,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},${NTFY_PUBLIC_DOMAIN:-push.spencer.lan},.spencer.lan}
+      - no_proxy=${HERMES_NO_PROXY:-localhost,127.0.0.1,ollama,litellm,searxng,firecrawl,hindsight,authentik-server,pgvector,valkey,rabbitmq,nuq-postgres,playwright-service,agent-vault,traefik,dozzle,ntfy,${SSO_PUBLIC_DOMAIN},${HERMES_PUBLIC_DOMAIN},${NTFY_PUBLIC_DOMAIN:-push.spencer.lan},.spencer.lan}
       - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
       - SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
       - NODE_EXTRA_CA_CERTS=/opt/data/ca.pem
@@ -578,7 +633,7 @@ services:
       HARNESS_STARTUP_TIMEOUT_MS: 60000
       HTTP_PROXY: http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
       HTTPS_PROXY: http://${FIRECRAWL_AGENT_VAULT_TOKEN:-${HERMES_AGENT_VAULT_TOKEN}}@agent-vault:14322
-      NO_PROXY: localhost,127.0.0.1,valkey,rabbitmq,nuq-postgres,playwright-service,searxng,agent-vault,pgvector,ollama,litellm,traefik,.spencer.lan
+      NO_PROXY: localhost,127.0.0.1,valkey,rabbitmq,nuq-postgres,playwright-service,searxng,agent-vault,pgvector,ollama,litellm,traefik,ntfy,.spencer.lan
       NODE_EXTRA_CA_CERTS: /etc/ssl/certs/agent-vault-ca.pem
     depends_on:
       valkey:

@@ -1,0 +1,25 @@
+type: http
+name: ntfy
+log_level: info
+
+url: http://ntfy:80/alerts
+
+method: POST
+headers:
+  Content-Type: "text/plain"
+  Title: "CrowdSec Security Alert"
+  Priority: "high"
+  Tags: "warning,skull,shield"
+  Click: "https://logs.spencer.lan"
+
+format: |
+  {{range . -}}
+  {{$alert := . -}}
+  {{range .Decisions -}}
+  🚨 IP Blocked: {{.Value}}
+  Action: {{.Type}} for {{.Duration}}
+  Trigger: {{.Scenario}}
+  {{if $alert.Source.Cn}}Origin: {{$alert.Source.Cn}}{{if $alert.Source.AsName}} ({{$alert.Source.AsName}}){{end}}{{end}}
+  Details: https://app.crowdsec.net/cti/{{.Value}}
+  {{end -}}
+  {{end -}}

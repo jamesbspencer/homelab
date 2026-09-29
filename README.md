@@ -22,6 +22,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](docs/valkey.md) |
 | **Authentik** | Centralized IAM, SSO, OIDC & Proxy Outposts | `https://sso.spencer.lan` / `https://login.spencer.lan` (:9000) | [Authentik Guide](docs/authentik.md) |
 | **Agent Vault** | AI Agent Credential Proxy & Broker | `https://vault.spencer.lan` (:14321), `:14322` | [Agent Vault Guide](docs/agent-vault.md) |
+| **ntfy** | Push notification gateway & system alerts | `https://push.spencer.lan` / `https://ntfy.spencer.lan` | [ntfy Guide](docs/ntfy.md) |
 | *Legacy Stack* | *Archived / Retired Legacy Services* | *Reclaimed ~1.02 GB RAM* | [Legacy Stack Archive](docs/archive/open-webui-legacy-stack.md) |
 
 ---
@@ -47,6 +48,7 @@ flowchart TB
         Traefik -->|mcp| HermesMCP["MCP :8765"]
         Traefik -->|llm| LiteLLMUI["LiteLLM :4000"]
         Traefik -->|hindsight| HindsightUI["Hindsight :9999"]
+        Traefik -->|push| Ntfy["ntfy :80"]
         Traefik -->|traefik| TraefikDash["Traefik :internal"]
     end
 

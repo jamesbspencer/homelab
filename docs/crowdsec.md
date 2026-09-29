@@ -128,3 +128,23 @@ clientTrustedIPs:
   - "10.0.0.0/8"
 ```
 Requests originating from these subnets bypass decision enforcement to avoid accidental lockouts during local administration.
+
+---
+
+## 📲 Real-Time Push Notifications (ntfy)
+
+CrowdSec is integrated with the homelab's **ntfy** push notification gateway to dispatch real-time alerts whenever remediation actions occur:
+- **Plugin Configuration**: [`crowdsec/config/notifications/ntfy.yaml`](file:///data/homelab/crowdsec/config/notifications/ntfy.yaml)
+- **Active Remediation Profiles**: Bound to `default_ip_remediation` and `default_range_remediation` in [`crowdsec/config/profiles.yaml`](file:///data/homelab/crowdsec/config/profiles.yaml)
+- **Target Endpoint**: `http://ntfy:80/alerts` over the internal Docker `net1` network
+- **Notification Details**:
+  - **Title**: `CrowdSec Security Alert`
+  - **Priority**: `high`
+  - **Tags**: `warning,skull,shield`
+  - **Click Action**: Opens Dozzle live log viewer at `https://logs.spencer.lan`
+  - **Message Body**: Displays blocked IP, ban duration, triggered detection scenario, country/AS details, and CrowdSec CTI lookup link.
+
+To verify notification dispatch manually:
+```bash
+docker exec crowdsec cscli notifications test ntfy
+```

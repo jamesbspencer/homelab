@@ -179,3 +179,18 @@ docker exec pgvector psql -U postgres -d authentik -c "SELECT count(*) FROM info
 curl -k -I http://authentik-server:9000/outpost.goauthentik.io/auth/traefik
 ```
 Expected response: `HTTP/1.1 401 Unauthorized` or redirect (indicating ForwardAuth outpost is active and listening).
+
+---
+
+## 📲 Real-Time Push Notifications (ntfy)
+
+Authentik is integrated with the homelab's **ntfy** push notification gateway to dispatch real-time security alerts:
+- **Notification Transport**: `ntfy-alerts` (`webhook_slack` mode targeting `http://ntfy:80/alerts` over Docker network `net1`)
+- **Configured Security Rules & Matchers**:
+  - `notify-login-failed`: Dispatches alerts on failed authentication attempts (`action: login_failed`)
+  - `notify-suspicious-request`: Dispatches alerts on anomalous or suspicious HTTP requests (`action: suspicious_request`)
+  - Core system health: Linked to configuration errors, configuration warnings, software updates, and policy/system exceptions.
+- **Verification Command**:
+  ```bash
+  docker exec authentik-server ak shell -c "from authentik.core.models import User; from authentik.events.models import NotificationTransport, Notification; t = NotificationTransport.objects.get(name='ntfy-alerts'); u = User.objects.first(); n = Notification(body='Test security alert from Authentik', user=u, severity='warning'); t.send(n)"
+  ```
