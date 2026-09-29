@@ -35,23 +35,13 @@ graph LR
 
 ---
 
-## 🛡️ Agent Vault Proxy Routing & Auditing
-
-SearXNG routes all outbound search queries to public search engines through **Agent Vault** (`agent-vault:14322`):
-* **Auditing & Protection**: Outbound engine requests (Google, Bing, DuckDuckGo, Wikipedia, etc.) are centralized and audited through the Agent Vault proxy.
-* **Root CA Trust**: SearXNG mounts Agent Vault's CA certificate (`./agent-vault/data/ca.pem`) to `/etc/searxng/ca.pem` and `/etc/ssl/certs/agent-vault-ca.pem`, configured via `SSL_CERT_FILE`, `REQUESTS_CA_BUNDLE`, and `CURL_CA_BUNDLE`.
-* **Internal Cache Exemption**: Inter-container connections to Valkey (`valkey:6379`) and local networks are exempted via `NO_PROXY=localhost,127.0.0.1,valkey,agent-vault,.spencer.lan`.
-
----
-
 ## 📁 Mounted Volumes
 
 | Host Path | Container Path | Purpose |
 |---|---|---|
 | `./searxng/config/` | `/etc/searxng/` | Configuration files (`settings.yml`, `limiter.toml`) |
 | `./searxng/data/` | `/var/cache/searxng/` | Engine response and rate-limiting cache |
-| `./agent-vault/data/ca.pem` | `/etc/searxng/ca.pem:ro` | Agent Vault root CA certificate |
-| `./agent-vault/data/ca.pem` | `/etc/ssl/certs/agent-vault-ca.pem:ro` | System root CA trust bundle |
+
 
 ---
 

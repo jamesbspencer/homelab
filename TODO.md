@@ -6,14 +6,9 @@ This file tracks upcoming features, architectural improvements, and exploration 
 
 ## 🎯 Active Initiatives & Roadmap
 
-### 1. 🛡️ Deep Agent Vault Integration & Secret Brokering
-- [ ] **End-to-End Validation**: Verify outbound requests through the MITM proxy successfully substitute secrets and validate that audit logs in Agent Vault record brokered traffic.
-
----
-
-### 2. 💾 Automated Backup & Disaster Recovery Pipeline
-- [ ] **Automated `pgvector` Backups**: Implement a lightweight backup sidecar or scheduled maintenance script executing transactional dumps (`pg_dumpall` or per-database `pg_dump`: `hindsight`, `litellm`, `authentik`, `agentvault`) with retention rotation (e.g., 7 daily, 4 weekly).
-- [ ] **Encrypted State Archiving**: Snapshot critical runtime volumes (`./agent-vault/data`, `./authentik/media`, `./traefik/certs`, `./hermes/hindsight`) using encrypted backup utilities (e.g., Restic or Borg).
+### 1. 💾 Automated Backup & Disaster Recovery Pipeline
+- [ ] **Automated `pgvector` Backups**: Implement a lightweight backup sidecar or scheduled maintenance script executing transactional dumps (`pg_dumpall` or per-database `pg_dump`: `hindsight`, `litellm`, `authentik`) with retention rotation (e.g., 7 daily, 4 weekly).
+- [ ] **Encrypted State Archiving**: Snapshot critical runtime volumes (`./authentik/media`, `./traefik/certs`, `./hermes/hindsight`) using encrypted backup utilities (e.g., Restic or Borg).
 - [ ] **Local NAS Replication**: Configure automated synchronization of encrypted snapshots and database dumps to the local NAS (via NFS/SMB mount or SSH/rsync) with retention cleanup.
 - [ ] **Restore & Recovery Runbook**: Document step-by-step restoration procedures in `docs/` and verify point-in-time recovery for database and certificate state.
 
