@@ -21,6 +21,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Authentik** | Centralized IAM, SSO, OIDC & Outposts | `sso.spencer.lan`, `login.spencer.lan` (:9000) | [Authentik Guide](authentik.md) |
 | **Dozzle** | Real-Time Container Log Viewer & Streamer | `logs.spencer.lan`, `dozzle.spencer.lan` (:8080) | [Dozzle Guide](dozzle.md) |
 | **ntfy** | Push Notification Gateway & System Alerts | `push.spencer.lan`, `ntfy.spencer.lan`, `:80` | [ntfy Guide](ntfy.md) |
+| **Gitea** | Self-Hosted Git Platform & Issue Tracker | `git.spencer.lan`, `gitea.spencer.lan`, `:2222` (SSH) | [Gitea Guide](gitea.md) |
 | *Retired Services* | *Archived Services Stack* | *Retired (legacy chat, database, agent vault, infisical)* | [Legacy Stack](archive/open-webui-legacy-stack.md), [Agent Vault](archive/agent-vault.md), [Infisical](archive/infisical.md) |
 
 ---

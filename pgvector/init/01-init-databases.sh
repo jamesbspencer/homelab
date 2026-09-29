@@ -77,6 +77,26 @@ if [ -n "$AUTHENTIK_POSTGRES_DB" ]; then
 EOSQL
 fi
 
+# Conditionally provision dedicated database & user for Gitea
+if [ -n "$GITEA_POSTGRES_DB" ]; then
+    GITEA_USER="${GITEA_POSTGRES_USER:-gitea}"
+    GITEA_PASS="${GITEA_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"
+
+    echo "Provisioning dedicated user '$GITEA_USER' and database '$GITEA_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        DO \$\$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$GITEA_USER') THEN
+                CREATE ROLE "$GITEA_USER" WITH LOGIN PASSWORD '$GITEA_PASS';
+            END IF;
+        END
+        \$\$;
+        SELECT 'CREATE DATABASE "$GITEA_POSTGRES_DB" OWNER "$GITEA_USER"'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$GITEA_POSTGRES_DB')\gexec
+        GRANT ALL PRIVILEGES ON DATABASE "$GITEA_POSTGRES_DB" TO "$GITEA_USER";
+EOSQL
+fi
+
 echo "pgvector initialization completed successfully."
 
 
