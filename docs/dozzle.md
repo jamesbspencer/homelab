@@ -83,7 +83,7 @@ Configured in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml):
 
 ## 💡 Key Features & Usage Tips
 
-* **Multi-Container View**: Click the multi-select icon in the top-left sidebar to view and interleave logs from multiple related services (e.g., `traefik`, `agent-vault`, and `hermes`) simultaneously.
+* **Multi-Container View**: Click the multi-select icon in the top-left sidebar to view and interleave logs from multiple related services (e.g., `traefik`, `litellm`, and `hermes`) simultaneously.
 * **Regex Filtering**: Enter regular expressions directly into the search bar at the top of any log stream to filter for specific error codes or request patterns.
 * **Real-Time Memory & CPU Stats**: Container CPU and memory consumption are displayed in real-time in the sidebar next to each container.
 * **Download Logs**: Click the download icon in the top right to download full unbuffered container logs for offline analysis or bug reports.

@@ -1,12 +1,12 @@
-# Dedicated pgvector Instance (Hindsight, LiteLLM, Authentik, Agent Vault & Shared Services)
+# Dedicated pgvector Instance (Hindsight, LiteLLM, Authentik & Shared Services)
 
-This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Hindsight** (Hermes long-term memory engine), **LiteLLM Proxy** (spend tracking & key persistence), **Authentik** (centralized identity provider), and **Infisical Agent Vault** (AI agent credential broker). It is decoupled from legacy single-app databases to ensure long-term stability and independent lifecycles.
+This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Hindsight** (Hermes long-term memory engine), **LiteLLM Proxy** (spend tracking & key persistence), and **Authentik** (centralized identity provider). It is decoupled from legacy single-app databases to ensure long-term stability and independent lifecycles.
 
 ---
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Primary vector and relational database for Hindsight, LiteLLM Proxy, Authentik, Agent Vault, and homelab services.
+* **Role**: Primary vector and relational database for Hindsight, LiteLLM Proxy, Authentik, and homelab services.
 * **Container Name**: `pgvector` (Service name: `pgvector`)
 * **Image**: `pgvector/pgvector:${PGVECTOR_VERSION:-pg16}`
 * **Network**: `db` (Strictly isolated database network; does **not** join `ai` or bind to host ports)
@@ -18,7 +18,7 @@ This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extens
 ## 🔒 Security & Network Isolation
 
 * **Isolated `db` Network**: Connected strictly to the internal `db` bridge network.
-* **Service Access Requirement**: Any container requiring database access (Hindsight, LiteLLM, Authentik, Agent Vault) must join the `db` network in `docker-compose.yaml`.
+* **Service Access Requirement**: Any container requiring database access (Hindsight, LiteLLM, Authentik) must join the `db` network in `docker-compose.yaml`.
 * **Zero Host Exposure**: Port `5432` is not bound to the host, preventing external access.
 
 ---
@@ -40,9 +40,6 @@ This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extens
 | `AUTHENTIK_POSTGRES_DB` | `authentik` | Dedicated database for Authentik IAM |
 | `AUTHENTIK_POSTGRES_USER` | `authentik` | Service role for Authentik |
 | `AUTHENTIK_POSTGRES_PASSWORD` | `${AUTHENTIK_POSTGRES_PASSWORD}` in `.env` | Password for Authentik service role |
-| `AGENTVAULT_POSTGRES_DB` | `agentvault` | Dedicated database for Infisical Agent Vault |
-| `AGENTVAULT_POSTGRES_USER` | `agentvault` | Service role for Agent Vault |
-| `AGENTVAULT_POSTGRES_PASSWORD` | `${AGENTVAULT_POSTGRES_PASSWORD}` in `.env` | Password for Agent Vault service role |
 | `PUID` / `PGID` | `1000` / `1000` | Host UID/GID mapping for file ownership |
 
 ---
@@ -54,7 +51,6 @@ The container mounts `./pgvector/init/01-init-databases.sh` to `/docker-entrypoi
 2. The `hindsight` user role and database are created with full privileges, and `vector` is enabled inside it.
 3. The `litellm` user role and database are created with full privileges.
 4. The `authentik` user role and database are created with full privileges.
-5. The `agentvault` user role and database are created with full privileges.
 
 ### Connection Strings
 
@@ -69,10 +65,6 @@ The container mounts `./pgvector/init/01-init-databases.sh` to `/docker-entrypoi
 * **Authentik Server & Worker**:
   ```
   postgresql://authentik:${AUTHENTIK_POSTGRES_PASSWORD}@pgvector:5432/authentik
-  ```
-* **Infisical Agent Vault**:
-  ```
-  postgresql://agentvault:${AGENTVAULT_POSTGRES_PASSWORD}@pgvector:5432/agentvault?sslmode=disable
   ```
 * **Administrative / Superuser**:
   ```
@@ -103,9 +95,6 @@ docker compose exec pgvector psql -U litellm -d litellm
 
 # Authentik database connection
 docker compose exec pgvector psql -U authentik -d authentik
-
-# Agent Vault database connection
-docker compose exec pgvector psql -U agentvault -d agentvault
 ```
 
 ### Verifying pgvector Extension
@@ -115,8 +104,7 @@ docker compose exec pgvector psql -U hindsight -d hindsight -c '\dx'
 
 ### Performing Database Backups
 ```bash
-# Backup specific database (e.g. agentvault or hindsight)
-docker compose exec -T pgvector pg_dump -U postgres agentvault > agentvault_backup_$(date +%Y%m%d).sql
+# Backup specific database (e.g. hindsight)
 docker compose exec -T pgvector pg_dump -U postgres hindsight > hindsight_backup_$(date +%Y%m%d).sql
 
 # Backup entire pgvector cluster

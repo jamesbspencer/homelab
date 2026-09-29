@@ -77,45 +77,6 @@ if [ -n "$AUTHENTIK_POSTGRES_DB" ]; then
 EOSQL
 fi
 
-# Conditionally provision dedicated database & user for Agent Vault
-if [ -n "$AGENTVAULT_POSTGRES_DB" ]; then
-    AGENTVAULT_USER="${AGENTVAULT_POSTGRES_USER:-agentvault}"
-    AGENTVAULT_PASS="${AGENTVAULT_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"
-
-    echo "Provisioning dedicated user '$AGENTVAULT_USER' and database '$AGENTVAULT_POSTGRES_DB'..."
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-        DO \$\$
-        BEGIN
-            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$AGENTVAULT_USER') THEN
-                CREATE ROLE "$AGENTVAULT_USER" WITH LOGIN PASSWORD '$AGENTVAULT_PASS';
-            END IF;
-        END
-        \$\$;
-        SELECT 'CREATE DATABASE "$AGENTVAULT_POSTGRES_DB" OWNER "$AGENTVAULT_USER"'
-        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$AGENTVAULT_POSTGRES_DB')\gexec
-        GRANT ALL PRIVILEGES ON DATABASE "$AGENTVAULT_POSTGRES_DB" TO "$AGENTVAULT_USER";
-EOSQL
-fi
-
-# Conditionally provision dedicated database & user for Infisical Secret Manager
-if [ -n "$INFISICAL_POSTGRES_DB" ]; then
-    INFISICAL_USER="${INFISICAL_POSTGRES_USER:-infisical}"
-    INFISICAL_PASS="${INFISICAL_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"
-
-    echo "Provisioning dedicated user '$INFISICAL_USER' and database '$INFISICAL_POSTGRES_DB'..."
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-        DO \$\$
-        BEGIN
-            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$INFISICAL_USER') THEN
-                CREATE ROLE "$INFISICAL_USER" WITH LOGIN PASSWORD '$INFISICAL_PASS';
-            END IF;
-        END
-        \$\$;
-        SELECT 'CREATE DATABASE "$INFISICAL_POSTGRES_DB" OWNER "$INFISICAL_USER"'
-        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$INFISICAL_POSTGRES_DB')\gexec
-        GRANT ALL PRIVILEGES ON DATABASE "$INFISICAL_POSTGRES_DB" TO "$INFISICAL_USER";
-EOSQL
-fi
-
 echo "pgvector initialization completed successfully."
+
 

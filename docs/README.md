@@ -18,18 +18,16 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Firecrawl Stack** | Web Scraper, Crawler & Search | `:3002` (Internal `ai` & `redis` networks) | [Firecrawl Guide](firecrawl.md) |
 | **SearXNG** | Metasearch Engine | `:8080` (Internal `ai` & `redis` networks) | [SearXNG Guide](searxng.md) |
 | **Valkey** | In-Memory Cache & Rate Limiter | `:6379` (Internal `redis` network) | [Valkey Guide](valkey.md) |
-| **Agent Vault** | AI Agent Credential Proxy & Broker | `vault.spencer.lan` (:14321), `:14322` (MITM Proxy) | [Agent Vault Guide](agent-vault.md) |
-| **Infisical** | Centralized Secret Management Server | `secrets.spencer.lan`, `infisical.spencer.lan` (:8080) | [Infisical Guide](infisical.md) |
 | **Authentik** | Centralized IAM, SSO, OIDC & Outposts | `sso.spencer.lan`, `login.spencer.lan` (:9000) | [Authentik Guide](authentik.md) |
 | **Dozzle** | Real-Time Container Log Viewer & Streamer | `logs.spencer.lan`, `dozzle.spencer.lan` (:8080) | [Dozzle Guide](dozzle.md) |
 | **ntfy** | Push Notification Gateway & System Alerts | `push.spencer.lan`, `ntfy.spencer.lan`, `:80` | [ntfy Guide](ntfy.md) |
-| *Legacy Services* | *Archived Legacy Stack* | *Retired (legacy chat, database, terminal, browserless)* | [Legacy Stack Archive](archive/open-webui-legacy-stack.md) |
+| *Retired Services* | *Archived Services Stack* | *Retired (legacy chat, database, agent vault, infisical)* | [Legacy Stack](archive/open-webui-legacy-stack.md), [Agent Vault](archive/agent-vault.md), [Infisical](archive/infisical.md) |
 
 ---
 
 ## 🌐 Network Topologies
 
-1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Hermes Gateway, Hermes Dashboard, Hindsight UI, LiteLLM, Agent Vault, Authentik Server, Traefik API).
-2. **`ai`**: Private high-speed network for inter-service communication (Hermes, Hindsight, Ollama, LiteLLM, SearXNG, Firecrawl, Agent Vault).
-3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Hindsight, LiteLLM, Authentik, Agent Vault).
+1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Hermes Gateway, Hermes Dashboard, Hindsight UI, LiteLLM, Authentik Server, Dozzle, ntfy, Traefik API).
+2. **`ai`**: Private high-speed network for inter-service communication (Hermes, Hindsight, Ollama, LiteLLM, SearXNG, Firecrawl, ntfy).
+3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Hindsight, LiteLLM, Authentik).
 4. **`redis`**: Dedicated caching network shared between Valkey, SearXNG, Firecrawl, and Authentik (sessions and task queue).

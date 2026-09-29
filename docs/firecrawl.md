@@ -54,24 +54,12 @@ graph TD
 | `CRAWL_CONCURRENT_REQUESTS` | `10` | Maximum simultaneous browser crawls |
 
 ---
-
-## 🛡️ Agent Vault Proxy Routing & SSRF Mitigation
-
-Both `firecrawl` and `playwright-service` route external egress traffic through **Agent Vault** (`agent-vault:14322`):
-* **SSRF Mitigation & Auditing**: Scraping arbitrary user-requested URLs can pose Server-Side Request Forgery risks. Routing crawler and Playwright Chromium traffic through Agent Vault ensures access controls, audit logs, and egress tracking.
-* **Headless Browser Proxying**: `playwright-service` is configured with `PROXY_SERVER=http://agent-vault:14322` and credentials so headless Chromium instances render remote web pages exclusively through the proxy.
-* **Root CA Trust**: Both services mount `./agent-vault/data/ca.pem` to `/etc/ssl/certs/agent-vault-ca.pem` with `NODE_EXTRA_CA_CERTS=/etc/ssl/certs/agent-vault-ca.pem`.
-* **Internal Cluster Exemption**: Inter-service traffic to Valkey, RabbitMQ, NuQ-Postgres, SearXNG, Playwright microservice, and homelab endpoints is preserved via `NO_PROXY`.
-
----
-
 ## 📁 Mounted Volumes
 
 | Service | Host Path | Container Path | Purpose |
 |---|---|---|---|
 | `nuq-postgres` | `./nuq-postgres` | `/var/lib/postgresql/data` | Persists crawl queue tables and job state |
-| `firecrawl` | `./agent-vault/data/ca.pem` | `/etc/ssl/certs/agent-vault-ca.pem:ro` | Agent Vault root CA certificate |
-| `playwright-service` | `./agent-vault/data/ca.pem` | `/etc/ssl/certs/agent-vault-ca.pem:ro` | Agent Vault root CA certificate |
+
 
 
 ---

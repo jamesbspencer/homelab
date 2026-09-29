@@ -32,7 +32,6 @@ valkey/*
 
 # SearXNG data/cache
 searxng/config/settings.yml
-searxng/config/ca.pem
 
 
 # Hermes data
@@ -77,11 +76,6 @@ authentik/media/*
 authentik/custom-templates/*
 !authentik/custom-templates/.gitkeep
 
-# Agent Vault runtime data
-agent-vault/data/*
-!agent-vault/data/.gitkeep
-!agent-vault/data/ca.pem
-!agent-vault/data/ca-bundle.crt
 
 # ntfy runtime data and message cache
 ntfy/data/*

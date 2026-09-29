@@ -21,7 +21,6 @@ Detailed architectural designs, configuration options, environment variables, an
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](docs/valkey.md) |
 | **Authentik** | Centralized IAM, SSO, OIDC & Proxy Outposts | `https://sso.spencer.lan` / `https://login.spencer.lan` (:9000) | [Authentik Guide](docs/authentik.md) |
-| **Agent Vault** | AI Agent Credential Proxy & Broker | `https://vault.spencer.lan` (:14321), `:14322` | [Agent Vault Guide](docs/agent-vault.md) |
 | **ntfy** | Push notification gateway & system alerts | `https://push.spencer.lan` / `https://ntfy.spencer.lan` | [ntfy Guide](docs/ntfy.md) |
 | *Legacy Stack* | *Archived / Retired Legacy Services* | *Reclaimed ~1.02 GB RAM* | [Legacy Stack Archive](docs/archive/open-webui-legacy-stack.md) |
 
@@ -125,7 +124,6 @@ flowchart TB
 │   └── data/                # SQLite event database and local intelligence store
 ├── docs/                    # Detailed service documentation
 │   ├── README.md            # Documentation directory index
-│   ├── agent-vault.md       # Agent Vault credential broker & MITM proxy guide
 │   ├── authentik.md         # Authentik centralized IAM & SSO guide
 │   ├── crowdsec.md          # CrowdSec security engine & Traefik bouncer guide
 │   ├── firecrawl.md         # Firecrawl architecture, queues & scraping
@@ -133,11 +131,10 @@ flowchart TB
 │   ├── hindsight.md         # Hindsight long-term agent memory engine
 │   ├── litellm.md           # LiteLLM Proxy model router & spend tracker
 │   ├── ollama.md            # Ollama setup & GPU acceleration guide
-│   ├── pgvector.md          # Dedicated pgvector database for Hindsight, LiteLLM, Authentik & Vault
+│   ├── pgvector.md          # Dedicated pgvector database for Hindsight, LiteLLM & Authentik
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
 │   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
 │   └── valkey.md            # Valkey caching & healthcheck operations
-├── agent-vault/             # Agent Vault runtime data and certificates
 ├── authentik/               # Authentik configuration, media and templates
 ├── hermes/                  # Hermes Agent persistent state, skills, MCP scripts
 │   ├── config.yaml          # Hermes model providers, tools & memory configs
