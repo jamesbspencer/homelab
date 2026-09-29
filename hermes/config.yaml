@@ -121,6 +121,12 @@ known_builtin_toolsets:
     - terminal
     - code_execution
     - skills
+secrets:
+  bitwarden:
+    enabled: true
+    access_token_env: BWS_ACCESS_TOKEN
+    project_id: 29cb1611-8883-4863-b1a0-b4d4010591e8
+    server_url: https://vault.bitwarden.com
 
 # ── Security ──────────────────────────────────────────────────────────
 # Secret redaction is ON by default — strings that look like API keys,
