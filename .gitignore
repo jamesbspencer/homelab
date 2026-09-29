@@ -83,3 +83,7 @@ ntfy/data/*
 ntfy/cache/*
 !ntfy/cache/.gitkeep
 
+# Gitea repository and runtime data
+gitea/*
+!gitea/.gitkeep
+
