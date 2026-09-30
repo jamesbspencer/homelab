@@ -87,9 +87,14 @@ RUN ARCH="$(dpkg --print-architecture)" && \
 # 4. Install uv (lightning-fast Python package manager)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 5. Global Node.js package managers, developer toolchain, and Bitwarden CLI
+# 5. Install Bitwarden Secrets Manager CLI (bws)
+RUN curl -fsSL https://bws.bitwarden.com/install | sh && \
+    if [ -f /root/.local/bin/bws ] && [ ! -f /usr/local/bin/bws ]; then \
+      cp /root/.local/bin/bws /usr/local/bin/bws; \
+    fi
+
+# 6. Global Node.js package managers and developer toolchain
 RUN npm install -g --no-fund --no-audit \
-    @bitwarden/cli \
     pnpm \
     yarn \
     typescript \
@@ -97,7 +102,7 @@ RUN npm install -g --no-fund --no-audit \
     prettier \
     eslint
 
-# 6. Common Python libraries for scripts, scraping, and data processing (via uv system install)
+# 7. Common Python libraries for scripts, scraping, and data processing (via uv system install)
 RUN rm -f /usr/lib/python*/EXTERNALLY-MANAGED && \
     /root/.local/bin/uv pip install --system --break-system-packages \
     requests \

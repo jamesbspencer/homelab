@@ -12,7 +12,7 @@ This custom image builds on **Ubuntu 26.04 LTS** and pre-bakes the most frequent
 
 * **Base OS**: Ubuntu 26.04 LTS (`ubuntu:26.04`).
 * **Dual Runtimes**: Modern Python 3 and Node.js runtimes.
-* **Bitwarden Secrets CLI**: Bitwarden Vault CLI (`bw`) for credential retrieval and vault automation.
+* **Bitwarden Secrets Manager CLI**: Bitwarden Secrets Manager CLI (`bws`) for machine account access token injection and project secret automation.
 * **Modern Package Managers**: `uv` (fast Python toolchain), `pnpm`, `yarn`, and `pip`.
 * **TypeScript Tooling**: Global `typescript`, `tsx`, `prettier`, and `eslint`.
 * **Homelab Database Clients**: `postgresql-client` (`psql`) and `redis-tools` (`redis-cli`).
@@ -77,7 +77,7 @@ terminal:
 Verify that the image builds cleanly and has all tools installed:
 
 ```bash
-docker run --rm -it hermes-terminal:latest bash -c "python3 --version && node -v && uv --version && bw --version && psql --version && redis-cli --version && jq --version && yq --version && rg --version && fd --version"
+docker run --rm -it hermes-terminal:latest bash -c "python3 --version && node -v && uv --version && bws --version && psql --version && redis-cli --version && jq --version && yq --version && rg --version && fd --version"
 ```
 
 Expected output:
@@ -85,7 +85,7 @@ Expected output:
 Python 3.14.x
 v22.x.x
 uv 0.12.x
-bw (Bitwarden CLI) 2026.x.x
+bws 2.1.x
 psql (PostgreSQL) 18.x
 redis-cli 8.x
 jq-1.8.x
@@ -99,32 +99,31 @@ fdfind 10.x.x
 In the Hermes Web Dashboard or via the MCP server, run a terminal command such as:
 
 ```bash
-which bw uv psql redis-cli jq yq rg
+which bws uv psql redis-cli jq yq rg
 ```
 
 All binaries should resolve directly without installation delays.
 
 ---
 
-## 🔐 Bitwarden CLI (`bw`) Usage in Sandbox
+## 🔐 Bitwarden Secrets Manager CLI (`bws`) Usage in Sandbox
 
-The Bitwarden CLI allows Hermes Agent to securely retrieve credentials or API keys on-demand without hardcoding them:
+The Bitwarden Secrets Manager CLI allows Hermes Agent to retrieve secrets directly via machine account access tokens or inject secrets into commands:
 
 ```bash
-# 1. (Optional) Point to self-hosted Bitwarden / Vaultwarden
-bw config server https://vault.spencer.lan
+# 1. Authenticate using Machine Account Access Token
+export BWS_ACCESS_TOKEN="0.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxx:xxxxxxxxxxxxxxxxxxxx=="
 
-# 2. Log in using an API key (headless/non-interactive)
-export BW_CLIENTID="user.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-export BW_CLIENTSECRET="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-bw login --apikey
+# 2. List projects and secrets
+bws project list
+bws secret list
 
-# 3. Unlock the vault and save the session key
-export BW_SESSION="$(bw unlock --raw)"
+# 3. Retrieve a specific secret by ID
+bws secret get <SECRET_UUID>
 
-# 4. Fetch passwords or items
-bw get password "Homelab Postgres"
-bw get item "Grafana Admin" | jq '.login'
+# 4. Inject secrets dynamically into commands without persisting on disk
+bws run -- 'env | grep DATABASE_URL'
+bws run -- 'python3 script.py'
 ```
 
 ---
