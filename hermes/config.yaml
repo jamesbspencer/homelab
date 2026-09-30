@@ -1,5 +1,5 @@
 model:
-  default: qwen2.5:14b
+  default: gemma4:12b
   provider: custom
   base_url: http://litellm:4000/v1
   api_key: ${CUSTOM_API_KEY}
@@ -22,11 +22,11 @@ web:
 auxiliary:
   curator:
     provider: litellm
-    model: qwen2.5:14b
+    model: gemma4:12b
   background_review:
-    enabled: true
+    enabled: false
     provider: litellm
-    model: qwen2.5:14b
+    model: gemma4:12b
     max_input_tokens: 600000
 dashboard:
   theme: default
@@ -38,6 +38,13 @@ dashboard:
       scopes: openid profile email
 memory:
   provider: hindsight
+compression:
+  enabled: true
+  threshold: 0.60
+  target_ratio: 0.25
+  protect_last_n: 12
+  proactive_prune_tokens: 12000
+  proactive_prune_min_result_chars: 4000
 skills:
   creation_nudge_interval: 5
   disabled:
@@ -66,7 +73,7 @@ curator:
   consolidate: true
   stale_days: 30
   archive_days: 90
-_config_version: 39
+_config_version: 46
 custom_providers:
   - name: litellm
     base_url: http://litellm:4000/v1
@@ -85,48 +92,52 @@ platforms:
     enabled: true
 platform_toolsets:
   cli:
-    - web
-    - file
     - clarify
+    - code_execution
+    - connections
+    - file
     - memory
     - session_search
-    - todo
-    - terminal
-    - code_execution
     - skills
+    - terminal
+    - todo
+    - web
   api_server:
-    - web
-    - file
     - clarify
+    - code_execution
+    - connections
+    - file
     - memory
     - session_search
-    - todo
-    - terminal
-    - code_execution
     - skills
+    - terminal
+    - todo
+    - web
   gateway:
-    - web
-    - file
     - clarify
+    - code_execution
+    - connections
+    - file
     - memory
     - session_search
-    - todo
-    - terminal
-    - code_execution
     - skills
+    - terminal
+    - todo
+    - web
 known_plugin_toolsets:
   cli: []
 known_builtin_toolsets:
   cli:
-    - web
-    - file
     - clarify
+    - code_execution
+    - connections
+    - file
     - memory
     - session_search
-    - todo
-    - terminal
-    - code_execution
     - skills
+    - terminal
+    - todo
+    - web
 secrets:
   bitwarden:
     enabled: true
@@ -171,3 +182,9 @@ secrets:
 # fallback_model:
 #   provider: openrouter
 #   model: anthropic/claude-sonnet-4
+gateway:
+  multiplex_profiles: true
+plugins:
+  enabled:
+    - hindsight
+  disabled: []
