@@ -49,7 +49,6 @@ services:
       - ./ollama:/root/.ollama
     environment:
       - OLLAMA_FLASH_ATTENTION=1
-      - OLLAMA_CONTEXT_LENGTH=65536
     deploy:
       resources:
         reservations:
@@ -389,7 +388,7 @@ services:
       - HERMES_MCP_KEY=${HERMES_MCP_KEY:-${HERMES_API_KEY}}
       - MCP_PORT=8765
       - MCP_HOST=0.0.0.0
-      - HERMES_MODEL=${HERMES_MODEL:-qwen2.5:14b}
+      - HERMES_MODEL=${HERMES_MODEL:-gemma4:12b}
       - HERMES_PROVIDER=${HERMES_PROVIDER:-custom}
       - HERMES_MODEL_PROVIDER=${HERMES_PROVIDER:-custom}
       - HERMES_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
