@@ -13,6 +13,9 @@ terminal:
   singularity_image: docker://hermes-terminal:latest
   modal_image: hermes-terminal:latest
   daytona_image: hermes-terminal:latest
+  docker_forward_env:
+    - BWS_ACCESS_TOKEN
+    - BWS_PROJECT_ID
 web:
   search_backend: searxng
   extract_backend: firecrawl
