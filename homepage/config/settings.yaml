@@ -1,0 +1,23 @@
+title: "Spencer's Homelab"
+favicon: "https://raw.githubusercontent.com/gethomepage/homepage/main/public/icons/homepage.png"
+theme: dark
+color: slate
+headerStyle: clean
+statusStyle: dot
+
+layout:
+  AI & Agents:
+    style: row
+    columns: 3
+  Search & Scrape:
+    style: row
+    columns: 2
+  Core Infrastructure:
+    style: row
+    columns: 3
+  Developer Tools & Ops:
+    style: row
+    columns: 3
+  Data & Storage:
+    style: row
+    columns: 3

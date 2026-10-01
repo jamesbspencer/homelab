@@ -87,3 +87,7 @@ ntfy/cache/*
 gitea/*
 !gitea/.gitkeep
 
+# Homepage runtime logs
+homepage/config/logs/*
+!homepage/config/logs/.gitkeep
+

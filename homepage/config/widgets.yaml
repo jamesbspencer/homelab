@@ -1,0 +1,11 @@
+- search:
+    provider: custom
+    url: https://search.spencer.lan/search?q=
+    target: _blank
+    showSearchSuggestions: false
+
+- resources:
+    label: System
+    cpu: true
+    memory: true
+    disk: /app/config
