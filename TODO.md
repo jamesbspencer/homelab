@@ -59,3 +59,11 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [ ] **Evaluate Memlord Architecture**: Investigate [`memlord`](https://github.com/MyrikLD/memlord) (self-hosted MCP memory server with reinforcement learning, time decay, and self-correcting agent memory) as a specialized per-project memory layer or alternative alongside Hindsight.
 - [ ] **MCP Server Deployment**: Deploy `memlord` as a container on the `ai` network and configure it as an MCP server for Hermes Agent.
 - [ ] **Memory Decay & Weight Tuning**: Validate memory persistence, weight-based reinforcement adjustments, and time decay across Hermes agent sessions.
+
+---
+
+### 9. 🧭 Centralized Homelab Dashboard & Status Portal (Homepage)
+- [x] **Deploy Homepage Service**: Containerized Homepage (`ghcr.io/gethomepage/homepage`) deployed on `net1` and `ai` networks behind Traefik (`home.spencer.lan`, `homepage.spencer.lan`) with Authentik ForwardAuth SSO.
+- [x] **Service Grouping & Icons**: Declarative `services.yaml` cataloging AI & Agents, Core Infrastructure, Search & Intelligence, Developer Tools & Ops, and Backend Storage.
+- [x] **Live Container & System Telemetry**: Read-only Docker socket binding (`/var/run/docker.sock:ro`) for live container states, CPU, memory, and SearXNG search widget.
+- [x] **Authentik Outpost Proxy Registration**: Completed binding of `https://home.spencer.lan` in the Authentik Admin interface under Embedded Outpost.

@@ -1,0 +1,21 @@
+- Homelab Resources:
+    - Homelab GitHub:
+        - icon: github.png
+          href: https://github.com/jamesbspencer/homelab
+    - Homelab Local Gitea:
+        - icon: gitea.png
+          href: https://git.spencer.lan
+    - Architecture Docs:
+        - icon: mdi-book-open-page-variant
+          href: https://git.spencer.lan/spencer/homelab/src/branch/master/docs
+
+- Upstream Docs:
+    - Traefik Docs:
+        - icon: traefik.png
+          href: https://doc.traefik.io/traefik/
+    - Authentik Docs:
+        - icon: authentik.png
+          href: https://goauthentik.io/docs/
+    - LiteLLM Docs:
+        - icon: openai.png
+          href: https://docs.litellm.ai/

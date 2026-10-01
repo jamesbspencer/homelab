@@ -7,6 +7,19 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-10-01]
+
+### Added
+- **Homepage Dashboard Deployment**:
+  - Deployed [Homepage](https://github.com/gethomepage/homepage) (`ghcr.io/gethomepage/homepage`) as the primary dashboard for Spencer's Homelab.
+  - Bound to `net1` and `ai` networks behind Traefik reverse proxy on internal port `3000` (`home.spencer.lan`, `homepage.spencer.lan`).
+  - Integrated Authentik ForwardAuth SSO (`authentik@file`) for secure local LAN access and optional WAN routing.
+  - Mounted read-only Docker daemon socket (`/var/run/docker.sock:ro`) with `docker.yaml` for live container telemetry (health, CPU, memory).
+  - Created declarative YAML configs under [`homepage/config/`](file:///data/homelab/homepage/config): `settings.yaml` (dark slate theme, grid layouts), `services.yaml` (AI & Agents, Search & Scrape, Core Infrastructure, Developer Tools, Backend Storage), `widgets.yaml` (SearXNG search bar and system resource metrics), and `bookmarks.yaml` (documentation and repository references).
+  - Added service documentation in [`docs/homepage.md`](file:///data/homelab/docs/homepage.md) and updated [`docs/README.md`](file:///data/homelab/docs/README.md), [`AGENTS.md`](file:///data/homelab/AGENTS.md), and [`TODO.md`](file:///data/homelab/TODO.md).
+
+---
+
 ## [2026-09-29]
 
 ### Removed

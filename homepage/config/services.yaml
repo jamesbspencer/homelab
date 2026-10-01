@@ -1,0 +1,108 @@
+- AI & Agents:
+    - Hermes Agent:
+        icon: mdi-robot-excited-outline
+        href: https://hermes.spencer.lan
+        description: "Autonomous Agent & Management Dashboard"
+        server: local-docker
+        container: hermes
+    - LiteLLM Gateway:
+        icon: openai.png
+        href: https://llm.spencer.lan
+        description: "Unified LLM Router & Spend Gateway"
+        server: local-docker
+        container: litellm
+    - Hindsight Memory:
+        icon: mdi-brain
+        href: https://hindsight.spencer.lan
+        description: "Persistent Vector Memory Engine"
+        server: local-docker
+        container: hindsight
+    - Ollama LLM:
+        icon: ollama.png
+        href: https://llm.spencer.lan
+        description: "Local GPU-Accelerated LLM Runtime"
+        server: local-docker
+        container: ollama
+        widget:
+          type: customapi
+          url: http://ollama:11434/api/tags
+          mappings:
+            - field: models.length
+              label: Models
+    - Hermes API & MCP:
+        icon: mdi-api
+        href: https://hermes-api.spencer.lan
+        description: "Agent Gateway API & MCP Server (:8765)"
+        server: local-docker
+        container: hermes
+
+- Search & Scrape:
+    - SearXNG:
+        icon: searxng.png
+        href: https://search.spencer.lan
+        description: "Privacy-Preserving Metasearch Engine"
+        server: local-docker
+        container: searxng
+    - Firecrawl:
+        icon: mdi-spider-web
+        href: https://search.spencer.lan
+        description: "Web Scraper & Crawler Cluster"
+        server: local-docker
+        container: firecrawl
+
+- Core Infrastructure:
+    - Traefik Proxy:
+        icon: traefik.png
+        href: https://traefik.spencer.lan
+        description: "Edge Reverse Proxy & TLS Ingress"
+        server: local-docker
+        container: traefik
+    - Authentik IAM:
+        icon: authentik.png
+        href: https://sso.spencer.lan
+        description: "Centralized Identity & Single Sign-On"
+        server: local-docker
+        container: authentik-server
+    - CrowdSec:
+        icon: crowdsec.png
+        href: https://traefik.spencer.lan
+        description: "Intrusion Detection & Traefik Bouncer"
+        server: local-docker
+        container: crowdsec
+
+- Developer Tools & Ops:
+    - Gitea:
+        icon: gitea.png
+        href: https://git.spencer.lan
+        description: "Self-Hosted Git Platform & Repositories"
+        server: local-docker
+        container: gitea
+    - Dozzle:
+        icon: dozzle.png
+        href: https://logs.spencer.lan
+        description: "Real-Time Container Log Streamer"
+        server: local-docker
+        container: dozzle
+    - ntfy Alerts:
+        icon: ntfy.png
+        href: https://push.spencer.lan
+        description: "System Notifications & Push Gateway"
+        server: local-docker
+        container: ntfy
+
+- Data & Storage:
+    - pgvector Database:
+        icon: postgresql.png
+        description: "Relational & Vector PostgreSQL 16"
+        server: local-docker
+        container: pgvector
+    - Valkey Cache:
+        icon: redis.png
+        description: "In-Memory Key-Value Cache & Queue"
+        server: local-docker
+        container: valkey
+    - RabbitMQ:
+        icon: rabbitmq.png
+        description: "Firecrawl Task Queue Broker"
+        server: local-docker
+        container: rabbitmq

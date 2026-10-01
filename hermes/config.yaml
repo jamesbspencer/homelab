@@ -10,6 +10,9 @@ terminal:
   timeout: 180
   docker_image: hermes-terminal:latest
   lifetime_seconds: 300
+  docker_mount_cwd_to_workspace: true
+  docker_volumes:
+    - /data/homelab/hermes/workspace:/workspace
   singularity_image: docker://hermes-terminal:latest
   modal_image: hermes-terminal:latest
   daytona_image: hermes-terminal:latest
@@ -86,6 +89,7 @@ custom_providers:
       groq/llama-3.3-70b-versatile: {}
       openrouter/auto: {}
       deepseek/deepseek-chat: {}
+      gemma4:12b: {}
     models_discovered: true
 platforms:
   api_server:
