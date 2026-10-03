@@ -79,6 +79,9 @@ services:
       AUTHENTIK_POSTGRES_DB: ${AUTHENTIK_POSTGRES_DB:-authentik}
       AUTHENTIK_POSTGRES_USER: ${AUTHENTIK_POSTGRES_USER:-authentik}
       AUTHENTIK_POSTGRES_PASSWORD: ${AUTHENTIK_POSTGRES_PASSWORD}
+      MEMLORD_POSTGRES_DB: ${MEMLORD_POSTGRES_DB:-memlord}
+      MEMLORD_POSTGRES_USER: ${MEMLORD_POSTGRES_USER:-memlord}
+      MEMLORD_POSTGRES_PASSWORD: ${MEMLORD_POSTGRES_PASSWORD}
     volumes:
       - ./pgvector/data:/var/lib/postgresql/data
       - ./pgvector/init:/docker-entrypoint-initdb.d:ro
@@ -155,6 +158,67 @@ services:
       - "traefik.http.routers.hindsight.tls=true"
       - "traefik.http.routers.hindsight.middlewares=authentik@file"
       - "traefik.http.services.hindsight.loadbalancer.server.port=9999"
+
+  memlord:
+    image: ghcr.io/myrikld/memlord:${MEMLORD_VERSION:-latest}
+    container_name: memlord
+    restart: unless-stopped
+    volumes:
+      - ./memlord/onnx:/app/src/memlord/onnx
+    networks:
+      - net1
+      - ai
+      - db
+    environment:
+      - MEMLORD_HOST=0.0.0.0
+      - MEMLORD_PORT=8000
+      - MEMLORD_DB_URL=postgresql+asyncpg://${MEMLORD_POSTGRES_USER:-memlord}:${MEMLORD_POSTGRES_PASSWORD}@pgvector:5432/${MEMLORD_POSTGRES_DB:-memlord}
+      - MEMLORD_MODEL_DIR=/app/src/memlord/onnx
+      - MEMLORD_BASE_URL=https://${MEMLORD_PUBLIC_DOMAIN:-memlord.spencer.lan}
+      - MEMLORD_OAUTH_JWT_SECRET=${MEMLORD_OAUTH_JWT_SECRET}
+      - MEMLORD_RRF_K=60
+      - MEMLORD_DEFAULT_LIMIT=10
+      - MEMLORD_SIM_THRESHOLD=0.7
+      - MEMLORD_DEDUP_THRESHOLD=0.95
+    depends_on:
+      pgvector:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+    labels:
+      - "traefik.enable=true"
+      # Local LAN router (direct access without Authentik ForwardAuth)
+      - "traefik.http.routers.memlord.rule=Host(`memlord.spencer.lan`)"
+      - "traefik.http.routers.memlord.entrypoints=websecure"
+      - "traefik.http.routers.memlord.tls=true"
+      - "traefik.http.routers.memlord.service=memlord-svc"
+      # Local LAN registration protection (Authentik ForwardAuth on /ui/register only)
+      - "traefik.http.routers.memlord-register-auth.rule=Host(`memlord.spencer.lan`) && PathPrefix(`/ui/register`)"
+      - "traefik.http.routers.memlord-register-auth.entrypoints=websecure"
+      - "traefik.http.routers.memlord-register-auth.tls=true"
+      - "traefik.http.routers.memlord-register-auth.priority=150"
+      - "traefik.http.routers.memlord-register-auth.middlewares=authentik@file"
+      - "traefik.http.routers.memlord-register-auth.service=memlord-svc"
+      # Public WAN Web UI router (Authentik ForwardAuth)
+      - "traefik.http.routers.memlord-public.rule=Host(`${MEMLORD_PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.memlord-public.entrypoints=websecure"
+      - "traefik.http.routers.memlord-public.tls=true"
+      - "traefik.http.routers.memlord-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.memlord-public.middlewares=authentik@file"
+      - "traefik.http.routers.memlord-public.service=memlord-svc"
+      # Public WAN MCP router (direct access for external MCP clients via Bearer/OAuth)
+      - "traefik.http.routers.memlord-mcp-public.rule=Host(`${MEMLORD_PUBLIC_DOMAIN}`) && PathPrefix(`/mcp`)"
+      - "traefik.http.routers.memlord-mcp-public.entrypoints=websecure"
+      - "traefik.http.routers.memlord-mcp-public.tls=true"
+      - "traefik.http.routers.memlord-mcp-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.memlord-mcp-public.priority=100"
+      - "traefik.http.routers.memlord-mcp-public.service=memlord-svc"
+      # Service loadbalancer
+      - "traefik.http.services.memlord-svc.loadbalancer.server.port=8000"
 
   authentik-server:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_VERSION:-2026.8.1}

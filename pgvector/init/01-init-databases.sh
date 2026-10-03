@@ -95,6 +95,29 @@ if [ -n "$GITEA_POSTGRES_DB" ]; then
         WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$GITEA_POSTGRES_DB')\gexec
         GRANT ALL PRIVILEGES ON DATABASE "$GITEA_POSTGRES_DB" TO "$GITEA_USER";
 EOSQL
+# Conditionally provision dedicated database & user for Memlord
+if [ -n "$MEMLORD_POSTGRES_DB" ]; then
+    MEMLORD_USER="${MEMLORD_POSTGRES_USER:-memlord}"
+    MEMLORD_PASS="${MEMLORD_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"
+
+    echo "Provisioning dedicated user '$MEMLORD_USER' and database '$MEMLORD_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        DO \$\$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$MEMLORD_USER') THEN
+                CREATE ROLE "$MEMLORD_USER" WITH LOGIN PASSWORD '$MEMLORD_PASS';
+            END IF;
+        END
+        \$\$;
+        SELECT 'CREATE DATABASE "$MEMLORD_POSTGRES_DB" OWNER "$MEMLORD_USER"'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$MEMLORD_POSTGRES_DB')\gexec
+        GRANT ALL PRIVILEGES ON DATABASE "$MEMLORD_POSTGRES_DB" TO "$MEMLORD_USER";
+EOSQL
+
+    echo "Enabling pgvector extension on '$MEMLORD_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$MEMLORD_POSTGRES_DB" <<-EOSQL
+        CREATE EXTENSION IF NOT EXISTS vector;
+EOSQL
 fi
 
 echo "pgvector initialization completed successfully."

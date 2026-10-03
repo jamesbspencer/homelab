@@ -10,6 +10,13 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-10-03]
 
 ### Added
+- **Memlord MCP Memory Server Deployment**:
+  - Deployed [Memlord](https://github.com/MyrikLD/memlord) (`ghcr.io/myrikld/memlord:latest`) as a self-hosted Model Context Protocol (MCP) memory server featuring hybrid BM25 full-text and `pgvector` KNN vector search fused with Reciprocal Rank Fusion (RRF).
+  - Provisioned dedicated `memlord` role and database with the `vector` extension enabled on the isolated `db` network in `pgvector/init/01-init-databases.sh`.
+  - Configured local ONNX embedding runtime with persistent volume storage (`./memlord/onnx`) for zero external API or GPU dependencies.
+  - Implemented dual-router Traefik ingress (`memlord.spencer.lan` / `${MEMLORD_PUBLIC_DOMAIN}`): protected Web UI via Authentik ForwardAuth (`authentik@file`) with direct client bypass for the `/mcp` Streamable HTTP endpoint.
+  - Registered Memlord under "AI & Agents" in Homepage dashboard (`homepage/config/services.yaml`).
+  - Authored comprehensive architecture and operational guide in [`docs/memlord.md`](file:///data/homelab/docs/memlord.md) and updated [`docs/README.md`](file:///data/homelab/docs/README.md) and [`TODO.md`](file:///data/homelab/TODO.md).
 - **Automated Database & Vector Maintenance Pipeline**:
   - Implemented [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh) to automate periodic health and storage optimization for the homelab's `pgvector` PostgreSQL cluster.
   - **HNSW Vector Index Rebuilds**: Executes non-blocking `REINDEX TABLE CONCURRENTLY` for vector tables (`memory_units`, `mental_models`) and GIN full-text search indexes in Hindsight to prevent index graph fragmentation and search latency degradation.
