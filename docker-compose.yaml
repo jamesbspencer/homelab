@@ -478,6 +478,7 @@ services:
       - TERMINAL_ENV=${HERMES_TERMINAL_ENV:-docker}
       - TERMINAL_DOCKER_IMAGE=${HERMES_TERMINAL_DOCKER_IMAGE:-nikolaik/python-nodejs:python3.11-nodejs20}
       - TERMINAL_CONTAINER_PERSISTENT=false
+      - TERMINAL_DOCKER_VOLUMES=${HERMES_TERMINAL_DOCKER_VOLUMES:-["/data/homelab/hermes/workspace:/workspace"]}
     depends_on:
       - firecrawl
       - hindsight

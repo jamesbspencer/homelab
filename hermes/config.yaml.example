@@ -12,7 +12,7 @@ terminal:
   lifetime_seconds: 300
   docker_mount_cwd_to_workspace: true
   docker_volumes:
-    - ./hermes/workspace:/workspace
+    - /data/homelab/hermes/workspace:/workspace
   singularity_image: docker://hermes-terminal:latest
   modal_image: hermes-terminal:latest
   daytona_image: hermes-terminal:latest

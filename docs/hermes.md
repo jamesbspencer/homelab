@@ -77,7 +77,7 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 * **Security & Isolation**:
   * **Dropped Capabilities**: `ALL` capabilities dropped, with only minimal required flags added back (`DAC_OVERRIDE`, `CHOWN`, `FOWNER`).
   * **Privilege Restrictions**: `no-new-privileges` enforced to block privilege escalation.
-  * **Ephemeral Storage**: `/workspace` (10 GB tmpfs), `/home` (1 GB tmpfs), and `/root` (1 GB tmpfs) run in-memory tmpfs scratch spaces that are completely discarded upon session cleanup.
+  * **Storage Architecture**: `/workspace` is bind-mounted directly to `/data/homelab/hermes/workspace` on the host for persistent data and code across runs, while `/home` (1 GB tmpfs) and `/root` (1 GB tmpfs) run in-memory tmpfs scratch spaces.
   * **Process Limits**: PID ceiling (`256`) and shared memory size (`1 GB`).
 
 ### 3. Environment Variables (`.env`)
@@ -100,7 +100,8 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 | `HINDSIGHT_API_URL` | `http://hindsight:8888` | Internal Hindsight service endpoint |
 | `HINDSIGHT_BANK_ID` | `hermes` | Default memory bank identifier |
 | `HERMES_TERMINAL_ENV` | `docker` | Terminal execution environment driver |
-| `HERMES_TERMINAL_DOCKER_IMAGE` | `nikolaik/python-nodejs:python3.11-nodejs20` | Container image used for sandbox execution |
+| `HERMES_TERMINAL_DOCKER_IMAGE` | `hermes-terminal:latest` | Container image used for sandbox execution |
+| `HERMES_TERMINAL_DOCKER_VOLUMES` | `["/data/homelab/hermes/workspace:/workspace"]` | Host-to-sandbox volume mounts for terminal |
 
 ---
 
