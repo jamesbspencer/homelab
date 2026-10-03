@@ -16,7 +16,8 @@ This custom image builds on **Ubuntu 26.04 LTS** and pre-bakes the most frequent
 * **Modern Package Managers**: `uv` (fast Python toolchain), `pnpm`, `yarn`, and `pip`.
 * **TypeScript Tooling**: Global `typescript`, `tsx`, `prettier`, and `eslint`.
 * **Homelab Database Clients**: `postgresql-client` (`psql`) and `redis-tools` (`redis-cli`).
-* **CLI & Text Processing**: `git`, `jq`, `yq`, `ripgrep` (`rg`), `fd-find` (`fd`), `tree`, `tar`, `unzip`, `file`.
+* **Git & Version Control CLI**: `git`, `tea` (official Gitea CLI for repos, issues, PRs, and releases).
+* **CLI & Text Processing**: `jq`, `yq`, `ripgrep` (`rg`), `fd-find` (`fd`), `tree`, `tar`, `unzip`, `file`.
 * **Networking & Remote Access**: `curl`, `wget`, `iputils-ping`, `dnsutils` (`dig`, `nslookup`), `netcat-openbsd`, `socat`, `traceroute`, `ssh` (`openssh-client`), and `sshpass` (non-interactive SSH password automation).
 * **Data & Scripting Libraries**: `requests`, `httpx`, `aiohttp`, `beautifulsoup4`, `pydantic`, `pyyaml`, `jinja2`, `rich`, `click`, `numpy`, `pandas`.
 
@@ -77,7 +78,7 @@ terminal:
 Verify that the image builds cleanly and has all tools installed:
 
 ```bash
-docker run --rm -it hermes-terminal:latest bash -c "python3 --version && node -v && uv --version && bws --version && psql --version && redis-cli --version && jq --version && yq --version && rg --version && fd --version"
+docker run --rm -it hermes-terminal:latest bash -c "python3 --version && node -v && uv --version && bws --version && tea --version && psql --version && redis-cli --version && jq --version && yq --version && rg --version && fd --version"
 ```
 
 Expected output:
@@ -86,6 +87,7 @@ Python 3.14.x
 v22.x.x
 uv 0.12.x
 bws 2.1.x
+Version: 0.16.x golang: ...
 psql (PostgreSQL) 18.x
 redis-cli 8.x
 jq-1.8.x
@@ -99,10 +101,34 @@ fdfind 10.x.x
 In the Hermes Web Dashboard or via the MCP server, run a terminal command such as:
 
 ```bash
-which bws uv psql redis-cli jq yq rg
+which bws tea uv psql redis-cli jq yq rg
 ```
 
 All binaries should resolve directly without installation delays.
+
+---
+
+## 🍵 Gitea CLI (`tea`) Usage in Sandbox
+
+The `tea` CLI provides a native interface to interact with Gitea repositories, issues, pull requests, releases, and milestones from within the terminal sandbox:
+
+```bash
+# 1. Log in to homelab Gitea instance (using personal access token)
+tea login add --name homelab --url https://gitea.spencer.lan --token <GITEA_TOKEN>
+
+# 2. List or clone repositories
+tea repos
+tea clone jamesbspencer/homelab
+
+# 3. Work with issues and pull requests
+tea issues ls
+tea pulls ls
+tea pulls checkout <PR_INDEX>
+
+# 4. Create an issue or release
+tea issue create --title "Automated homelab backup verification" --body "Backup verified successfully."
+tea release create --tag "v1.1.0" --title "Version 1.1.0"
+```
 
 ---
 

@@ -93,7 +93,21 @@ RUN curl -fsSL https://bws.bitwarden.com/install | sh && \
       cp /root/.local/bin/bws /usr/local/bin/bws; \
     fi
 
-# 6. Global Node.js package managers and developer toolchain
+# 6. Install Gitea CLI (tea)
+RUN ARCH="$(dpkg --print-architecture)" && \
+    case "${ARCH}" in \
+      amd64) TEA_ARCH="amd64" ;; \
+      arm64) TEA_ARCH="arm64" ;; \
+      *) TEA_ARCH="amd64" ;; \
+    esac && \
+    TEA_VERSION="$(curl -s https://gitea.com/api/v1/repos/gitea/tea/releases/latest | jq -r .tag_name | sed 's/^v//')" && \
+    if [ -z "${TEA_VERSION}" ] || [ "${TEA_VERSION}" = "null" ]; then TEA_VERSION="0.16.0"; fi && \
+    curl -fsSL -o /usr/local/bin/tea "https://dl.gitea.com/tea/${TEA_VERSION}/tea-${TEA_VERSION}-linux-${TEA_ARCH}" && \
+    chmod +x /usr/local/bin/tea && \
+    mkdir -p /etc/bash_completion.d && \
+    /usr/local/bin/tea completion bash > /etc/bash_completion.d/tea 2>/dev/null || true
+
+# 7. Global Node.js package managers and developer toolchain
 RUN npm install -g --no-fund --no-audit \
     pnpm \
     yarn \
@@ -102,7 +116,7 @@ RUN npm install -g --no-fund --no-audit \
     prettier \
     eslint
 
-# 7. Common Python libraries for scripts, scraping, and data processing (via uv system install)
+# 8. Common Python libraries for scripts, scraping, and data processing (via uv system install)
 RUN rm -f /usr/lib/python*/EXTERNALLY-MANAGED && \
     /root/.local/bin/uv pip install --system --break-system-packages \
     requests \
