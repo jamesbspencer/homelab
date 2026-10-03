@@ -50,8 +50,9 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ---
 
 ### 7. 🔍 Periodic Database & Vector Maintenance Automation
-- [ ] **Automated Vector Index Optimization**: Implement scheduled maintenance jobs to rebuild and optimize HNSW vector indexes as Hindsight memory entries grow.
-- [ ] **Session & Spend Log Rotation**: Configure automated vacuuming, pruning, and archiving for aged LiteLLM spend logs and ephemeral task states in `pgvector`.
+- [x] **Automated Vector Index Optimization**: Implemented scheduled maintenance pipeline (`scripts/pgvector-maintenance.sh`) executing concurrent HNSW vector and GIN text index rebuilds (`memory_units`, `mental_models`) in Hindsight.
+- [x] **Session & Spend Log Rotation**: Configured automated archival (gzip CSVs in `pgvector/archives/`) and pruning for aged `LiteLLM_SpendLogs` (> 30d) and Hindsight `async_operations` (> 14d) with cluster-wide `VACUUM ANALYZE`.
+- [x] **Hermes Proactive Cron & Alerts**: Registered weekly background maintenance job (`6ff939ca35e2`) in Hermes scheduler with ntfy push completion notifications and provided Hermes with the `database-maintenance` skill.
 
 ---
 

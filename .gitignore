@@ -15,10 +15,12 @@ traefik/crowdsec_bouncer_key
 postgres
 postgres/*
 
-# pgvector standalone data
+# pgvector standalone data & archives
 pgvector/data
 pgvector/data/*
 !pgvector/data/.gitkeep
+pgvector/archives/*
+!pgvector/archives/.gitkeep
 
 # Ollama models, caches, and key pairs
 ollama/*
@@ -42,12 +44,17 @@ hermes/*
 hermes/scripts/*
 !hermes/scripts/hermes_mcp_server.py
 !hermes/scripts/notify.sh
+!hermes/scripts/pgvector-maintenance.sh
 !hermes/skills/
 hermes/skills/*
 !hermes/skills/productivity/
 hermes/skills/productivity/*
 !hermes/skills/productivity/push-notifications/
 !hermes/skills/productivity/push-notifications/*
+!hermes/skills/devops/
+hermes/skills/devops/*
+!hermes/skills/devops/database-maintenance/
+!hermes/skills/devops/database-maintenance/*
 !hermes/init/
 hermes/init/*
 !hermes/init/03-mcp-server.sh
