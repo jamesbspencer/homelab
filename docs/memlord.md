@@ -17,7 +17,7 @@
   * `8000`: HTTP Web UI & MCP endpoint (`/mcp`).
 * **External Ingress**:
   * Internal LAN: `https://memlord.spencer.lan` (Direct access to Web UI & MCP; registration `/ui/register` protected by Authentik ForwardAuth).
-  * Public WAN: `https://<public-domain>` (Protected via Authentik ForwardAuth with direct `/mcp` client bypass).
+  * Public WAN: `https://<public-domain>` (Direct access to Web UI & MCP; registration `/ui/register` protected by Authentik ForwardAuth).
 
 ```mermaid
 graph TD
@@ -78,7 +78,7 @@ Memlord exposes 11 native MCP tools:
 | `MEMLORD_POSTGRES_USER` | `memlord` | Database user on `pgvector` |
 | `MEMLORD_POSTGRES_PASSWORD` | `${MEMLORD_POSTGRES_PASSWORD}` | Database password credential |
 | `MEMLORD_OAUTH_JWT_SECRET` | `${MEMLORD_OAUTH_JWT_SECRET}` | JWT secret for OAuth 2.1 token issuance |
-| `MEMLORD_PUBLIC_DOMAIN` | `memlord.example.com` | Public ingress hostname |
+| `MEMLORD_PUBLIC_DOMAIN` | `${MEMLORD_PUBLIC_DOMAIN}` | Public ingress hostname |
 | `MEMLORD_RRF_K` | `60` | Reciprocal Rank Fusion constant for hybrid rank fusion |
 | `MEMLORD_SIM_THRESHOLD` | `0.7` | Minimum vector similarity threshold |
 | `MEMLORD_DEDUP_THRESHOLD` | `0.95` | Deduplication threshold preventing near-identical saves |
@@ -146,6 +146,20 @@ mcp_servers:
   memlord:
     url: "http://memlord:8000/mcp"
     transport: "http"
+```
+
+### 4. Antigravity & Gemini (`~/.gemini/config/mcp_config.json` or `.agents/mcp_config.json`)
+```json
+{
+  "mcpServers": {
+    "memlord": {
+      "serverUrl": "https://${MEMLORD_PUBLIC_DOMAIN}/mcp",
+      "headers": {
+        "Authorization": "Bearer <MEMLORD_API_KEY>"
+      }
+    }
+  }
+}
 ```
 
 ---

@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+.agents/mcp_config.json
 
 # Traefik state and SSL certificates
 traefik/acme.json

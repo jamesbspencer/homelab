@@ -65,7 +65,7 @@
         container: traefik
     - Authentik IAM:
         icon: authentik.png
-        href: https://sso.example.com
+        href: https://sso.spencer.lan
         description: "Centralized Identity & Single Sign-On"
         server: local-docker
         container: authentik-server

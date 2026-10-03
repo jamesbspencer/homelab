@@ -203,20 +203,20 @@ services:
       - "traefik.http.routers.memlord-register-auth.priority=150"
       - "traefik.http.routers.memlord-register-auth.middlewares=authentik@file"
       - "traefik.http.routers.memlord-register-auth.service=memlord-svc"
-      # Public WAN Web UI router (Authentik ForwardAuth)
+      # Public WAN router (direct access without Authentik ForwardAuth)
       - "traefik.http.routers.memlord-public.rule=Host(`${MEMLORD_PUBLIC_DOMAIN}`)"
       - "traefik.http.routers.memlord-public.entrypoints=websecure"
       - "traefik.http.routers.memlord-public.tls=true"
       - "traefik.http.routers.memlord-public.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.memlord-public.middlewares=authentik@file"
       - "traefik.http.routers.memlord-public.service=memlord-svc"
-      # Public WAN MCP router (direct access for external MCP clients via Bearer/OAuth)
-      - "traefik.http.routers.memlord-mcp-public.rule=Host(`${MEMLORD_PUBLIC_DOMAIN}`) && PathPrefix(`/mcp`)"
-      - "traefik.http.routers.memlord-mcp-public.entrypoints=websecure"
-      - "traefik.http.routers.memlord-mcp-public.tls=true"
-      - "traefik.http.routers.memlord-mcp-public.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.memlord-mcp-public.priority=100"
-      - "traefik.http.routers.memlord-mcp-public.service=memlord-svc"
+      # Public WAN registration protection (Authentik ForwardAuth on /ui/register only)
+      - "traefik.http.routers.memlord-register-auth-public.rule=Host(`${MEMLORD_PUBLIC_DOMAIN}`) && PathPrefix(`/ui/register`)"
+      - "traefik.http.routers.memlord-register-auth-public.entrypoints=websecure"
+      - "traefik.http.routers.memlord-register-auth-public.tls=true"
+      - "traefik.http.routers.memlord-register-auth-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.memlord-register-auth-public.priority=150"
+      - "traefik.http.routers.memlord-register-auth-public.middlewares=authentik@file"
+      - "traefik.http.routers.memlord-register-auth-public.service=memlord-svc"
       # Service loadbalancer
       - "traefik.http.services.memlord-svc.loadbalancer.server.port=8000"
 
@@ -658,7 +658,7 @@ services:
     environment:
       - PUID=${PUID:-1000}
       - PGID=${DOCKER_GID:-983}
-      - HOMEPAGE_ALLOWED_HOSTS=home.spencer.lan,homepage.spencer.lan,homepage,homepage:3000,localhost,localhost:3000,${HOMEPAGE_PUBLIC_DOMAIN:-home.example.com}
+      - HOMEPAGE_ALLOWED_HOSTS=home.spencer.lan,homepage.spencer.lan,homepage,homepage:3000,localhost,localhost:3000,${HOMEPAGE_PUBLIC_DOMAIN:-home.spencer.lan}
       - HOMEPAGE_VAR_AUTHENTIK_TOKEN=${HOMEPAGE_VAR_AUTHENTIK_TOKEN:-}
       - HOMEPAGE_VAR_GITEA_TOKEN=${HOMEPAGE_VAR_GITEA_TOKEN:-}
     labels:
