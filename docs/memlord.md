@@ -45,6 +45,15 @@ Spencer's Homelab operates a synergistic dual-tier memory system:
 | **Tier 1: Episodic & Reflective** | **Hindsight** (`:8888`) | Implicit (Auto-Retain / Auto-Recall) | Vector graph in `hindsight` DB + Ollama LLM extraction | Cross-session narrative history, user preferences, entity resolution, and temporal observations. |
 | **Tier 2: Workspace & Procedural** | **Memlord** (`:8000`) | Explicit (11 MCP Tools) | BM25 (`tsvector`) + pgvector KNN fused with RRF in `memlord` DB | SOPs, repo conventions, project-specific notes, progressive disclosure snippets, and deliberate deduplication. |
 
+### 🔄 Continuous Memory Synchronization (Hermes Cron)
+Episodic observations and validated facts captured by Hindsight are periodically synchronized into Memlord's hybrid vector/BM25 database via an autonomous Hermes cron pipeline:
+* **Cron Task**: `hindsight-memlord-sync` (ID: `5fc9990b2434`)
+* **Schedule**: Hourly (`0 * * * *`)
+* **Runner**: [`hermes/scripts/sync-hindsight-to-memlord.py`](file:///data/homelab/hermes/scripts/sync-hindsight-to-memlord.py)
+* **Ingestion Transport**: MCP Streamable HTTP transport (`http://memlord:8000/mcp`) using `MCP_MEMLORD_API_KEY`.
+* **State Ledger**: Persistent tracking at `hermes/cron/hindsight_memlord_sync_state.json` ensuring sub-second incremental execution.
+* **Notification**: Dispatches run summaries to the `agent-memory` topic on ntfy.
+
 ---
 
 ## 🛠️ MCP Tools Reference (11 Tools)

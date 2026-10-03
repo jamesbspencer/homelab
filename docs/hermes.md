@@ -219,6 +219,17 @@ The memory engine (`hermes/hindsight/config.json`) is enriched with:
 * **Multi-Layer Fact Retrieval**: `recall_types: "observation,world,experience"` delivering both consolidated observations and granular facts.
 * **Attribution**: Persistent retention tags (`["homelab", "agent-learning"]`) for cross-session queryability.
 
+### 5. Scheduled Jobs & Autonomous Cron Tasks
+Hermes manages persistent scheduled tasks with `--no-agent` zero-token script execution or scheduled agent invocations:
+* **Hindsight to Memlord Sync (`hindsight-memlord-sync`)**:
+  * **Schedule**: Hourly (`0 * * * *`)
+  * **Script**: [`scripts/sync-hindsight-to-memlord.py`](file:///data/homelab/hermes/scripts/sync-hindsight-to-memlord.py)
+  * **Function**: Queries Hindsight (`:8888`) for new memory units, formats them into structured schemas, and streams them into Memlord (`:8000/mcp`) via MCP Streamable HTTP transport with local ledger state caching.
+* **Database & Vector Maintenance (`pgvector-maintenance`)**:
+  * **Schedule**: Weekly Sunday at 03:00 UTC (`0 3 * * 0`)
+  * **Script**: [`scripts/pgvector-maintenance.sh`](file:///data/homelab/hermes/scripts/pgvector-maintenance.sh)
+  * **Function**: VACUUM (ANALYZE), HNSW/GIN re-indexing, log pruning, and ntfy alerts.
+
 ---
 
 ## 📁 Mounted Volumes

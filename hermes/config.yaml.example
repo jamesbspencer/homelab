@@ -12,7 +12,7 @@ terminal:
   lifetime_seconds: 300
   docker_mount_cwd_to_workspace: true
   docker_volumes:
-    - /data/homelab/hermes/workspace:/workspace
+    - ./hermes/workspace:/workspace
   singularity_image: docker://hermes-terminal:latest
   modal_image: hermes-terminal:latest
   daytona_image: hermes-terminal:latest
@@ -146,7 +146,7 @@ secrets:
   bitwarden:
     enabled: true
     access_token_env: BWS_ACCESS_TOKEN
-    project_id: 29cb1611-8883-4863-b1a0-b4d4010591e8
+    project_id: ${BWS_PROJECT_ID}
     server_url: https://vault.bitwarden.com
 
 # ── Security ──────────────────────────────────────────────────────────
@@ -192,3 +192,8 @@ plugins:
   enabled:
     - hindsight
   disabled: []
+mcp_servers:
+  memlord:
+    headers:
+      Authorization: Bearer ${MCP_MEMLORD_API_KEY}
+    url: http://memlord:8000/mcp

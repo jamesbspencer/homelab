@@ -39,13 +39,15 @@ searxng/config/settings.yml
 
 # Hermes data
 hermes/*
-!hermes/config.yaml
+hermes/config.yaml
+!hermes/config.yaml.example
 !hermes/SOUL.md
 !hermes/scripts/
 hermes/scripts/*
 !hermes/scripts/hermes_mcp_server.py
 !hermes/scripts/notify.sh
 !hermes/scripts/pgvector-maintenance.sh
+!hermes/scripts/sync-hindsight-to-memlord.py
 !hermes/skills/
 hermes/skills/*
 !hermes/skills/productivity/
