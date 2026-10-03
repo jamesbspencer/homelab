@@ -7,6 +7,22 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-10-03]
+
+### Added
+- **Automated Database & Vector Maintenance Pipeline**:
+  - Implemented [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh) to automate periodic health and storage optimization for the homelab's `pgvector` PostgreSQL cluster.
+  - **HNSW Vector Index Rebuilds**: Executes non-blocking `REINDEX TABLE CONCURRENTLY` for vector tables (`memory_units`, `mental_models`) and GIN full-text search indexes in Hindsight to prevent index graph fragmentation and search latency degradation.
+  - **Spend Log & Task State Rotation**: Automatically exports aged records to compressed gzip CSV archives under `./pgvector/archives/` before pruning `LiteLLM_SpendLogs` (> 30 days default) and completed/failed `hindsight.async_operations` (> 14 days default).
+  - **Cluster Vacuuming**: Executes `VACUUM (ANALYZE)` across `hindsight`, `litellm`, `authentik`, and `gitea` to reclaim storage and refresh PostgreSQL optimizer statistics.
+  - **ntfy Push Notifications**: Dispatches formatted completion summaries (reclaimed counts, sizes, durations) to user devices via [`scripts/notify.sh`](file:///data/homelab/scripts/notify.sh).
+  - **Hermes Cron Automation**: Registered weekly scheduled job (`6ff939ca35e2`, `0 3 * * 0`) in Hermes Agent's background scheduler with `--no-agent` mode for zero LLM overhead.
+  - **Hermes DevOps Skill**: Created the `database-maintenance` skill ([`hermes/skills/devops/database-maintenance/SKILL.md`](file:///data/homelab/hermes/skills/devops/database-maintenance/SKILL.md)) for conversational inspection and on-demand maintenance runs.
+- **Push Notification Loopback Resolve**:
+  - Enhanced [`scripts/notify.sh`](file:///data/homelab/scripts/notify.sh) with automatic Traefik loopback resolve (`--resolve push.spencer.lan:443:127.0.0.1`), ensuring push notifications dispatch reliably from host scripts when local LAN DNS is not configured on the host machine.
+
+---
+
 ## [2026-10-01]
 
 ### Added

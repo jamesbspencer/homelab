@@ -110,3 +110,35 @@ docker compose exec -T pgvector pg_dump -U postgres hindsight > hindsight_backup
 # Backup entire pgvector cluster
 docker compose exec -T pgvector pg_dumpall -U postgres > pgvector_all_backup_$(date +%Y%m%d).sql
 ```
+
+---
+
+## 🧹 Periodic Maintenance & Vector Optimization Automation
+
+To prevent unbounded table growth, HNSW vector graph fragmentation, and optimizer statistic decay, an automated pipeline is provided by [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh):
+
+### Pipeline Operations
+1. **Concurrent HNSW Vector Reindexing**: Runs `REINDEX TABLE CONCURRENTLY memory_units;` and `REINDEX TABLE CONCURRENTLY mental_models;` in Hindsight to rebuild vector indexes without locking reads or writes.
+2. **Spend Log Archival & Pruning**: Archives aged `LiteLLM_SpendLogs` (> 30 days) to compressed gzip CSVs in `./pgvector/archives/` before deleting rows.
+3. **Async Task State Pruning**: Archives and prunes finished tasks in `hindsight.async_operations` (> 14 days) and aged `llm_requests`.
+4. **Cluster-wide Vacuuming**: Runs `VACUUM (ANALYZE)` across `hindsight`, `litellm`, `authentik`, and `gitea` to reclaim space and update PostgreSQL query planner statistics.
+5. **Push Notifications**: Automatically dispatches a formatted run summary to Spencer's mobile and desktop devices via the self-hosted `ntfy` push gateway.
+
+### Manual Execution
+```bash
+# Preview operations without altering tables (Simulated)
+./scripts/pgvector-maintenance.sh --dry-run
+
+# Run full live maintenance
+./scripts/pgvector-maintenance.sh
+
+# Custom retention windows (e.g., 60 days spend, 30 days async tasks)
+./scripts/pgvector-maintenance.sh --spend-days 60 --async-days 30
+```
+
+### Scheduled Hermes Automation
+Scheduled natively via the Hermes Agent scheduler (`hermes cron`):
+* **Job ID**: `6ff939ca35e2`
+* **Schedule**: `0 3 * * 0` (Weekly every Sunday at 03:00 UTC)
+* **Mode**: `--no-agent` (runs script directly with zero LLM token overhead and dispatches ntfy alert)
+* **Agent Skill**: Hermes possesses the `database-maintenance` skill (`hermes/skills/devops/database-maintenance/SKILL.md`) enabling on-demand conversational execution.
