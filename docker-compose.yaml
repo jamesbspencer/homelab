@@ -433,6 +433,7 @@ services:
     ports:
       - "9119:9119"
     volumes:
+      - ./hermes:/data/homelab/hermes
       - ./hermes:/opt/data
       - ./hermes/init/03-custom-init.sh:/etc/cont-init.d/03-custom-init:ro
       - /var/run/docker.sock:/var/run/docker.sock
@@ -444,6 +445,8 @@ services:
       - "${SSO_PUBLIC_DOMAIN}:host-gateway"
       - "${HERMES_PUBLIC_DOMAIN}:host-gateway"
     environment:
+      - HERMES_HOME=/data/homelab/hermes
+      - HERMES_WRITE_SAFE_ROOT=/data/homelab/hermes:/opt/data
       - HERMES_DASHBOARD=${HERMES_DASHBOARD}
       - API_SERVER_ENABLED=${API_SERVER_ENABLED}
       - API_SERVER_KEY=${HERMES_API_KEY}

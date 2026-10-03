@@ -77,13 +77,15 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 * **Security & Isolation**:
   * **Dropped Capabilities**: `ALL` capabilities dropped, with only minimal required flags added back (`DAC_OVERRIDE`, `CHOWN`, `FOWNER`).
   * **Privilege Restrictions**: `no-new-privileges` enforced to block privilege escalation.
-  * **Storage Architecture**: `/workspace` is bind-mounted directly to `/data/homelab/hermes/workspace` on the host for persistent data and code across runs, while `/home` (1 GB tmpfs) and `/root` (1 GB tmpfs) run in-memory tmpfs scratch spaces.
+  * **Storage Architecture**: `/workspace` is bind-mounted directly to `/data/homelab/hermes/workspace` on the host for persistent data and code across runs, while `/home` (1 GB tmpfs) and `/root` (1 GB tmpfs) run in-memory tmpfs scratch spaces. The main container mounts `./hermes` at both `/data/homelab/hermes` and `/opt/data` with `HERMES_HOME=/data/homelab/hermes` to maintain host-container path parity, preventing Docker from creating stray `/opt/data` directories when spawning sibling sandbox containers.
   * **Process Limits**: PID ceiling (`256`) and shared memory size (`1 GB`).
 
 ### 3. Environment Variables (`.env`)
 
 | Variable | Reference / Value | Purpose |
 |---|---|---|
+| `HERMES_HOME` | `/data/homelab/hermes` | Agent root directory matching host path for sibling Docker mounts |
+| `HERMES_WRITE_SAFE_ROOT` | `/data/homelab/hermes:/opt/data` | Allowed filesystem write prefixes for agent file tools |
 | `HERMES_API_KEY` | `${HERMES_API_KEY}` | API Server authentication key |
 | `HERMES_MCP_KEY` | `${HERMES_MCP_KEY}` | MCP Server Bearer authentication token |
 | `HERMES_PROVIDER` | `custom` | LLM backend provider type |
