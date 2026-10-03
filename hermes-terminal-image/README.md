@@ -113,8 +113,8 @@ All binaries should resolve directly without installation delays.
 The `tea` CLI provides a native interface to interact with Gitea repositories, issues, pull requests, releases, and milestones from within the terminal sandbox:
 
 ```bash
-# 1. Log in to homelab Gitea instance (using personal access token)
-tea login add --name homelab --url https://gitea.spencer.lan --token <GITEA_TOKEN>
+# 1. Log in to homelab Gitea instance (using personal access token; use --insecure for self-signed TLS)
+tea login add --name homelab --url https://git.spencer.lan --token <GITEA_TOKEN> --insecure
 
 # 2. List or clone repositories
 tea repos

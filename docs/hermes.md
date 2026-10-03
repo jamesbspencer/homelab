@@ -216,13 +216,20 @@ Users and the agent can explicitly trigger skill distillation via the `/learn` s
   * `## Pitfalls`: Known limitations.
   * `## Verification`: Concrete test commands.
 
-### 4. Deepened Hindsight Memory Integration
+### 4. Gitea & `tea` CLI Integration (`gitea`, `tea`)
+Hermes includes an active skill for self-hosted Gitea repository management using the official `tea` CLI installed in `hermes-terminal:latest`:
+* **Skill Locations**: [`hermes/skills/devops/gitea/`](file:///data/homelab/hermes/skills/devops/gitea/SKILL.md) (with `tea` and `gitea-tea` aliases).
+* **Endpoint**: Targets `https://git.spencer.lan` (pass `--insecure` for self-signed certificates or connect to internal `http://gitea:3000`).
+* **Capabilities**: Issue tracking, PR workflows, release management, branch protections, labels, milestones, and API operations.
+
+### 5. Deepened Hindsight Memory Integration
 The memory engine (`hermes/hindsight/config.json`) is enriched with:
+
 * **Bank Missions**: Dedicated retain and reflect missions steering the extraction of architectural conventions, tool workarounds, and user preferences.
 * **Multi-Layer Fact Retrieval**: `recall_types: "observation,world,experience"` delivering both consolidated observations and granular facts.
 * **Attribution**: Persistent retention tags (`["homelab", "agent-learning"]`) for cross-session queryability.
 
-### 5. Scheduled Jobs & Autonomous Cron Tasks
+### 6. Scheduled Jobs & Autonomous Cron Tasks
 Hermes manages persistent scheduled tasks with `--no-agent` zero-token script execution or scheduled agent invocations:
 * **Hindsight to Memlord Sync (`hindsight-memlord-sync`)**:
   * **Schedule**: Hourly (`0 * * * *`)
