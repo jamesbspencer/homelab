@@ -238,7 +238,7 @@ Hermes manages persistent scheduled tasks with `--no-agent` zero-token script ex
 | Host Path | Container Path | Purpose |
 |---|---|---|
 | `./hermes` | `/opt/data` | Persists agent state, databases (`state.db`, `kanban.db`, `projects.db`), skills, memories, and configuration |
-| `./hermes/init/03-mcp-server.sh` | `/etc/cont-init.d/03-mcp-server` | Read-only s6 initialization script auto-supervising the MCP server on container boot |
+| `./hermes/init/03-custom-init.sh` | `/etc/cont-init.d/03-custom-init` | Read-only s6 initialization script auto-supervising the MCP server, injecting internal CA certs, and applying runtime patches on container boot |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | Docker daemon socket allowing Hermes to manage ephemeral sandbox containers |
 
 

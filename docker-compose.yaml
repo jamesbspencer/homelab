@@ -434,7 +434,7 @@ services:
       - "9119:9119"
     volumes:
       - ./hermes:/opt/data
-      - ./hermes/init/03-mcp-server.sh:/etc/cont-init.d/03-mcp-server:ro
+      - ./hermes/init/03-custom-init.sh:/etc/cont-init.d/03-custom-init:ro
       - /var/run/docker.sock:/var/run/docker.sock
 
     networks:

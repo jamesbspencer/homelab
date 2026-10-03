@@ -27,6 +27,11 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - **Hermes DevOps Skill**: Created the `database-maintenance` skill ([`hermes/skills/devops/database-maintenance/SKILL.md`](file:///data/homelab/hermes/skills/devops/database-maintenance/SKILL.md)) for conversational inspection and on-demand maintenance runs.
 - **Push Notification Loopback Resolve**:
   - Enhanced [`scripts/notify.sh`](file:///data/homelab/scripts/notify.sh) with automatic Traefik loopback resolve (`--resolve push.spencer.lan:443:127.0.0.1`), ensuring push notifications dispatch reliably from host scripts when local LAN DNS is not configured on the host machine.
+- **Hermes Custom Init & Skills Hub Quarantine Fix**:
+  - Renamed [`hermes/init/03-mcp-server.sh`](file:///data/homelab/hermes/init/03-mcp-server.sh) to [`hermes/init/03-custom-init.sh`](file:///data/homelab/hermes/init/03-custom-init.sh) and updated S6 volume mounts in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml), [`.gitignore`](file:///data/homelab/.gitignore), and [`docs/hermes.md`](file:///data/homelab/docs/hermes.md) to reflect its expanded role handling boot supervision, custom CA injection, OIDC cookie handling, and runtime patching.
+  - Resolved `FileExistsError` during skills hub bundle quarantine when community ZIPs contain directory entries without trailing slashes.
+  - Integrated runtime filtering into `03-custom-init.sh` for `skills_hub_clawhub.py` and `skills_hub_install.py` to strip directory-name entries before file writing and quarantine scanning.
+
 
 ---
 

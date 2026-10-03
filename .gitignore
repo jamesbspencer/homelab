@@ -60,7 +60,7 @@ hermes/skills/devops/*
 !hermes/skills/devops/database-maintenance/*
 !hermes/init/
 hermes/init/*
-!hermes/init/03-mcp-server.sh
+!hermes/init/03-custom-init.sh
 !hermes/hindsight/
 hermes/hindsight/*
 !hermes/hindsight/config.json
