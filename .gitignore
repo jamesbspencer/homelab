@@ -98,3 +98,7 @@ gitea/*
 homepage/config/logs/*
 !homepage/config/logs/.gitkeep
 
+# Memlord ONNX model and tokenizer data
+memlord/onnx/*
+!memlord/onnx/.gitkeep
+

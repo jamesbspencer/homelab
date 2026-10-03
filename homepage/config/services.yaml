@@ -35,6 +35,12 @@
         description: "Agent Gateway API & MCP Server (:8765)"
         server: local-docker
         container: hermes
+    - Memlord MCP Memory:
+        icon: mdi-brain-freeze-outline
+        href: https://memlord.spencer.lan
+        description: "Hybrid Vector & BM25 MCP Memory (:8000)"
+        server: local-docker
+        container: memlord
 
 - Search & Scrape:
     - SearXNG:
@@ -59,7 +65,7 @@
         container: traefik
     - Authentik IAM:
         icon: authentik.png
-        href: https://sso.spencer.lan
+        href: https://sso.example.com
         description: "Centralized Identity & Single Sign-On"
         server: local-docker
         container: authentik-server

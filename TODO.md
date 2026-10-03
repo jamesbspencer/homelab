@@ -14,10 +14,8 @@ This file tracks upcoming features, architectural improvements, and exploration 
 
 ---
 
-### 2. 📲 Self-Hosted Push Notifications & System Alerts (ntfy / Gotify)
-- [x] **Deploy Notification Gateway**: Run a lightweight notification server (`ntfy` or `gotify`) behind Traefik (`push.spencer.lan`) with Authentik ForwardAuth protecting the web interface.
-- [ ] **Backup & Security Event Dispatch**: Configured CrowdSec IP ban alerts and Authentik security events to dispatch to ntfy; pending local NAS backup script wiring in Phase 2.
-- [x] **Hermes Notification Webhook**: Provided Hermes Agent with the `push-notifications` skill, helper script (`/opt/data/scripts/notify.sh`), and `send_notification` MCP tool to dispatch alerts to `http://ntfy:80/hermes`.
+### 2. 📲 Self-Hosted Push Notifications & System Alerts (ntfy)
+- [ ] **Backup Event Dispatch**: Wire automated backup and NAS replication events to dispatch alerts to ntfy upon pipeline deployment.
 
 ---
 
@@ -49,22 +47,7 @@ This file tracks upcoming features, architectural improvements, and exploration 
 
 ---
 
-### 7. 🔍 Periodic Database & Vector Maintenance Automation
-- [x] **Automated Vector Index Optimization**: Implemented scheduled maintenance pipeline (`scripts/pgvector-maintenance.sh`) executing concurrent HNSW vector and GIN text index rebuilds (`memory_units`, `mental_models`) in Hindsight.
-- [x] **Session & Spend Log Rotation**: Configured automated archival (gzip CSVs in `pgvector/archives/`) and pruning for aged `LiteLLM_SpendLogs` (> 30d) and Hindsight `async_operations` (> 14d) with cluster-wide `VACUUM ANALYZE`.
-- [x] **Hermes Proactive Cron & Alerts**: Registered weekly background maintenance job (`6ff939ca35e2`) in Hermes scheduler with ntfy push completion notifications and provided Hermes with the `database-maintenance` skill.
-
----
-
-### 8. 🧠 Agentic Memory & Reinforcement Learning MCP Server (memlord)
-- [ ] **Evaluate Memlord Architecture**: Investigate [`memlord`](https://github.com/MyrikLD/memlord) (self-hosted MCP memory server with reinforcement learning, time decay, and self-correcting agent memory) as a specialized per-project memory layer or alternative alongside Hindsight.
-- [ ] **MCP Server Deployment**: Deploy `memlord` as a container on the `ai` network and configure it as an MCP server for Hermes Agent.
-- [ ] **Memory Decay & Weight Tuning**: Validate memory persistence, weight-based reinforcement adjustments, and time decay across Hermes agent sessions.
-
----
-
-### 9. 🧭 Centralized Homelab Dashboard & Status Portal (Homepage)
-- [x] **Deploy Homepage Service**: Containerized Homepage (`ghcr.io/gethomepage/homepage`) deployed on `net1` and `ai` networks behind Traefik (`home.spencer.lan`, `homepage.spencer.lan`) with Authentik ForwardAuth SSO.
-- [x] **Service Grouping & Icons**: Declarative `services.yaml` cataloging AI & Agents, Core Infrastructure, Search & Intelligence, Developer Tools & Ops, and Backend Storage.
-- [x] **Live Container & System Telemetry**: Read-only Docker socket binding (`/var/run/docker.sock:ro`) for live container states, CPU, memory, and SearXNG search widget.
-- [x] **Authentik Outpost Proxy Registration**: Completed binding of `https://home.spencer.lan` in the Authentik Admin interface under Embedded Outpost.
+### 7. 🧠 Agentic Memory & Reinforcement Learning MCP Server (memlord)
+- [x] **Evaluate Memlord Architecture**: Investigate [`memlord`](https://github.com/MyrikLD/memlord) (self-hosted MCP memory server with hybrid BM25 + pgvector KNN, local ONNX embeddings, workspaces, and dreaming consolidation) as a specialized per-project memory layer alongside Hindsight.
+- [x] **MCP Server Deployment**: Deploy `memlord` container on `net1`, `ai`, and `db` networks with Traefik routing, Authentik ForwardAuth for Web UI, direct `/mcp` ingress, and dedicated `memlord` pgvector database.
+- [x] **Client & Tooling Integration**: Document MCP connections for Hermes Agent, Claude Desktop, and Cursor, and register Memlord in Homepage dashboard.
