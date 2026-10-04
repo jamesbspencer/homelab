@@ -103,7 +103,7 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 | `HINDSIGHT_BANK_ID` | `hermes` | Default memory bank identifier |
 | `HERMES_TERMINAL_ENV` | `docker` | Terminal execution environment driver |
 | `HERMES_TERMINAL_DOCKER_IMAGE` | `hermes-terminal:latest` | Container image used for sandbox execution |
-| `HERMES_TERMINAL_DOCKER_VOLUMES` | `["/data/homelab/hermes/workspace:/workspace"]` | Host-to-sandbox volume mounts for terminal |
+| `HERMES_TERMINAL_DOCKER_VOLUMES` | `["/data/homelab/hermes/workspace:/workspace", "/data/repos:/data/repos"]` | Host-to-sandbox volume mounts for terminal |
 
 ---
 
@@ -218,7 +218,7 @@ Users and the agent can explicitly trigger skill distillation via the `/learn` s
 
 ### 4. Gitea & `tea` CLI Integration (`gitea`, `tea`)
 Hermes includes an active skill for self-hosted Gitea repository management using the official `tea` CLI installed in `hermes-terminal:latest`:
-* **Skill Locations**: [`hermes/skills/devops/gitea/`](file:///data/homelab/hermes/skills/devops/gitea/SKILL.md) (with `tea` and `gitea-tea` aliases).
+* **Skill Locations**: Maintained in centralized AI skills repo [`/data/repos/ai-skills/skills/gitea/`](file:///data/repos/ai-skills/skills/gitea/SKILL.md) and exposed via Hermes `skills.external_dirs` (with backwards-compatible symlinks at [`hermes/skills/devops/gitea/`](file:///data/homelab/hermes/skills/devops/gitea/SKILL.md), `tea`, and `gitea-tea`).
 * **Endpoint**: Targets `https://git.spencer.lan` (pass `--insecure` for self-signed certificates or connect to internal `http://gitea:3000`).
 * **Capabilities**: Issue tracking, PR workflows, release management, branch protections, labels, milestones, and API operations.
 
@@ -247,6 +247,7 @@ Hermes manages persistent scheduled tasks with `--no-agent` zero-token script ex
 | Host Path | Container Path | Purpose |
 |---|---|---|
 | `./hermes` | `/opt/data` | Persists agent state, databases (`state.db`, `kanban.db`, `projects.db`), skills, memories, and configuration |
+| `/data/repos` | `/data/repos` | Shared repositories folder (including central AI skills library at `/data/repos/ai-skills`) mounted into Hermes and `hermes-terminal` |
 | `./hermes/init/03-custom-init.sh` | `/etc/cont-init.d/03-custom-init` | Read-only s6 initialization script auto-supervising the MCP server, injecting internal CA certs, and applying runtime patches on container boot |
 | `/var/run/docker.sock` | `/var/run/docker.sock` | Docker daemon socket allowing Hermes to manage ephemeral sandbox containers |
 

@@ -13,6 +13,7 @@ terminal:
   docker_mount_cwd_to_workspace: true
   docker_volumes:
     - /data/homelab/hermes/workspace:/workspace
+    - /data/repos:/data/repos
   singularity_image: docker://hermes-terminal:latest
   modal_image: hermes-terminal:latest
   daytona_image: hermes-terminal:latest
@@ -50,6 +51,8 @@ compression:
   proactive_prune_min_result_chars: 4000
 skills:
   creation_nudge_interval: 5
+  external_dirs:
+    - /data/repos/ai-skills/skills
   disabled:
     - airtable
     - arxiv

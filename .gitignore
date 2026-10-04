@@ -58,8 +58,7 @@ hermes/skills/productivity/*
 hermes/skills/devops/*
 !hermes/skills/devops/database-maintenance/
 !hermes/skills/devops/database-maintenance/*
-!hermes/skills/devops/gitea/
-!hermes/skills/devops/gitea/**
+!hermes/skills/devops/gitea
 !hermes/skills/devops/tea
 !hermes/skills/devops/gitea-tea
 !hermes/init/
