@@ -157,7 +157,8 @@ Configured in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) 
 | `GITEA_PUBLIC_DOMAIN` | `git.example.com` | Public WAN domain for Traefik Let's Encrypt |
 | `GITEA_OIDC_CLIENT_ID` | `gitea` | Authentik OIDC client identifier |
 | `GITEA_OIDC_CLIENT_SECRET`| `<secure-generated>` | Authentik OIDC client secret |
-| `GITEA__server__DOMAIN` | `git.spencer.lan` | Primary domain name displayed in clone URLs |
+| `GITEA__server__DOMAIN` | `${GITEA_PUBLIC_DOMAIN:-git.spencer.lan}` | Primary domain name displayed in clone URLs |
+| `GITEA__server__ROOT_URL`| `https://${GITEA_PUBLIC_DOMAIN:-git.spencer.lan}/` | Canonical base URL for web UI and OAuth2 callbacks |
 | `GITEA__server__SSH_PORT`| `2222` | External SSH port exposed on host |
 
 ---
