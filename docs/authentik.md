@@ -14,7 +14,7 @@ Authentik is an all-in-one, modern open-source Identity Provider (IdP) and singl
                                               ▼
 ┌───────────────────────────────────────── Traefik ─────────────────────────────────────────┐
 │                                                                                           │
-│   Incoming Request (e.g. https://hindsight.spencer.lan or https://traefik.spencer.lan)     │
+│   Incoming Request (e.g. https://home.spencer.lan or https://traefik.spencer.lan)       │
 │                                              │                                            │
 │                                              ▼ ForwardAuth Check                          │
 │                     http://authentik-server:9000/outpost.goauthentik.io/auth/traefik      │
@@ -23,7 +23,7 @@ Authentik is an all-in-one, modern open-source Identity Provider (IdP) and singl
 │                        │ 200 OK (Authorized)                       │ 302 Redirect         │
 │                        ▼                                           ▼                      │
 │               Proxied Web Service                     Redirect to Login Portal            │
-│               (Hindsight, Traefik Dash)               https://sso.spencer.lan/if/flow/... │
+│               (Homepage, Traefik Dash)                https://sso.spencer.lan/if/flow/... │
 │                                                                                           │
 └───────────────────────────────────────────────────────────────────────────────────────────┘
                                               │
@@ -84,27 +84,27 @@ When the containers start for the first time:
 
 ## 🛡️ Protecting Applications with Traefik ForwardAuth
 
-To protect any web dashboard (e.g. Hindsight, Traefik Dashboard, or future services) with Authentik:
+To protect any web dashboard (e.g. Homepage, Dozzle, Traefik Dashboard, or future services) with Authentik:
 
 ### Step 1: Create a Provider in Authentik Admin
 1. Go to **Applications** ➡️ **Providers** ➡️ **Create**.
 2. Select **Proxy Provider**.
-3. **Name**: `Hindsight Provider` (or service name).
+3. **Name**: `Homepage Provider` (or service name).
 4. **Mode**: `Forward auth (single application)`.
-5. **External Host**: `https://hindsight.spencer.lan`.
+5. **External Host**: `https://home.spencer.lan`.
 6. Click **Finish**.
 
 ### Step 2: Create the Application in Authentik Admin
 1. Go to **Applications** ➡️ **Applications** ➡️ **Create**.
-2. **Name**: `Hindsight`.
-3. **Slug**: `hindsight`.
-4. **Provider**: Select the `Hindsight Provider` created in Step 1.
+2. **Name**: `Homepage`.
+3. **Slug**: `homepage`.
+4. **Provider**: Select the `Homepage Provider` created in Step 1.
 5. Click **Create**.
 
 ### Step 3: Bind to the Embedded Outpost
 1. Go to **Applications** ➡️ **Outposts**.
 2. Edit the default **`authentik Embedded Outpost`**.
-3. In the **Applications** multi-select field, select your newly created application (e.g. `Hindsight`).
+3. In the **Applications** multi-select field, select your newly created application (e.g. `Homepage`).
 4. Click **Update**.
 
 ### Step 4: Add Traefik Labels in `docker-compose.yaml`
@@ -113,18 +113,18 @@ Attach the `authentik@file` middleware to the container's Traefik router:
 ```yaml
 labels:
   - "traefik.enable=true"
-  - "traefik.http.routers.hindsight.rule=Host(`hindsight.spencer.lan`)"
-  - "traefik.http.routers.hindsight.entrypoints=websecure"
-  - "traefik.http.routers.hindsight.tls=true"
-  - "traefik.http.routers.hindsight.middlewares=authentik@file"
-  - "traefik.http.services.hindsight.loadbalancer.server.port=9999"
+  - "traefik.http.routers.homepage.rule=Host(`home.spencer.lan`)"
+  - "traefik.http.routers.homepage.entrypoints=websecure"
+  - "traefik.http.routers.homepage.tls=true"
+  - "traefik.http.routers.homepage.middlewares=authentik@file"
+  - "traefik.http.services.homepage-svc.loadbalancer.server.port=3000"
 ```
 
 ---
 
 ## 🔌 Integrating OIDC (OpenID Connect) Applications
 
-For applications that natively support OAuth2/OIDC (e.g. Hermes Agent, Nextcloud, Grafana):
+For applications that natively support OAuth2/OIDC (e.g. Gitea, LiteLLM, Nextcloud, Grafana):
 
 1. In Authentik, an OAuth2/OpenID Provider can be created via Admin UI or programmatically via the **Authentik REST API** (`/api/v3/`):
    - **Endpoint**: `https://<sso-public-domain>/api/v3/providers/oauth2/`
@@ -133,20 +133,15 @@ For applications that natively support OAuth2/OIDC (e.g. Hermes Agent, Nextcloud
    - **Redirect URIs**: Application callback URLs (Mode: `strict`, Type: `authorization`)
    - **Signing Key**: `authentik Self-signed Certificate` (RS256)
    - **Client ID & Secret**: Application credentials
-2. **Hermes Agent Integration**:
-   - **Issuer URL**: `https://<sso-public-domain>/application/o/hermes/`
-   - **Discovery Metadata**: `https://<sso-public-domain>/application/o/hermes/.well-known/openid-configuration`
-   - **Client ID**: `hermes`
-   - **Client Secret**: In `.env` as `HERMES_DASHBOARD_OIDC_CLIENT_SECRET`
-   - **Public Callback**: `https://<hermes-public-domain>/auth/callback`
-   - Hermes activates its native `self-hosted` OIDC provider plugin, redirecting users seamlessly to Authentik for single sign-on without Traefik proxy middleware interception.
-3. **LiteLLM Proxy Integration**:
+2. **LiteLLM Proxy Integration**:
    - **Issuer URL**: `https://<sso-public-domain>/application/o/litellm/`
    - **Discovery Metadata**: `https://<sso-public-domain>/application/o/litellm/.well-known/openid-configuration`
    - **Client ID**: `litellm`
    - **Client Secret**: In `.env` as `LITELLM_OIDC_CLIENT_SECRET`
    - **Redirect URI**: `https://llm.spencer.lan/sso/callback`
    - LiteLLM uses standard Generic OIDC SSO environment variables to authenticate users against Authentik for the Web Admin UI, maintaining machine token bypass for `/v1/*` API endpoints.
+3. **Archived / Decommissioned Integrations**:
+   - **Hermes Agent** (Archived): Formerly used Client ID `hermes` with issuer `https://<sso-public-domain>/application/o/hermes/`. Retired alongside Hermes Agent.
 
 ---
 
@@ -154,8 +149,6 @@ For applications that natively support OAuth2/OIDC (e.g. Hermes Agent, Nextcloud
 
 Autonomous agent tools and machine-to-machine APIs must not be blocked by SSO redirects. The following endpoints bypass ForwardAuth by omitting the `authentik@file` middleware:
 
-- `https://mcp.spencer.lan/*` (Hermes Model Context Protocol server)
-- `https://hermes-api.spencer.lan/*` (Hermes Gateway and worker API)
 - `https://llm.spencer.lan/v1/*` (LiteLLM OpenAI-compatible router and health probes)
 
 ---

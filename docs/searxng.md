@@ -6,17 +6,17 @@ SearXNG is a privacy-respecting metasearch engine aggregating search results acr
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Centralized search query backend for Hermes Agent and Firecrawl.
+* **Role**: Centralized search query backend for Open WebUI, Antigravity, and Firecrawl.
 * **Container Name**: `searxng`
 * **Image**: `docker.io/searxng/searxng:${SEARXNG_VERSION:-latest}`
 * **Internal Port**: `8080`
 * **Networks**:
-  * `ai`: Available to Hermes Agent and Firecrawl.
+  * `ai`: Available to Open WebUI, Antigravity, and Firecrawl.
   * `redis`: Connected to Valkey for search query and engine response caching.
 
 ```mermaid
 graph LR
-    Hermes[Hermes Agent] -->|Search Query| SearXNG[SearXNG :8080]
+    Clients[Open WebUI / Antigravity] -->|Search Query| SearXNG[SearXNG :8080]
     Firecrawl[Firecrawl] -->|SEARXNG_ENDPOINT| SearXNG
     SearXNG -->|Result Cache| Valkey[(Valkey Cache)]
 ```
@@ -48,6 +48,6 @@ graph LR
 ## 🛠️ Testing Queries Internally
 
 ```bash
-docker compose exec hermes curl -s "http://searxng:8080/search?q=homelab&format=json"
+docker compose exec open-webui curl -s "http://searxng:8080/search?q=homelab&format=json"
 ```
 

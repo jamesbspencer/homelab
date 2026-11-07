@@ -16,10 +16,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **Open WebUI** | Multi-model generative AI chat & memory client | `https://chat.spencer.lan` / `https://ai.spencer.lan` (:8080) | [Open WebUI Guide](docs/open-webui.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
 | **MoMoE** | Hybrid MoE inference engine (GPU + 61 GiB RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](docs/momoe.md) |
-| **Hermes Agent** | Autonomous AI agent runtime, dashboard & MCP server | `https://hermes.spencer.lan` / `https://ai.spencer.lan` / `https://mcp.spencer.lan` | [Hermes Guide](docs/hermes.md) |
-| **Hindsight** | Long-term contextual memory engine for agents | `https://hindsight.spencer.lan` (:9999) / `:8888` | [Hindsight Guide](docs/hindsight.md) |
-| **Memlord** | MCP vector & BM25 memory server | `https://memlord.spencer.lan` (:8000), `/mcp` | [Memlord Guide](docs/memlord.md) |
-| **pgvector** | Unified vector & relational DB for Hindsight, LiteLLM & Authentik | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
+| **pgvector** | Unified vector & relational DB for LiteLLM, Open WebUI, Authentik & Gitea | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](docs/valkey.md) |
@@ -50,12 +47,7 @@ flowchart TB
     subgraph Ingress ["🚪 Proxied Endpoints (net1)"]
         Traefik -->|sso / login| Authentik
         Traefik -->|chat / ai| OpenWebUI["Open WebUI :8080"]
-        Traefik -->|hermes| HermesDash["Dashboard :9119"]
-        Traefik -->|hermes-api| HermesAPI["API :8642"]
-        Traefik -->|mcp| HermesMCP["MCP :8765"]
         Traefik -->|llm| LiteLLMUI["LiteLLM :4000"]
-        Traefik -->|hindsight| HindsightUI["Hindsight :9999"]
-        Traefik -->|memlord| MemlordUI["Memlord :8000"]
         Traefik -->|logs| DozzleUI["Dozzle :8080"]
         Traefik -->|push| Ntfy["ntfy :80"]
         Traefik -->|vault| OpenBaoUI["OpenBao :8200"]
@@ -66,24 +58,14 @@ flowchart TB
 
     %% AI Agent & Inference Layer
     subgraph AICore ["🧠 AI Agent & Inference Layer (ai)"]
-        Hermes["Nous Hermes Agent Runtime\n(Supervised Gateway & Background Review)"]
         LiteLLM["LiteLLM Proxy\n(Unified Router & Fallbacks)"]
         Ollama["Ollama (GPU Accelerated)\ngemma4:12b | nomic-embed"]
         MoMoE["MoMoE Hybrid MoE (GPU + RAM)\nornith-1.5-35b (64k)"]
-        Hindsight["Hindsight Memory Engine\n(Long-Term Memory & Graphs)"]
-        Sandbox["Docker Sandbox\n(Ephemeral Container Runtime)"]
         
-        HermesDash -.- Hermes
-        HermesAPI -.- Hermes
-        HermesMCP -.- Hermes
-
-        Hermes -->|LLM Requests| LiteLLM
-        Hermes -->|Memory Retain / Recall| Hindsight
-        Hermes -->|Code & Process Exec| Sandbox
+        OpenWebUI -->|LLM Requests| LiteLLM
         LiteLLM -->|Local GPU Inference| Ollama
         LiteLLM -->|Hybrid MoE 64k| MoMoE
         LiteLLM -.->|Optional Cloud| CloudLLM[OpenRouter / Groq]
-        Hindsight -->|Fact Extraction| Ollama
     end
 
     %% Tools, Search & Scraping Cluster
@@ -100,22 +82,21 @@ flowchart TB
             Firecrawl --> NuqPG
         end
 
-        Hermes -->|Web Search| SearXNG
-        Hermes -->|Web Scraping & Crawling| Firecrawl
+        OpenWebUI -->|Web Search| SearXNG
         Firecrawl -->|Direct Search Backend| SearXNG
     end
 
     %% Data Plane & Storage
     subgraph DataPlane ["💾 Data & Caching Plane"]
         subgraph DBNet ["db Network"]
-            PGVector[("pgvector Database\n(hindsight, litellm, authentik, gitea & memlord)")]
+            PGVector[("pgvector Database\n(litellm, openwebui, authentik & gitea)")]
         end
         subgraph CacheNet ["redis Network"]
             Valkey[("Valkey In-Memory Cache\n(Search Cache & Rate Limiting)")]
         end
     end
 
-    Hindsight -->|Vectors & Relations| PGVector
+    OpenWebUI -->|Memory & Vectors| PGVector
     LiteLLM -->|Keys & Spend Audit| PGVector
     SearXNG -->|Result Cache| Valkey
     Firecrawl -->|Rate Limiting| Valkey
@@ -145,30 +126,22 @@ flowchart TB
 │   ├── dozzle.md            # Dozzle real-time container log viewer guide
 │   ├── firecrawl.md         # Firecrawl architecture, queues & scraping
 │   ├── gitea.md             # Gitea Git repository manager & issue tracker guide
-│   ├── hermes.md            # Hermes Agent runtime, dashboard, sandbox & MCP
-│   ├── hindsight.md         # Hindsight long-term agent memory engine
 │   ├── homepage.md          # Homepage service directory & health dashboard guide
 │   ├── litellm.md           # LiteLLM Proxy model router & spend tracker
-│   ├── memlord.md           # Memlord MCP hybrid vector & BM25 memory server
 │   ├── momoe.md             # MoMoE hybrid MoE 64k inference engine guide
 │   ├── ntfy.md              # ntfy push notification gateway guide
 │   ├── ollama.md            # Ollama setup & GPU acceleration guide
 │   ├── openbao.md           # OpenBao secrets & encryption management guide
 │   ├── open-webui.md        # Open WebUI generative chat & memory client guide
-│   ├── pgvector.md          # Dedicated pgvector database for Hindsight, LiteLLM & Authentik
+│   ├── pgvector.md          # Dedicated pgvector database for LiteLLM, Open WebUI & Authentik
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
 │   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
-│   └── valkey.md            # Valkey caching & healthcheck operations
+│   ├── valkey.md            # Valkey caching & healthcheck operations
+│   └── archive/             # Archived service guides (hermes, hindsight, memlord)
 ├── authentik/               # Authentik configuration, media and templates
 ├── gitea/                   # Gitea repositories, git data and configs
-├── hermes/                  # Hermes Agent persistent state, skills, MCP scripts
-│   ├── config.yaml          # Hermes model providers, tools & memory configs
-│   ├── hindsight/           # Profile memory configuration (config.json)
-│   ├── init/                # Container s6 boot supervisor scripts (MCP server)
-│   └── scripts/             # Hermes MCP server implementation (SSE & stdio)
 ├── homepage/                # Homepage service dashboard layout & configs
 ├── litellm/                 # LiteLLM Proxy configuration (config.yaml)
-├── memlord/                 # Memlord MCP memory server data & vector models
 ├── momoe/                   # MoMoE hybrid MoE engine data, packs & entrypoint
 │   ├── data/                # Downloaded GGUF weights, packs, configs and logs
 │   └── docker-entrypoint.sh # Container startup orchestrator & CLI pass-through
@@ -241,14 +214,14 @@ docker compose exec momoe ./momoe status
 
 ### Test Internal Scraping (Firecrawl)
 ```bash
-docker compose exec hermes curl -s -X POST http://firecrawl:3002/v1/scrape \
+docker compose exec open-webui curl -s -X POST http://firecrawl:3002/v1/scrape \
   -H "Content-Type: application/json" \
   -d '{"url":"https://example.com"}'
 ```
 
 ### Test Internal Search (SearXNG)
 ```bash
-docker compose exec hermes curl -s "http://searxng:8080/search?q=docker&format=json"
+docker compose exec open-webui curl -s "http://searxng:8080/search?q=docker&format=json"
 ```
 
 ### Test Database Readiness

@@ -45,9 +45,7 @@ graph TD
     Traefik[Traefik Proxy] -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy :4000]
 
     subgraph Clients
-        Hermes[Hermes Agent] -->|http://litellm:4000/v1| LiteLLM
-        Hindsight[Hindsight Memory] -->|http://litellm:4000/v1| LiteLLM
-        Memlord[Memlord MCP] -->|Embeddings / LLM| LiteLLM
+        OpenWebUI[Open WebUI] -->|http://litellm:4000/v1| LiteLLM
         IDEs[Claude Code / IDEs / LAN] -->|https://llm.spencer.lan| LiteLLM
     end
 
@@ -63,11 +61,11 @@ All homelab AI traffic is already unified behind [LiteLLM Proxy](../../docs/lite
 - Register the backend in `litellm/config.yaml` (e.g., `model_name: local-moe-large`).
 - Every downstream service automatically gains access with centralized key management, PostgreSQL (`pgvector`) spend/prompt logging, and Authentik OIDC SSO protection intact.
 
-### B. Stronger Autonomous Loops in Hermes Agent
-[Hermes Agent](../../docs/hermes.md) relies heavily on multi-step tool calling, MCP orchestration, and Docker sandbox code execution. Dense 12B–14B models can occasionally lose track of complex JSON tool schemas or multi-turn debugging loops over 64k contexts. Routing complex tasks to a large local MoE model gives Hermes significantly stronger planning and coding reliability without sending private homelab data to external cloud providers (Groq, OpenRouter, DeepSeek).
+### B. Stronger Autonomous Loops & Large Context Reasoning
+Routing complex tasks to a large local MoE model gives Open WebUI, Antigravity, and autonomous scripts significantly stronger planning and coding reliability over 64k contexts without sending private homelab data to external cloud providers (Groq, OpenRouter, DeepSeek).
 
-### C. Higher-Quality Memory Synthesis in Hindsight & Memlord
-[Hindsight](../../docs/hindsight.md) and [Memlord](../../docs/memlord.md) perform background entity extraction, fact deduplication, and reflective memory synthesis. Because background consolidation jobs are asynchronous and not latency-sensitive to the millisecond, running them against a large local MoE model produces cloud-grade knowledge extraction at zero API cost.
+### C. High-Quality Document & Retrieval Synthesis
+Open WebUI and agent pipelines perform background knowledge indexing, fact deduplication, and reflective synthesis. Because background consolidation jobs are asynchronous and not latency-sensitive to the millisecond, running them against a large local MoE model produces cloud-grade knowledge extraction at zero API cost.
 
 ### D. Local Anthropic/OpenAI Harness for Claude Code & Developer Tools
 Both Strata and MoMoE natively implement the **Anthropic Messages API (`/v1/messages`)** alongside OpenAI's `/v1/chat/completions`, specifically tuned for agentic coding harnesses (Claude Code, Cursor, OpenCode, Aider). Exposed through LiteLLM (`https://llm.spencer.lan`), any workstation on `.spencer.lan` can connect to a local 100B+ MoE coding assistant.
@@ -90,12 +88,12 @@ Both Strata and MoMoE natively implement the **Anthropic Messages API (`/v1/mess
 Because the host has a single **RTX 3060 (12 GB VRAM)** for compute, running **Ollama** and a **Hybrid MoE Engine** simultaneously requires coordinating GPU memory:
 
 1. **The Contention Challenge**:
-   - **Ollama** keeps dense models resident in VRAM for its `keep_alive` window (default 5m) and serves `nomic-embed-text` for [Memlord](../../docs/memlord.md) and [Hindsight](../../docs/hindsight.md).
+   - **Ollama** keeps dense models resident in VRAM for its `keep_alive` window (default 5m) and serves `nomic-embed-text` for Open WebUI RAG and semantic embeddings.
    - **MoMoE / Strata / `ik_llama.cpp`** wants to pin a dedicated slice of VRAM (typically 6–9 GB) for hot experts, attention layers, and the KV cache.
 
 2. **Recommended Coexistence Strategies**:
    - **Strategy A — Partitioned VRAM Reservation (Always-On MoE + Embeddings)**:
-     Configure the MoE engine to cap its VRAM footprint at **~8–9 GB**, leaving **~3 GB VRAM headroom** on the RTX 3060. This allows `ollama` to keep `nomic-embed-text` (~400 MB VRAM) permanently resident for Memlord/Hindsight without out-of-memory (OOM) errors.
+     Configure the MoE engine to cap its VRAM footprint at **~8–9 GB**, leaving **~3 GB VRAM headroom** on the RTX 3060. This allows `ollama` to keep `nomic-embed-text` (~400 MB VRAM) permanently resident for Open WebUI embeddings without out-of-memory (OOM) errors.
    - **Strategy B — On-Demand Dense vs. MoE Routing**:
      Set `OLLAMA_KEEP_ALIVE=1m` (or `0` for chat models) when testing large MoE workloads, and configure model aliases in `litellm/config.yaml` (`fast-local` → Ollama dense model vs. `deep-local` → MoMoE hybrid model).
 
@@ -118,4 +116,4 @@ Because the host has a single **RTX 3060 (12 GB VRAM)** for compute, running **O
 - [x] **Phase 4: 64k Context & Multi-Agent Hardening**
   - Upgraded context window to **65,536 tokens** (`MOMOE_CONTEXT=65536`) with KV streaming across the 61 GiB DDR4 RAM arena.
   - Aligned LiteLLM with `mode: chat`, `max_tokens: 65536`, `max_input_tokens: 57344`, and dynamic `MOMOE_API_KEY` credential forwarding.
-  - Aligned with Hermes Agent Firecrawl web scraping, ending VRAM collisions between Gemma 4 and MoMoE.
+  - Aligned with autonomous Firecrawl web scraping, ending VRAM collisions between Gemma 4 and MoMoE.

@@ -25,7 +25,7 @@ In this homelab, CrowdSec pairs with the **Traefik Bouncer Plugin** (`github.com
 │                           │ Allowed                           │ Banned                    │
 │                           ▼                                   ▼                           │
 │                 Internal Homelab Services               403 Forbidden                     │
-│                 (Hermes, LiteLLM, Agent Vault)                                            │
+│                 (Open WebUI, LiteLLM, Authentik, Gitea)                                   │
 │                                                                                           │
 │   Writes access.log ───► /var/log/traefik/access.log                                      │
 └─────────────────────────────────────┬─────────────────────────────────────────────────────┘

@@ -6,13 +6,13 @@ Firecrawl is an open-source web scraping, crawling, and search engine converting
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Primary extraction, scraping, and crawling backend for Hermes Agent and homelab tools.
+* **Role**: Primary extraction, scraping, and crawling backend for Open WebUI, Antigravity, and homelab AI tools.
 * **Architecture**: Multi-process unified container backed by RabbitMQ, NuQ-Postgres, Playwright, and Valkey.
 * **Internal Port**: `3002` (Strictly internal on `ai` and `redis` networks)
 
 ```mermaid
 graph TD
-    Hermes[Hermes Agent] -->|POST /v1/scrape<br/>POST /v1/crawl| Firecrawl[Firecrawl :3002]
+    Clients[Open WebUI / Antigravity] -->|POST /v1/scrape<br/>POST /v1/crawl| Firecrawl[Firecrawl :3002]
     
     subgraph Firecrawl Stack
         Firecrawl -->|Playwright Engine| Playwright[Playwright Service :3000]
@@ -68,14 +68,14 @@ graph TD
 
 ### 1. Direct Scrape
 ```bash
-docker compose exec hermes curl -s -X POST http://firecrawl:3002/v1/scrape \
+docker compose exec open-webui curl -s -X POST http://firecrawl:3002/v1/scrape \
   -H "Content-Type: application/json" \
   -d '{"url":"https://example.com"}'
 ```
 
 ### 2. Standalone Search via SearXNG Backend
 ```bash
-docker compose exec hermes curl -s -X POST http://firecrawl:3002/v1/search \
+docker compose exec open-webui curl -s -X POST http://firecrawl:3002/v1/search \
   -H "Content-Type: application/json" \
   -d '{"query":"homelab"}'
 ```

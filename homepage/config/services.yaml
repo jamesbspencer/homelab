@@ -5,24 +5,12 @@
         description: "Modern Generative AI Chat & Multi-Model Interface"
         server: local-docker
         container: open-webui
-    - Hermes Agent:
-        icon: mdi-robot-excited-outline
-        href: https://hermes.spencer.lan
-        description: "Autonomous Agent & Management Dashboard"
-        server: local-docker
-        container: hermes
     - LiteLLM Gateway:
         icon: openai.png
         href: https://llm.spencer.lan
         description: "Unified LLM Router & Spend Gateway"
         server: local-docker
         container: litellm
-    - Hindsight Memory:
-        icon: mdi-brain
-        href: https://hindsight.spencer.lan
-        description: "Persistent Vector Memory Engine"
-        server: local-docker
-        container: hindsight
     - Ollama LLM:
         icon: ollama.png
         href: https://llm.spencer.lan
@@ -41,18 +29,6 @@
         description: "Hybrid MoE 64k Inference Engine (GPU + RAM)"
         server: local-docker
         container: momoe
-    - Hermes API & MCP:
-        icon: mdi-api
-        href: https://hermes-api.spencer.lan
-        description: "Agent Gateway API & MCP Server (:8765)"
-        server: local-docker
-        container: hermes
-    - Memlord MCP Memory:
-        icon: mdi-brain-freeze-outline
-        href: https://memlord.spencer.lan
-        description: "Hybrid Vector & BM25 MCP Memory (:8000)"
-        server: local-docker
-        container: memlord
 
 - Search & Scrape:
     - SearXNG:

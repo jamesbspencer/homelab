@@ -35,7 +35,7 @@ Configured via environment variables in [`docker-compose.yaml`](../docker-compos
 |---|---|---|
 | `MOMOE_FAMILY` (`FAMILY`) | `ornith` | Model family (`ornith` = **Ornith-1.5-35B-A3B**, agentic coding fine-tune of Qwen3.6-35B-A3B) |
 | `MOMOE_MODEL` (`MODEL`) | `IQ4_XS` | Quantization size (~19 GB GGUF download, ~128 tok/s with MTP drafting) |
-| `MOMOE_CONTEXT` (`CONTEXT`) | `65536` | Maximum context window in tokens (64k enables large Firecrawl web scrapes in Hermes via KV streaming) |
+| `MOMOE_CONTEXT` (`CONTEXT`) | `65536` | Maximum context window in tokens (64k enables large Firecrawl web scrapes in Open WebUI via KV streaming) |
 | `MOMOE_VISION` (`VISION`) | `no` | Vision encoder (`no`, `yes`, or `cpu`) |
 | `MOMOE_VRAM_RESERVE_MIB` (`VRAM_RESERVE_MIB`) | `2560` | Reserves 2.5 GiB of RTX 3060 VRAM so Ollama (`nomic-embed-text`) can coexist without OOM |
 | `MOMOE_API_KEY` (`API_KEY`) | `momoe-local` | Internal API key used between LiteLLM Proxy and MoMoE |
@@ -47,7 +47,7 @@ Configured via environment variables in [`docker-compose.yaml`](../docker-compos
 ## 🚀 GPU & Memory Coexistence with Ollama
 
 Because the homelab shares a single **NVIDIA RTX 3060 (12 GB VRAM)** between `ollama` and `momoe`:
-1. **VRAM Reservation (`VRAM_RESERVE_MIB=2560`)**: MoMoE leaves 2.5 GiB of VRAM untouched on the RTX 3060, ensuring `ollama` always has headroom to run `nomic-embed-text` (~400 MB VRAM) for Memlord and Hindsight.
+1. **VRAM Reservation (`VRAM_RESERVE_MIB=2560`)**: MoMoE leaves 2.5 GiB of VRAM untouched on the RTX 3060, ensuring `ollama` always has headroom to run `nomic-embed-text` (~400 MB VRAM) for Open WebUI RAG and conversational memory embeddings.
 2. **Locked Host Memory (`ulimits.memlock: -1`)**: Allows MoMoE to pin expert arenas in the host's 61 GiB quad-channel DDR4 RAM for high-bandwidth PCIe transfers and AVX-512 CPU expert execution.
 
 ---

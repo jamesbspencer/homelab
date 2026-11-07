@@ -11,7 +11,7 @@ LiteLLM Proxy provides a unified, OpenAI-compatible proxy gateway and router for
 * **Image**: `ghcr.io/berriai/litellm:main-latest`
 * **Networks**:
   * `net1`: Traefik reverse proxy ingress (`llm.spencer.lan`).
-  * `ai`: Internal communication with Ollama (`ollama:11434`), MoMoE (`momoe:8080`), Hermes Agent, and Hindsight.
+  * `ai`: Internal communication with Ollama (`ollama:11434`), MoMoE (`momoe:8080`), and Open WebUI.
   * `db`: PostgreSQL connection to `pgvector` for key management, spend tracking, and audit logging.
 * **External Ingress & Ports**:
   * API Endpoint: `https://llm.spencer.lan/v1`
@@ -23,8 +23,7 @@ graph TD
     Traefik[Traefik Proxy] -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy :4000]
     
     subgraph Clients
-        Hermes[Hermes Agent] -->|http://litellm:4000/v1| LiteLLM
-        Hindsight[Hindsight Memory] -->|http://litellm:4000/v1| LiteLLM
+        OpenWebUI[Open WebUI] -->|http://litellm:4000/v1| LiteLLM
         LAN[LAN Clients / IDEs] -->|https://llm.spencer.lan/v1| LiteLLM
     end
 
@@ -79,46 +78,20 @@ Defined in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml):
 
 ## 🔌 Client Integration
 
-### 1. Pointing Hermes Agent to LiteLLM
-Hermes connects directly to LiteLLM over the internal `ai` Docker network.
-- **In `.env`**:
-  ```bash
-  CUSTOM_BASE_URL=http://litellm:4000/v1
-  HERMES_MODEL=qwen2.5:14b
-  ```
+### 1. Pointing Open WebUI to LiteLLM
+Open WebUI routes all chat generations and embeddings through LiteLLM over the internal `ai` Docker network.
 - **In `docker-compose.yaml`**:
   ```yaml
   environment:
-    - CUSTOM_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
-    - CUSTOM_API_KEY=${LITELLM_MASTER_KEY}
+    - OPENAI_API_BASE_URL=http://litellm:4000/v1
     - OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+    - RAG_EMBEDDING_OPENAI_API_BASE_URL=http://litellm:4000/v1
+    - RAG_EMBEDDING_OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+    - RAG_EMBEDDING_MODEL=nomic-embed-text
   depends_on:
-    - litellm
+    litellm:
+      condition: service_healthy
   ```
-- **In `hermes/config.yaml`**:
-  ```yaml
-  model:
-    default: qwen2.5:14b
-    provider: custom
-    base_url: http://litellm:4000/v1
-    context_length: 65536
-    ollama_num_ctx: 65536
-  custom_providers:
-    - name: litellm
-      base_url: http://litellm:4000/v1
-      key_env: CUSTOM_API_KEY
-      context_length: 65536
-      models:
-        - qwen2.5:14b
-        - default
-  ```
-
-### 2. Pointing Hindsight to LiteLLM
-In `docker-compose.yaml`:
-```yaml
-HINDSIGHT_API_LLM_BASE_URL=http://litellm:4000/v1
-HINDSIGHT_API_LLM_MODEL=qwen2.5:14b
-```
 
 ---
 

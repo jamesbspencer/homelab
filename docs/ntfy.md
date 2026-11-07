@@ -6,13 +6,13 @@
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Centralized push notification gateway for homelab backup events, CrowdSec security bans, Hermes AI task completions, and system monitoring alerts.
+* **Role**: Centralized push notification gateway for homelab backup events, CrowdSec security bans, database maintenance alerts, and system monitoring events.
 * **Container Name**: `ntfy`
 * **Image**: `binwiederhier/ntfy:${NTFY_VERSION:-latest}`
 * **User**: `"${PUID:-1000}:${PGID:-1000}"`
 * **Networks**:
   * `net1`: Edge reverse proxy network connecting Traefik to the ntfy container.
-  * `ai`: Private inter-service network allowing Hermes Agent and AI microservices to publish notifications directly over `http://ntfy:80` without TLS or external routing overhead.
+  * `ai`: Private inter-service network allowing AI agents and microservices to publish notifications directly over `http://ntfy:80` without TLS or external routing overhead.
 * **Ingress & URLs**:
   * Public WAN URL: `https://${NTFY_PUBLIC_DOMAIN:-push.example.com}` (TLS via Let's Encrypt ACME resolver)
   * Internal LAN URL: `https://push.spencer.lan` (TLS via local wildcard certificate)
@@ -28,7 +28,7 @@ graph TD
     subgraph Clients ["Clients & Publishers"]
         Browser([Web Browser])
         Mobile([ntfy Mobile App iOS/Android])
-        HermesNode([Hermes Agent / AI Stack])
+        AINode([AI Microservices / Scripts])
         SystemScripts([Backups / CrowdSec / Cron])
     end
 
@@ -57,7 +57,7 @@ graph TD
     Authentik -->|SSO Approved| NtfyContainer
     AuthCheck -->|API / Mobile / POST / PUT| NtfyContainer
 
-    HermesNode -->|Direct HTTP POST :80 on 'ai' network| NtfyContainer
+    AINode -->|Direct HTTP POST :80 on 'ai' network| NtfyContainer
     NtfyContainer --- ServerYml
     NtfyContainer --- DataVol
     NtfyContainer --- CacheVol
@@ -98,7 +98,7 @@ To enable single sign-on for the web interface, register ntfy in Authentik:
 2. In the app settings:
    * **Default Server**: Set to `https://push.spencer.lan` (or `https://${NTFY_PUBLIC_DOMAIN:-push.example.com}`).
 3. **Add Subscriptions**:
-   * Tap **+** to subscribe to any topic (e.g., `alerts`, `backups`, `hermes`).
+   * Tap **+** to subscribe to any topic (e.g., `alerts`, `backups`).
    * If topic-level access control is enabled in ntfy, provide your user credentials or access token under topic settings.
 
 ---
@@ -159,18 +159,18 @@ curl -s \
 
 # Action button to open relevant dashboard
 curl -s \
-  -H "Title: Hermes Agent Update" \
-  -H "Action: view, Open Hermes, https://hermes.spencer.lan" \
-  -d "Autonomous task finished." \
-  https://push.spencer.lan/hermes
+  -H "Title: AI Service Alert" \
+  -H "Action: view, Open WebUI, https://chat.spencer.lan" \
+  -d "Autonomous analysis finished." \
+  https://push.spencer.lan/alerts
 ```
 
-### 3. Hermes AI Agent Integration
+### 3. AI Agent & Service Alerts
 
-Hermes can publish directly to ntfy over the internal `ai` Docker network without needing authentication:
+Internal AI services and automated tasks can publish directly to ntfy over the internal `ai` Docker network without needing authentication:
 
 ```bash
-curl -s -X POST -d "Task completed successfully" http://ntfy:80/hermes
+curl -s -X POST -d "Task completed successfully" http://ntfy:80/alerts
 ```
 
 ---

@@ -112,15 +112,9 @@ services:
       POSTGRES_USER: ${PGVECTOR_USER:-postgres}
       POSTGRES_PASSWORD: ${PGVECTOR_PASSWORD}
       POSTGRES_DB: ${PGVECTOR_DB:-postgres}
-      HINDSIGHT_POSTGRES_DB: ${HINDSIGHT_POSTGRES_DB:-hindsight}
-      HINDSIGHT_POSTGRES_USER: ${HINDSIGHT_POSTGRES_USER:-hindsight}
-      HINDSIGHT_POSTGRES_PASSWORD: ${HINDSIGHT_POSTGRES_PASSWORD}
       AUTHENTIK_POSTGRES_DB: ${AUTHENTIK_POSTGRES_DB:-authentik}
       AUTHENTIK_POSTGRES_USER: ${AUTHENTIK_POSTGRES_USER:-authentik}
       AUTHENTIK_POSTGRES_PASSWORD: ${AUTHENTIK_POSTGRES_PASSWORD}
-      MEMLORD_POSTGRES_DB: ${MEMLORD_POSTGRES_DB:-memlord}
-      MEMLORD_POSTGRES_USER: ${MEMLORD_POSTGRES_USER:-memlord}
-      MEMLORD_POSTGRES_PASSWORD: ${MEMLORD_POSTGRES_PASSWORD}
       OPENWEBUI_POSTGRES_DB: ${OPENWEBUI_POSTGRES_DB:-openwebui}
       OPENWEBUI_POSTGRES_USER: ${OPENWEBUI_POSTGRES_USER:-openwebui}
       OPENWEBUI_POSTGRES_PASSWORD: ${OPENWEBUI_POSTGRES_PASSWORD}
@@ -165,102 +159,6 @@ services:
     depends_on:
       valkey:
         condition: service_started
-  hindsight:
-    image: ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}
-    container_name: hindsight
-    restart: unless-stopped
-    networks:
-      - ai
-      - db
-      - net1
-    environment:
-      - HINDSIGHT_API_DATABASE_URL=postgresql://${HINDSIGHT_POSTGRES_USER:-hindsight}:${HINDSIGHT_POSTGRES_PASSWORD}@pgvector:5432/${HINDSIGHT_POSTGRES_DB:-hindsight}
-      - HINDSIGHT_API_VECTOR_EXTENSION=pgvector
-      - HINDSIGHT_API_WORKER_ID=hindsight-worker
-      - HINDSIGHT_API_LLM_PROVIDER=${HINDSIGHT_LLM_PROVIDER:-ollama}
-      - HINDSIGHT_API_LLM_BASE_URL=${HINDSIGHT_LLM_BASE_URL:-http://ollama:11434/v1}
-      - HINDSIGHT_API_LLM_MODEL=${HINDSIGHT_LLM_MODEL:-qwen2.5:14b}
-      - HINDSIGHT_API_LLM_MAX_CONCURRENT=${HINDSIGHT_LLM_MAX_CONCURRENT:-1}
-      - HINDSIGHT_API_EMBEDDINGS_PROVIDER=local
-    depends_on:
-      pgvector:
-        condition: service_healthy
-      ollama:
-        condition: service_started
-    healthcheck:
-      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8888/health')\" || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.hindsight.rule=Host(`hindsight.spencer.lan`)"
-      - "traefik.http.routers.hindsight.entrypoints=websecure"
-      - "traefik.http.routers.hindsight.tls=true"
-      - "traefik.http.routers.hindsight.middlewares=authentik@file"
-      - "traefik.http.services.hindsight.loadbalancer.server.port=9999"
-
-  memlord:
-    image: ghcr.io/myrikld/memlord:${MEMLORD_VERSION:-latest}
-    container_name: memlord
-    restart: unless-stopped
-    volumes:
-      - ./memlord/onnx:/app/src/memlord/onnx
-    networks:
-      - net1
-      - ai
-      - db
-    environment:
-      - MEMLORD_HOST=0.0.0.0
-      - MEMLORD_PORT=8000
-      - MEMLORD_DB_URL=postgresql+asyncpg://${MEMLORD_POSTGRES_USER:-memlord}:${MEMLORD_POSTGRES_PASSWORD}@pgvector:5432/${MEMLORD_POSTGRES_DB:-memlord}
-      - MEMLORD_MODEL_DIR=/app/src/memlord/onnx
-      - MEMLORD_BASE_URL=https://${MEMLORD_PUBLIC_DOMAIN:-memlord.spencer.lan}
-      - MEMLORD_OAUTH_JWT_SECRET=${MEMLORD_OAUTH_JWT_SECRET}
-      - MEMLORD_RRF_K=60
-      - MEMLORD_DEFAULT_LIMIT=10
-      - MEMLORD_SIM_THRESHOLD=0.7
-      - MEMLORD_DEDUP_THRESHOLD=0.95
-    depends_on:
-      pgvector:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 25s
-    labels:
-      - "traefik.enable=true"
-      # Local LAN router (direct access without Authentik ForwardAuth)
-      - "traefik.http.routers.memlord.rule=Host(`memlord.spencer.lan`)"
-      - "traefik.http.routers.memlord.entrypoints=websecure"
-      - "traefik.http.routers.memlord.tls=true"
-      - "traefik.http.routers.memlord.service=memlord-svc"
-      # Local LAN registration protection (Authentik ForwardAuth on /ui/register only)
-      - "traefik.http.routers.memlord-register-auth.rule=Host(`memlord.spencer.lan`) && PathPrefix(`/ui/register`)"
-      - "traefik.http.routers.memlord-register-auth.entrypoints=websecure"
-      - "traefik.http.routers.memlord-register-auth.tls=true"
-      - "traefik.http.routers.memlord-register-auth.priority=150"
-      - "traefik.http.routers.memlord-register-auth.middlewares=authentik@file"
-      - "traefik.http.routers.memlord-register-auth.service=memlord-svc"
-      # Public WAN router (direct access without Authentik ForwardAuth)
-      - "traefik.http.routers.memlord-public.rule=Host(`${MEMLORD_PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.memlord-public.entrypoints=websecure"
-      - "traefik.http.routers.memlord-public.tls=true"
-      - "traefik.http.routers.memlord-public.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.memlord-public.service=memlord-svc"
-      # Public WAN registration protection (Authentik ForwardAuth on /ui/register only)
-      - "traefik.http.routers.memlord-register-auth-public.rule=Host(`${MEMLORD_PUBLIC_DOMAIN}`) && PathPrefix(`/ui/register`)"
-      - "traefik.http.routers.memlord-register-auth-public.entrypoints=websecure"
-      - "traefik.http.routers.memlord-register-auth-public.tls=true"
-      - "traefik.http.routers.memlord-register-auth-public.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.memlord-register-auth-public.priority=150"
-      - "traefik.http.routers.memlord-register-auth-public.middlewares=authentik@file"
-      - "traefik.http.routers.memlord-register-auth-public.service=memlord-svc"
-      # Service loadbalancer
-      - "traefik.http.services.memlord-svc.loadbalancer.server.port=8000"
 
   authentik-server:
     image: ghcr.io/goauthentik/server:${AUTHENTIK_VERSION:-2026.8.1}
@@ -515,7 +413,7 @@ services:
 
       # Security & Signup
       - WEBUI_AUTH=True
-      - ENABLE_SIGNUP=True
+      - ENABLE_SIGNUP=${ENABLE_SIGNUP:-False}
     deploy:
       resources:
         limits:
@@ -551,90 +449,6 @@ services:
       - "traefik.http.routers.open-webui-public.tls=true"
       - "traefik.http.routers.open-webui-public.tls.certresolver=letsencrypt"
       - "traefik.http.routers.open-webui-public.service=open-webui-svc"
-
-  hermes:
-    image: nousresearch/hermes-agent:latest
-    container_name: hermes
-    restart: unless-stopped
-    command: gateway run
-    ports:
-      - "9119:9119"
-    volumes:
-      - ./hermes:/data/homelab/hermes
-      - ./hermes:/opt/data
-      - /data/repos:/data/repos
-      - ./hermes/init/03-custom-init.sh:/etc/cont-init.d/03-custom-init:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-
-    networks:
-      - net1
-      - ai
-    extra_hosts:
-      - "${SSO_PUBLIC_DOMAIN}:host-gateway"
-      - "${HERMES_PUBLIC_DOMAIN}:host-gateway"
-    environment:
-      - HERMES_HOME=/data/homelab/hermes
-      - HERMES_WRITE_SAFE_ROOT=/data/homelab/hermes:/opt/data:/data/repos
-      - HERMES_DASHBOARD=${HERMES_DASHBOARD}
-      - API_SERVER_ENABLED=${API_SERVER_ENABLED}
-      - API_SERVER_KEY=${HERMES_API_KEY}
-      - API_SERVER_HOST=0.0.0.0
-      - API_SERVER_PORT=8642
-      - HERMES_MCP_KEY=${HERMES_MCP_KEY:-${HERMES_API_KEY}}
-      - MCP_PORT=8765
-      - MCP_HOST=0.0.0.0
-      - HERMES_MODEL=${HERMES_MODEL:-gemma4:12b}
-      - HERMES_PROVIDER=${HERMES_PROVIDER:-custom}
-      - HERMES_MODEL_PROVIDER=${HERMES_PROVIDER:-custom}
-      - HERMES_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
-      - CUSTOM_BASE_URL=${CUSTOM_BASE_URL:-http://litellm:4000/v1}
-      - CUSTOM_API_KEY=${LITELLM_MASTER_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-${LITELLM_MASTER_KEY}}
-      - OPEN_API_KEY=${OPEN_API_KEY:-${OPENAI_API_KEY}}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
-      - HERMES_DASHBOARD_PUBLIC_URL=${HERMES_DASHBOARD_PUBLIC_URL}
-      - HERMES_DASHBOARD_OIDC_ISSUER=${HERMES_DASHBOARD_OIDC_ISSUER}
-      - HERMES_DASHBOARD_OIDC_CLIENT_ID=${HERMES_DASHBOARD_OIDC_CLIENT_ID}
-      - HERMES_DASHBOARD_OIDC_CLIENT_SECRET=${HERMES_DASHBOARD_OIDC_CLIENT_SECRET}
-      - HERMES_DASHBOARD_OIDC_SCOPES=openid profile email
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - GATEWAY_ALLOW_ALL_USERS=${GATEWAY_ALLOW_ALL_USERS}
-      - SEARXNG_URL=${SEARXNG_URL}
-      - FIRECRAWL_API_URL=${FIRECRAWL_API_URL:-http://firecrawl:3002}
-      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
-      - HINDSIGHT_MODE=${HINDSIGHT_MODE:-local_external}
-      - HINDSIGHT_API_URL=${HINDSIGHT_API_URL:-http://hindsight:8888}
-      - HINDSIGHT_BANK_ID=${HINDSIGHT_BANK_ID:-hermes}
-      - TERMINAL_ENV=${HERMES_TERMINAL_ENV:-docker}
-      - TERMINAL_DOCKER_IMAGE=${HERMES_TERMINAL_DOCKER_IMAGE:-nikolaik/python-nodejs:python3.11-nodejs20}
-      - TERMINAL_CONTAINER_PERSISTENT=false
-      - TERMINAL_DOCKER_VOLUMES=${HERMES_TERMINAL_DOCKER_VOLUMES:-["/data/homelab/hermes/workspace:/workspace","/data/repos:/data/repos"]}
-    depends_on:
-      - firecrawl
-      - hindsight
-      - litellm
-    labels:
-      - "traefik.enable=true"
-      # Gateway routing (port 8642)
-      - "traefik.http.routers.hermes-gateway.rule=Host(`hermes-api.spencer.lan`)"
-      - "traefik.http.routers.hermes-gateway.entrypoints=websecure"
-      - "traefik.http.routers.hermes-gateway.tls=true"
-      - "traefik.http.routers.hermes-gateway.service=hermes-gateway-svc"
-      - "traefik.http.services.hermes-gateway-svc.loadbalancer.server.port=8642"
-      # Public Dashboard routing (port 9119, with Hermes native OIDC SSO)
-      - "traefik.http.routers.hermes-dashboard-public.rule=Host(`${HERMES_PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.hermes-dashboard-public.entrypoints=websecure"
-      - "traefik.http.routers.hermes-dashboard-public.tls=true"
-      - "traefik.http.routers.hermes-dashboard-public.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.hermes-dashboard-public.service=hermes-dashboard-svc"
-      - "traefik.http.services.hermes-dashboard-svc.loadbalancer.server.port=9119"
-      # MCP Server routing (port 8765)
-      - "traefik.http.routers.hermes-mcp.rule=Host(`mcp.spencer.lan`)"
-      - "traefik.http.routers.hermes-mcp.entrypoints=websecure"
-      - "traefik.http.routers.hermes-mcp.tls=true"
-      - "traefik.http.routers.hermes-mcp.service=hermes-mcp-svc"
-      - "traefik.http.services.hermes-mcp-svc.loadbalancer.server.port=8765"
 
   rabbitmq:
     image: rabbitmq:3-management

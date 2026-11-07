@@ -11,7 +11,7 @@
 * **Image**: `openbao/openbao:${OPENBAO_VERSION:-latest}` (running OpenBao v2.7.2+)
 * **Networks**:
   * `net1`: Traefik reverse proxy bridge for HTTPS web access and Web UI routing.
-  * `ai`: Isolated internal network allowing AI services (e.g., Hermes, LiteLLM) to access OpenBao directly via `http://openbao:8200`.
+  * `ai`: Isolated internal network allowing AI services (e.g., Open WebUI, LiteLLM, Antigravity) to access OpenBao directly via `http://openbao:8200`.
 * **Storage Backend**: Raft integrated transactional storage located at `/openbao/file` on container, mapped to `./openbao/data` on host.
 * **Ingress & URLs**:
   * **Primary Web UI & API**: `https://vault.spencer.lan` (Internal LAN only, TLS termination via Traefik wildcard cert)
@@ -205,7 +205,7 @@ Two purpose-built credential sets and policies are provisioned in OpenBao:
    * **Stored Details**: Managed securely in OpenBao at `kv/credentials/docker`.
 
 2. **AI Agent Access (`ai-creator`)**:
-   * **Purpose**: Allows autonomous AI agents (Hermes, LiteLLM, toolchains) to dynamically create, rotate, and manage secrets.
+   * **Purpose**: Allows autonomous AI agents and services (LiteLLM, Antigravity, Open WebUI) to dynamically create, rotate, and manage secrets.
    * **Capabilities**: Full lifecycle (`create`, `read`, `update`, `delete`, `list`) across `kv/*` and `homelab/kv/*`.
    * **Auth Methods**:
      * **AppRole**: `role_id` and `secret_id` configured under `auth/approle/role/ai`

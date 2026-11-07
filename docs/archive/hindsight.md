@@ -1,20 +1,23 @@
-# Hindsight Long-Term Memory Engine
+# Hindsight Long-Term Memory Engine (Archived)
 
-**Hindsight** (by Vectorize.io) is an agent memory system that extracts facts, models entities, and maintains consolidated observations across conversations. It enables **Nous Research Hermes Agent** to retain long-term context and learn continuously over time.
+> [!WARNING]
+> **DEPRECATED & RETIRED**: Hindsight Long-Term Memory Engine was decommissioned on 2026-11-07 alongside Hermes Agent. Its database and roles have been dumped to `archives/hindsight-dump-20261107.sql.gz` and removed from `pgvector`. Historical memories and facts were imported into **Open WebUI**'s native pgvector memory store. This guide is retained for historical and architectural reference only.
+
+**Hindsight** (by Vectorize.io) is an agent memory system that extracts facts, models entities, and maintains consolidated observations across conversations. It formerly served as the contextual memory engine for **Nous Research Hermes Agent**.
 
 ---
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Dedicated long-term memory engine and memory bank API for Hermes Agent.
+* **Role**: Dedicated long-term memory engine and memory bank API.
 * **Container Name**: `hindsight` (Service name: `hindsight`)
 * **Image**: `ghcr.io/vectorize-io/hindsight:${HINDSIGHT_VERSION:-latest}`
 * **Networks**:
-  * `ai`: Inter-service AI network connecting Hermes Agent (`http://hindsight:8888`) and Ollama (`http://ollama:11434/v1`).
+  * `ai`: Inter-service AI network connecting internal services (`http://hindsight:8888`) and Ollama (`http://ollama:11434/v1`).
   * `db`: Isolated database network connecting to the dedicated `pgvector` PostgreSQL instance.
   * `net1`: Traefik reverse proxy bridge exposing the Hindsight Control Plane Web UI.
 * **Internal Ports**:
-  * `8888`: Hindsight HTTP API endpoint (consumed by Hermes Agent).
+  * `8888`: Hindsight HTTP API endpoint.
   * `9999`: Hindsight Control Plane Web UI.
 * **External Ingress**:
   * Control Plane Dashboard: `https://hindsight.spencer.lan` (`:9999` via Traefik).
@@ -24,8 +27,7 @@ graph TD
     Traefik[Traefik Proxy] -->|hindsight.spencer.lan :9999| HindsightUI[Hindsight Control Plane UI]
     
     subgraph AI Network
-        Hermes[Hermes Agent] -->|API Calls :8888| HindsightAPI[Hindsight Service]
-        HindsightAPI -->|Fact Extraction & Reflection| Ollama[Ollama :11434]
+        HindsightAPI[Hindsight Service :8888] -->|Fact Extraction & Reflection| Ollama[Ollama :11434]
     end
 
     subgraph DB Network

@@ -64,11 +64,11 @@ By default, Open WebUI loads PyTorch and SentenceTransformer weights in memory (
 
 Open WebUI acts as a pure API client, retaining a minimal memory footprint (~350 MB) while vectorizing documents and user memories at GPU speeds.
 
-### 2. Shared Memory Architecture (Memlord & Hindsight)
-Homelab maintains a unified procedural memory store (**Memlord**) and autonomous conversational memory (**Hindsight**):
-* The migration script [`scripts/import-memories-to-openwebui.py`](file:///data/homelab/scripts/import-memories-to-openwebui.py) aggregates all workspace memories from Memlord and interaction facts from Hindsight.
-* Deduplicated memories are inserted into Open WebUI's user memory database and indexed in pgvector.
-* Memories can be synced bi-directionally or queried via Open WebUI's REST API (`GET /api/v1/memories/`, `POST /api/v1/memories/query`).
+### 2. Native Memory Architecture & Historical Migration
+Open WebUI operates its own self-contained conversational memory engine backed directly by PostgreSQL on `pgvector`:
+* **Native Memory Store**: User memories are stored in the `memory` table and vector-indexed directly using PostgreSQL's `pgvector` extension (`VECTOR_DB=pgvector`).
+* **Historical Memory Migration**: All legacy procedural memories and conversational facts from retired memory servers (Memlord and Hindsight) were migrated into Open WebUI via [`scripts/import-memories-to-openwebui.py`](file:///data/homelab/scripts/import-memories-to-openwebui.py), establishing Open WebUI as the consolidated conversational memory system.
+* **API Access**: Memories can be queried or managed via Open WebUI's REST API (`GET /api/v1/memories/`, `POST /api/v1/memories/query`).
 
 ---
 
@@ -80,7 +80,7 @@ Key environment variables in [`.env`](file:///data/homelab/.env) and [`docker-co
 # Core Application
 OPENWEBUI_VERSION=main
 OPENWEBUI_SECRET_KEY=<secure-secret-key>
-OPENWEBUI_PUBLIC_DOMAIN=chat.jamesspencer.me
+OPENWEBUI_PUBLIC_DOMAIN=ai.example.com
 
 # PostgreSQL & pgvector
 OPENWEBUI_POSTGRES_DB=openwebui
@@ -114,7 +114,7 @@ curl -kfsS https://ai.spencer.lan/health
 # 4. View memory entries in PostgreSQL
 docker exec pgvector psql -U postgres -d openwebui -c "SELECT count(*) FROM memory;"
 
-# 5. Re-run memory synchronization from Memlord & Hindsight
-python3 /data/homelab/scripts/import-memories-to-openwebui.py
+# 5. Query user memory via REST API
+curl -s -H "Authorization: Bearer <OPENWEBUI_API_KEY>" https://chat.spencer.lan/api/v1/memories/
 ```
 

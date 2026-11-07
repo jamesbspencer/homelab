@@ -14,7 +14,7 @@
   * `net1`: Edge reverse proxy network connecting Traefik to Gitea for web UI and HTTP Git operations.
   * `db`: Dedicated database network communicating directly with `pgvector` on port `5432`.
   * `redis`: Dedicated caching network communicating with Valkey on port `6379` for caches, sessions, and task queues.
-  * `ai`: Private inter-service network allowing Hermes Agent and AI microservices to interact directly with Git APIs (`http://gitea:3000`).
+  * `ai`: Private inter-service network allowing AI agents (Antigravity) and microservices to interact directly with Git APIs (`http://gitea:3000`).
 * **Ingress & URLs**:
   * Internal LAN URL: `https://git.spencer.lan` (TLS via local wildcard certificate)
   * Internal LAN Alias: `https://gitea.spencer.lan`
@@ -30,7 +30,7 @@ graph TD
     subgraph Clients ["Developers & Agents"]
         DevBrowser([Web Browser])
         DevGit([Git CLI / IDE])
-        HermesAgent([Hermes AI Agent])
+        AIAgent([AI Agent / Antigravity])
     end
 
     subgraph Edge ["Traefik Edge (:443)"]
@@ -58,7 +58,7 @@ graph TD
     Traefik -->|Proxy :3000 on net1| GiteaContainer
     GiteaContainer <-->|OIDC Auth / Token Exchange| Authentik
 
-    HermesAgent -->|HTTP :3000 on ai network| GiteaContainer
+    AIAgent -->|HTTP :3000 on ai network| GiteaContainer
 
     GiteaContainer -->|db network| PgVector
     GiteaContainer -->|redis network| Valkey

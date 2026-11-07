@@ -23,12 +23,18 @@ if [ -z "$NTFY_URL" ]; then
         NTFY_URL="http://ntfy:80"
     elif ping -c 1 -W 1 push.spencer.lan >/dev/null 2>&1; then
         NTFY_URL="https://push.spencer.lan"
+        EXTRA_CURL_FLAGS=(-k)
     elif curl -sk --connect-timeout 1 --resolve push.spencer.lan:443:127.0.0.1 https://push.spencer.lan/v1/health >/dev/null 2>&1; then
         NTFY_URL="https://push.spencer.lan"
         EXTRA_CURL_FLAGS=(--resolve "push.spencer.lan:443:127.0.0.1" -k)
     else
         NTFY_URL="${NTFY_PUBLIC_URL:-https://push.spencer.lan}"
     fi
+fi
+
+# Ensure local .spencer.lan internal TLS certificates don't cause verification failures on host
+if [[ "$NTFY_URL" =~ \.spencer\.lan ]] && [[ ! " ${EXTRA_CURL_FLAGS[*]} " =~ " -k " ]]; then
+    EXTRA_CURL_FLAGS+=(-k)
 fi
 
 TITLE=""

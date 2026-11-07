@@ -14,9 +14,6 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Open WebUI** | Multi-Model Generative AI Chat Interface | `chat.spencer.lan`, `ai.spencer.lan` (:8080) | [Open WebUI Guide](open-webui.md) |
 | **Ollama** | LLM Engine (GPU Accelerated) | `:11434` (Internal `ai` network) | [Ollama Guide](ollama.md) |
 | **MoMoE** | Hybrid MoE Inference Engine (GPU + RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](momoe.md) |
-| **Hermes Agent** | Autonomous Agent, Dashboard & Code Sandbox | `hermes.spencer.lan`, `ai.spencer.lan`, `hermes-api.spencer.lan` | [Hermes Guide](hermes.md) |
-| **Hindsight** | Agent Long-Term Memory Engine | `:8888` (API), `hindsight.spencer.lan` (:9999) | [Hindsight Guide](hindsight.md) |
-| **Memlord** | MCP Vector & BM25 Memory Server | `memlord.spencer.lan` (:8000), `/mcp` | [Memlord Guide](memlord.md) |
 | **pgvector** | Unified Vector & Relational Database | `:5432` (Internal `db` network) | [pgvector Guide](pgvector.md) |
 | **Firecrawl Stack** | Web Scraper, Crawler & Search | `:3002` (Internal `ai` & `redis` networks) | [Firecrawl Guide](firecrawl.md) |
 | **SearXNG** | Metasearch Engine | `:8080` (Internal `ai` & `redis` networks) | [SearXNG Guide](searxng.md) |
@@ -27,13 +24,13 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **OpenBao** | Secrets & Encryption Management Service | `vault.spencer.lan`, `openbao.spencer.lan` (:8200) | [OpenBao Guide](openbao.md) |
 | **Gitea** | Self-Hosted Git Platform & Issue Tracker | `git.spencer.lan`, `gitea.spencer.lan`, `:2222` (SSH) | [Gitea Guide](gitea.md) |
 | **Homepage** | Unified Homelab Dashboard & Service Directory | `home.spencer.lan`, `homepage.spencer.lan` (:3000) | [Homepage Guide](homepage.md) |
-| *Retired Services* | *Archived Services Stack* | *Retired (legacy chat, database, agent vault, infisical)* | [Legacy Stack](archive/open-webui-legacy-stack.md), [Agent Vault](archive/agent-vault.md), [Infisical](archive/infisical.md) |
+| *Retired Services* | *Archived Services Stack* | *Retired (hindsight, memlord, hermes, legacy chat, database, agent vault, infisical)* | [Hindsight](archive/hindsight.md), [Memlord](archive/memlord.md), [Hermes Agent](archive/hermes.md), [Legacy Stack](archive/open-webui-legacy-stack.md), [Agent Vault](archive/agent-vault.md), [Infisical](archive/infisical.md) |
 
 ---
 
 ## 🌐 Network Topologies
 
-1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Open WebUI, Hermes Gateway, Hermes Dashboard, Hindsight UI, Memlord Web UI, LiteLLM, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage, Traefik API).
-2. **`ai`**: Private high-speed network for inter-service communication (Open WebUI, Hermes, Hindsight, Memlord MCP, Ollama, MoMoE, LiteLLM, OpenBao, SearXNG, Firecrawl, ntfy, Homepage).
-3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Open WebUI, Hindsight, Memlord, LiteLLM, Authentik, Gitea).
+1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Open WebUI, LiteLLM, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage, Traefik API).
+2. **`ai`**: Private high-speed network for inter-service communication (Open WebUI, Ollama, MoMoE, LiteLLM, OpenBao, SearXNG, Firecrawl, ntfy, Homepage).
+3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Open WebUI, LiteLLM, Authentik, Gitea).
 4. **`redis`**: Dedicated caching network shared between Valkey, SearXNG, Firecrawl, Authentik (sessions and task queue), and Gitea (cache, session, and queue).

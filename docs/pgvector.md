@@ -1,12 +1,12 @@
-# Dedicated pgvector Instance (Hindsight, LiteLLM, Authentik & Shared Services)
+# Dedicated pgvector Instance (LiteLLM, Open WebUI, Authentik & Gitea)
 
-This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Hindsight** (Hermes long-term memory engine), **LiteLLM Proxy** (spend tracking & key persistence), and **Authentik** (centralized identity provider). It is decoupled from legacy single-app databases to ensure long-term stability and independent lifecycles.
+This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Open WebUI** (user conversation memory & RAG vector store), **LiteLLM Proxy** (spend tracking & key persistence), **Authentik** (centralized identity provider), and **Gitea** (repository metadata & issues).
 
 ---
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Primary vector and relational database for Hindsight, LiteLLM Proxy, Authentik, and homelab services.
+* **Role**: Primary vector and relational database for Open WebUI, LiteLLM Proxy, Authentik, Gitea, and homelab services.
 * **Container Name**: `pgvector` (Service name: `pgvector`)
 * **Image**: `pgvector/pgvector:${PGVECTOR_VERSION:-pg16}`
 * **Network**: `db` (Strictly isolated database network; does **not** join `ai` or bind to host ports)
@@ -18,7 +18,7 @@ This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extens
 ## 🔒 Security & Network Isolation
 
 * **Isolated `db` Network**: Connected strictly to the internal `db` bridge network.
-* **Service Access Requirement**: Any container requiring database access (Hindsight, LiteLLM, Authentik) must join the `db` network in `docker-compose.yaml`.
+* **Service Access Requirement**: Any container requiring database access (Open WebUI, LiteLLM, Authentik, Gitea) must join the `db` network in `docker-compose.yaml`.
 * **Zero Host Exposure**: Port `5432` is not bound to the host, preventing external access.
 
 ---
@@ -31,9 +31,9 @@ This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extens
 | `PGVECTOR_USER` | `postgres` | Superuser / administrator username |
 | `PGVECTOR_PASSWORD` | `${PGVECTOR_PASSWORD}` in `.env` | Superuser password |
 | `PGVECTOR_DB` | `postgres` | Default administrative database |
-| `HINDSIGHT_POSTGRES_DB` | `hindsight` | Dedicated database for Hindsight memory engine |
-| `HINDSIGHT_POSTGRES_USER` | `hindsight` | Service role for Hindsight |
-| `HINDSIGHT_POSTGRES_PASSWORD` | `${HINDSIGHT_POSTGRES_PASSWORD}` in `.env` | Password for Hindsight service role |
+| `OPENWEBUI_POSTGRES_DB` | `openwebui` | Dedicated database for Open WebUI user memory & RAG |
+| `OPENWEBUI_POSTGRES_USER` | `openwebui` | Service role for Open WebUI |
+| `OPENWEBUI_POSTGRES_PASSWORD` | `${OPENWEBUI_POSTGRES_PASSWORD}` in `.env` | Password for Open WebUI service role |
 | `LITELLM_POSTGRES_DB` | `litellm` | Dedicated database for LiteLLM key & spend persistence |
 | `LITELLM_POSTGRES_USER` | `litellm` | Service role for LiteLLM |
 | `LITELLM_POSTGRES_PASSWORD` | `${LITELLM_POSTGRES_PASSWORD}` in `.env` | Password for LiteLLM service role |
@@ -48,15 +48,16 @@ This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extens
 
 The container mounts `./pgvector/init/01-init-databases.sh` to `/docker-entrypoint-initdb.d/`. On initial bootstrap:
 1. The `vector` extension is enabled on the primary database (`postgres`).
-2. The `hindsight` user role and database are created with full privileges, and `vector` is enabled inside it.
+2. The `openwebui` user role and database are created with full privileges, and `vector` is enabled inside it.
 3. The `litellm` user role and database are created with full privileges.
 4. The `authentik` user role and database are created with full privileges.
+5. The `gitea` user role and database are created with full privileges.
 
 ### Connection Strings
 
-* **Hindsight Service**:
+* **Open WebUI Service**:
   ```
-  postgresql://hindsight:${HINDSIGHT_POSTGRES_PASSWORD}@pgvector:5432/hindsight
+  postgresql://openwebui:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/openwebui
   ```
 * **LiteLLM Proxy Service**:
   ```
@@ -87,8 +88,8 @@ The container mounts `./pgvector/init/01-init-databases.sh` to `/docker-entrypoi
 # Administrative connection
 docker compose exec pgvector psql -U postgres -d postgres
 
-# Hindsight database connection
-docker compose exec pgvector psql -U hindsight -d hindsight
+# Open WebUI database connection
+docker compose exec pgvector psql -U openwebui -d openwebui
 
 # LiteLLM database connection
 docker compose exec pgvector psql -U litellm -d litellm
@@ -99,13 +100,13 @@ docker compose exec pgvector psql -U authentik -d authentik
 
 ### Verifying pgvector Extension
 ```bash
-docker compose exec pgvector psql -U hindsight -d hindsight -c '\dx'
+docker compose exec pgvector psql -U openwebui -d openwebui -c '\dx'
 ```
 
 ### Performing Database Backups
 ```bash
-# Backup specific database (e.g. hindsight)
-docker compose exec -T pgvector pg_dump -U postgres hindsight > hindsight_backup_$(date +%Y%m%d).sql
+# Backup specific database (e.g. openwebui)
+docker compose exec -T pgvector pg_dump -U postgres openwebui > openwebui_backup_$(date +%Y%m%d).sql
 
 # Backup entire pgvector cluster
 docker compose exec -T pgvector pg_dumpall -U postgres > pgvector_all_backup_$(date +%Y%m%d).sql
@@ -113,16 +114,14 @@ docker compose exec -T pgvector pg_dumpall -U postgres > pgvector_all_backup_$(d
 
 ---
 
-## 🧹 Periodic Maintenance & Vector Optimization Automation
+## 🧹 Periodic Maintenance & Optimization Automation
 
-To prevent unbounded table growth, HNSW vector graph fragmentation, and optimizer statistic decay, an automated pipeline is provided by [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh):
+To prevent unbounded table growth and optimizer statistic decay, an automated pipeline is provided by [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh):
 
 ### Pipeline Operations
-1. **Concurrent HNSW Vector Reindexing**: Runs `REINDEX TABLE CONCURRENTLY memory_units;` and `REINDEX TABLE CONCURRENTLY mental_models;` in Hindsight to rebuild vector indexes without locking reads or writes.
-2. **Spend Log Archival & Pruning**: Archives aged `LiteLLM_SpendLogs` (> 30 days) to compressed gzip CSVs in `./pgvector/archives/` before deleting rows.
-3. **Async Task State Pruning**: Archives and prunes finished tasks in `hindsight.async_operations` (> 14 days) and aged `llm_requests`.
-4. **Cluster-wide Vacuuming**: Runs `VACUUM (ANALYZE)` across `hindsight`, `litellm`, `authentik`, and `gitea` to reclaim space and update PostgreSQL query planner statistics.
-5. **Push Notifications**: Automatically dispatches a formatted run summary to Spencer's mobile and desktop devices via the self-hosted `ntfy` push gateway.
+1. **Spend Log Archival & Pruning**: Archives aged `LiteLLM_SpendLogs` (> 30 days) to compressed gzip CSVs in `./pgvector/archives/` before deleting rows.
+2. **Cluster-wide Vacuuming**: Runs `VACUUM (ANALYZE)` across active databases (`litellm`, `openwebui`, `authentik`, and `gitea`) to reclaim space and refresh PostgreSQL query planner statistics.
+3. **Push Notifications**: Automatically dispatches a formatted run summary to Spencer's mobile and desktop devices via the self-hosted `ntfy` push gateway.
 
 ### Manual Execution
 ```bash
@@ -136,9 +135,8 @@ To prevent unbounded table growth, HNSW vector graph fragmentation, and optimize
 ./scripts/pgvector-maintenance.sh --spend-days 60 --async-days 30
 ```
 
-### Scheduled Hermes Automation
-Scheduled natively via the Hermes Agent scheduler (`hermes cron`):
-* **Job ID**: `6ff939ca35e2`
+### Scheduled Host Crontab Automation
+Scheduled natively via host crontab (`crontab -e` for `suadmin`):
 * **Schedule**: `0 3 * * 0` (Weekly every Sunday at 03:00 UTC)
-* **Mode**: `--no-agent` (runs script directly with zero LLM token overhead and dispatches ntfy alert)
-* **Agent Skill**: Hermes possesses the `database-maintenance` skill (`hermes/skills/devops/database-maintenance/SKILL.md`) enabling on-demand conversational execution.
+* **Command**: `/data/homelab/scripts/pgvector-maintenance.sh >> /data/homelab/pgvector/archives/maintenance.log 2>&1`
+* **Execution**: Runs script directly with zero LLM token overhead, archives aged records, vacuums databases, rebuilds HNSW indexes, and dispatches ntfy alerts.

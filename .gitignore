@@ -23,6 +23,10 @@ pgvector/data/*
 pgvector/archives/*
 !pgvector/archives/.gitkeep
 
+# System & Service Archives
+archives/*
+*.tar.gz
+
 # Ollama models, caches, and key pairs
 ollama/*
 !ollama/.gitkeep
@@ -123,3 +127,7 @@ openbao/*.keys
 # Open WebUI runtime data and uploads
 open-webui/*
 !open-webui/.gitkeep
+
+# OmniRoute runtime data and SQLite storage
+omniroute/data/*
+!omniroute/data/.gitkeep

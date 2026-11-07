@@ -3,11 +3,9 @@
 # pgvector-maintenance.sh - Spencer's Homelab Database & Vector Maintenance Pipeline
 #
 # Automates:
-#   1. Concurrent HNSW vector index & GIN full-text index reindexing in Hindsight
-#   2. Archival & pruning of aged LiteLLM spend logs (> 30 days default)
-#   3. Archival & pruning of completed Hindsight async operations (> 14 days default)
-#   4. Reclaiming bloat via VACUUM (ANALYZE) across all homelab databases
-#   5. Push notification summary delivery via ntfy
+#   1. Archival & pruning of aged LiteLLM spend logs (> 30 days default)
+#   2. Reclaiming bloat via VACUUM (ANALYZE) across active homelab databases (litellm, openwebui, authentik, gitea)
+#   3. Push notification summary delivery via ntfy
 #
 # Usage:
 #   scripts/pgvector-maintenance.sh [OPTIONS]
@@ -15,8 +13,6 @@
 # Options:
 #   --dry-run             Preview actions and record counts without altering data
 #   --spend-days <N>      Retention period in days for LiteLLM spend logs (default: 30)
-#   --async-days <N>      Retention period in days for Hindsight async ops (default: 14)
-#   --no-reindex          Skip vector index reindexing
 #   --no-vacuum           Skip VACUUM ANALYZE
 #   --no-archive          Prune aged records without creating compressed CSV archives
 #   --no-notify           Skip sending push notification via ntfy
@@ -143,14 +139,13 @@ log "Archive Storage: ${ARCHIVE_DIR}"
 log "=================================================="
 
 # Collect initial database sizes
-HINDSIGHT_SIZE_BEFORE=$(run_psql_val hindsight "SELECT pg_size_pretty(pg_database_size('hindsight'));")
 LITELLM_SIZE_BEFORE=$(run_psql_val litellm "SELECT pg_size_pretty(pg_database_size('litellm'));")
 SPEND_LOGS_SIZE_BEFORE=$(run_psql_val litellm "SELECT pg_size_pretty(pg_total_relation_size('\"LiteLLM_SpendLogs\"'));")
-MEMORY_UNITS_SIZE_BEFORE=$(run_psql_val hindsight "SELECT pg_size_pretty(pg_total_relation_size('memory_units'));")
+OPENWEBUI_SIZE_BEFORE=$(run_psql_val openwebui "SELECT pg_size_pretty(pg_database_size('openwebui'));")
 
 log "📊 Initial Database Sizes:"
-log "   • hindsight DB: ${HINDSIGHT_SIZE_BEFORE} (memory_units: ${MEMORY_UNITS_SIZE_BEFORE})"
 log "   • litellm DB:   ${LITELLM_SIZE_BEFORE} (LiteLLM_SpendLogs: ${SPEND_LOGS_SIZE_BEFORE})"
+log "   • openwebui DB: ${OPENWEBUI_SIZE_BEFORE}"
 
 # --- STEP 1: LiteLLM Spend Logs Archival & Pruning ---
 log "\n🧹 Step 1: Evaluating LiteLLM Spend Logs (> ${SPEND_DAYS} days)..."
@@ -182,67 +177,18 @@ if [ "$WORKFLOW_COUNT" -gt 0 ] && [ "$DRY_RUN" = false ]; then
     run_psql litellm -c "DELETE FROM \"LiteLLM_WorkflowEvent\" WHERE created_at < NOW() - INTERVAL '${SPEND_DAYS} days';" || true
 fi
 
-# --- STEP 2: Hindsight Ephemeral Task States Archival & Pruning ---
-log "\n🧹 Step 2: Evaluating Hindsight Ephemeral Operations (> ${ASYNC_DAYS} days)..."
-ASYNC_COUNT=$(run_psql_val hindsight "SELECT count(*) FROM async_operations WHERE status IN ('completed', 'failed') AND completed_at < NOW() - INTERVAL '${ASYNC_DAYS} days';")
-log "   Found ${ASYNC_COUNT} aged completed/failed async operations."
-
-PRUNED_ASYNC=0
-if [ "$ASYNC_COUNT" -gt 0 ]; then
-    if [ "$DRY_RUN" = true ]; then
-        log "   [DRY-RUN] Would archive and delete ${ASYNC_COUNT} async operations."
-        PRUNED_ASYNC="$ASYNC_COUNT"
-    else
-        if [ "$DO_ARCHIVE" = true ]; then
-            ASYNC_ARCHIVE="${ARCHIVE_DIR}/hindsight_async_ops_${TIMESTAMP}.csv.gz"
-            log "   📦 Archiving ${ASYNC_COUNT} records to ${ASYNC_ARCHIVE}..."
-            run_psql hindsight -c "\COPY (SELECT * FROM async_operations WHERE status IN ('completed', 'failed') AND completed_at < NOW() - INTERVAL '${ASYNC_DAYS} days') TO STDOUT WITH CSV HEADER;" | gzip -9 > "$ASYNC_ARCHIVE"
-            log "   ✓ Archive created ($(du -h "$ASYNC_ARCHIVE" | awk '{print $1}'))."
-        fi
-        log "   🗑️ Deleting aged records from async_operations..."
-        run_psql hindsight -c "DELETE FROM async_operations WHERE status IN ('completed', 'failed') AND completed_at < NOW() - INTERVAL '${ASYNC_DAYS} days';"
-        PRUNED_ASYNC="$ASYNC_COUNT"
-    fi
-fi
-
-# Clean up aged Hindsight llm_requests if any exist
-LLM_REQ_COUNT=$(run_psql_val hindsight "SELECT count(*) FROM llm_requests WHERE started_at < NOW() - INTERVAL '30 days';" || echo "0")
-if [ "$LLM_REQ_COUNT" -gt 0 ] && [ "$DRY_RUN" = false ]; then
-    log "   🗑️ Pruning ${LLM_REQ_COUNT} aged llm_requests..."
-    run_psql hindsight -c "DELETE FROM llm_requests WHERE started_at < NOW() - INTERVAL '30 days';" || true
-fi
-
-# --- STEP 3: Vector Index Optimization (HNSW & GIN) ---
-if [ "$DO_REINDEX" = true ]; then
-    log "\n⚡ Step 3: Reindexing HNSW vector indexes and GIN text indexes..."
-    if [ "$DRY_RUN" = true ]; then
-        log "   [DRY-RUN] Would run REINDEX TABLE CONCURRENTLY on memory_units and mental_models."
-    else
-        log "   🔨 Reindexing table 'memory_units' concurrently..."
-        run_psql hindsight -c "REINDEX TABLE CONCURRENTLY memory_units;"
-        log "   🔨 Reindexing table 'mental_models' concurrently..."
-        run_psql hindsight -c "REINDEX TABLE CONCURRENTLY mental_models;"
-        log "   ✓ Vector and search indexes rebuilt successfully."
-    fi
-else
-    log "\n⏩ Step 3: Skipping reindexing (--no-reindex specified)."
-fi
-
-# --- STEP 4: Vacuum & Analyze ---
+# --- STEP 2: Vacuum & Analyze ---
 if [ "$DO_VACUUM" = true ]; then
-    log "\n🧽 Step 4: Reclaiming storage and updating statistics with VACUUM ANALYZE..."
+    log "\n🧽 Step 2: Reclaiming storage and updating statistics with VACUUM ANALYZE..."
     if [ "$DRY_RUN" = true ]; then
-        log "   [DRY-RUN] Would run VACUUM ANALYZE across hindsight, litellm, authentik, and gitea."
+        log "   [DRY-RUN] Would run VACUUM ANALYZE across litellm, openwebui, authentik, and gitea."
     else
-        log "   • Vacuuming hindsight DB (vector & relation tables)..."
-        run_psql hindsight -c "VACUUM (ANALYZE, VERBOSE) memory_units;"
-        run_psql hindsight -c "VACUUM (ANALYZE, VERBOSE) mental_models;"
-        run_psql hindsight -c "VACUUM (ANALYZE, VERBOSE) async_operations;"
-        run_psql hindsight -c "VACUUM ANALYZE;"
-
         log "   • Vacuuming litellm DB..."
         run_psql litellm -c "VACUUM (ANALYZE, VERBOSE) \"LiteLLM_SpendLogs\";"
         run_psql litellm -c "VACUUM ANALYZE;"
+
+        log "   • Vacuuming openwebui DB..."
+        run_psql openwebui -c "VACUUM ANALYZE;"
 
         log "   • Vacuuming authentik DB..."
         run_psql authentik -c "VACUUM ANALYZE;"
@@ -252,30 +198,28 @@ if [ "$DO_VACUUM" = true ]; then
         log "   ✓ Cluster vacuum and optimizer statistics refreshed."
     fi
 else
-    log "\n⏩ Step 4: Skipping VACUUM ANALYZE (--no-vacuum specified)."
+    log "\n⏩ Step 2: Skipping VACUUM ANALYZE (--no-vacuum specified)."
 fi
 
-# --- STEP 5: Final Metrics & Summary ---
-HINDSIGHT_SIZE_AFTER=$(run_psql_val hindsight "SELECT pg_size_pretty(pg_database_size('hindsight'));")
+# --- STEP 3: Final Metrics & Summary ---
 LITELLM_SIZE_AFTER=$(run_psql_val litellm "SELECT pg_size_pretty(pg_database_size('litellm'));")
 SPEND_LOGS_SIZE_AFTER=$(run_psql_val litellm "SELECT pg_size_pretty(pg_total_relation_size('\"LiteLLM_SpendLogs\"'));")
-MEMORY_UNITS_SIZE_AFTER=$(run_psql_val hindsight "SELECT pg_size_pretty(pg_total_relation_size('memory_units'));")
+OPENWEBUI_SIZE_AFTER=$(run_psql_val openwebui "SELECT pg_size_pretty(pg_database_size('openwebui'));")
 
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))
 
 SUMMARY_MSG="Database maintenance completed in ${DURATION}s.
-• Pruned: ${PRUNED_SPEND} LiteLLM spend logs, ${PRUNED_ASYNC} Hindsight async tasks
-• litellm DB: ${LITELLM_SIZE_BEFORE} ➔ ${LITELLM_SIZE_AFTER} (SpendLogs: ${SPEND_LOGS_SIZE_BEFORE} ➔ ${SPEND_LOGS_SIZE_AFTER})
-• hindsight DB: ${HINDSIGHT_SIZE_BEFORE} ➔ ${HINDSIGHT_SIZE_AFTER} (memory_units: ${MEMORY_UNITS_SIZE_BEFORE} ➔ ${MEMORY_UNITS_SIZE_AFTER})
-• Reindex HNSW: $([ "$DO_REINDEX" = true ] && echo 'Completed' || echo 'Skipped')"
+• Pruned: ${PRUNED_SPEND} LiteLLM spend logs
+• litellm DB:   ${LITELLM_SIZE_BEFORE} ➔ ${LITELLM_SIZE_AFTER} (SpendLogs: ${SPEND_LOGS_SIZE_BEFORE} ➔ ${SPEND_LOGS_SIZE_AFTER})
+• openwebui DB: ${OPENWEBUI_SIZE_BEFORE} ➔ ${OPENWEBUI_SIZE_AFTER}"
 
 log "\n=================================================="
 log "🎉 Maintenance Run Complete!"
 log "$SUMMARY_MSG"
 log "=================================================="
 
-# --- STEP 6: Push Notification Delivery ---
+# --- STEP 4: Push Notification Delivery ---
 if [ "$DO_NOTIFY" = true ] && [ -n "$NOTIFY_BIN" ]; then
     log "📲 Dispatching notification via ntfy topic '${NTFY_TOPIC}'..."
     NOTIF_TITLE="pgvector Maintenance Complete"

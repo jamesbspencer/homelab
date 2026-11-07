@@ -1,6 +1,9 @@
-# Nous Research Hermes Agent
+# Nous Research Hermes Agent (Archived)
 
-Hermes Agent is an autonomous agent framework and gateway providing tool execution, scheduling, delegation, and web automation capabilities.
+> [!WARNING]
+> **DEPRECATED & RETIRED**: Nous Research Hermes Agent was decommissioned on 2026-11-07. The service, its Traefik ingress routers (`hermes.jamesspencer.me`, `hermes-api.spencer.lan`, `mcp.spencer.lan`), Authentik OIDC integration, and Docker sandbox execution engine have been retired. Background database maintenance has migrated to the host crontab. This guide is retained for historical and architectural reference only.
+
+Hermes Agent was an autonomous agent framework and gateway providing tool execution, scheduling, delegation, and web automation capabilities.
 
 ---
 

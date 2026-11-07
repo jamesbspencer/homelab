@@ -7,8 +7,8 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ## 🎯 Active Initiatives & Roadmap
 
 ### 1. 💾 Automated Backup & Disaster Recovery Pipeline
-- [ ] **Automated `pgvector` Backups**: Implement a lightweight backup sidecar or scheduled maintenance script executing transactional dumps (`pg_dumpall` or per-database `pg_dump`: `hindsight`, `litellm`, `authentik`) with retention rotation (e.g., 7 daily, 4 weekly).
-- [ ] **Encrypted State Archiving**: Snapshot critical runtime volumes (`./authentik/media`, `./traefik/certs`, `./hermes/hindsight`) using encrypted backup utilities (e.g., Restic or Borg).
+- [ ] **Automated `pgvector` Backups**: Implement a lightweight backup sidecar or scheduled maintenance script executing transactional dumps (`pg_dumpall` or per-database `pg_dump`: `openwebui`, `litellm`, `authentik`, `gitea`) with retention rotation (e.g., 7 daily, 4 weekly).
+- [ ] **Encrypted State Archiving**: Snapshot critical runtime volumes (`./authentik/media`, `./traefik/certs`, `./pgvector/data`) using encrypted backup utilities (e.g., Restic or Borg).
 - [ ] **Local NAS Replication**: Configure automated synchronization of encrypted snapshots and database dumps to the local NAS (via NFS/SMB mount or SSH/rsync) with retention cleanup.
 - [ ] **Restore & Recovery Runbook**: Document step-by-step restoration procedures in `docs/` and verify point-in-time recovery for database and certificate state.
 
@@ -26,10 +26,12 @@ This file tracks upcoming features, architectural improvements, and exploration 
 
 ---
 
-### 4. ⏰ Hermes Proactive Schedules & Autonomous Briefings
-- [ ] **Daily Briefing Routine**: Configure a scheduled cron task for Hermes to run at 7:00 AM daily, querying SearXNG and Firecrawl for top news/releases, auditing homelab container status, and dispatching a formatted digest.
-- [ ] **Autonomous Workspace & Dependency Hygiene**: Set up recurring agent routines to inspect repository dependencies, review git history, and suggest maintenance tasks.
-- [ ] **Homelab Webhook Trigger Gateway**: Expose an authenticated webhook endpoint allowing external events (e.g. GitHub releases, RSS feeds, server events) to trigger Hermes to investigate and synthesize an analysis.
+### 4. 🛑 Hermes Agent Decommissioning & Workload Migration
+- [x] **Decommission Hermes Agent Container**: Stopped and removed `nousresearch/hermes-agent:latest` container from `docker-compose.yaml`, freeing host ports `9119`, `8642`, `8765`, and eliminating the `/var/run/docker.sock` privilege exposure.
+- [x] **Cron & Task Migration**: Migrated `pgvector-maintenance.sh` from Hermes internal scheduler to host crontab (`0 3 * * 0 /data/homelab/scripts/pgvector-maintenance.sh`), verified dry-run and ntfy notifications.
+- [x] **Data Archival & Storage Reclamation**: Created timestamped compressed archive `archives/hermes-backup-20261107.tar.gz`, pruned untracked runtime cruft (`state.db`, caches, lockfiles), and deleted local Docker execution sandbox images (`hermes-terminal:latest`).
+- [x] **Ingress, SSO & Homepage Clean-up**: Unregistered Traefik routers (`hermes.jamesspencer.me`, `hermes-api.spencer.lan`, `mcp.spencer.lan`), decommissioned Authentik OIDC integration, and removed tiles from Homepage.
+- [x] **Documentation & Architecture Synchronization**: Archived `docs/hermes.md` to `docs/archive/hermes.md`, and updated `README.md`, `AGENTS.md`, and service guides.
 
 ---
 
@@ -43,14 +45,15 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ### 6. 🎙️ Fully Offline Voice & Speech AI Stack (Piper & Faster-Whisper)
 - [ ] **Local Text-to-Speech (Piper)**: Deploy a containerized Piper TTS server on the `ai` network for low-latency neural speech generation.
 - [ ] **Local Speech-to-Text (Faster-Whisper)**: Deploy a GPU-accelerated Whisper endpoint on the `ai` network for local speech transcription.
-- [ ] **Hermes Audio Tools Integration**: Route Hermes's voice and audio tools to local Piper and Whisper endpoints instead of cloud APIs.
+- [ ] **Open WebUI Voice Integration**: Route Open WebUI's voice and audio tools to local Piper and Whisper endpoints instead of cloud APIs.
 
 ---
 
-### 7. 🧠 Agentic Memory & Reinforcement Learning MCP Server (memlord)
-- [x] **Evaluate Memlord Architecture**: Investigate [`memlord`](https://github.com/MyrikLD/memlord) (self-hosted MCP memory server with hybrid BM25 + pgvector KNN, local ONNX embeddings, workspaces, and dreaming consolidation) as a specialized per-project memory layer alongside Hindsight.
-- [x] **MCP Server Deployment**: Deploy `memlord` container on `net1`, `ai`, and `db` networks with Traefik routing, Authentik ForwardAuth for Web UI, direct `/mcp` ingress, and dedicated `memlord` pgvector database.
-- [x] **Client & Tooling Integration**: Document MCP connections for Hermes Agent, Claude Desktop, and Cursor, and register Memlord in Homepage dashboard.
+### 7. 🛑 Memlord & Hindsight Decommissioning & Memory Consolidation
+- [x] **Consolidate Memories into Open WebUI**: Imported 400+ procedural rules and conversational memory units from Memlord and Hindsight into Open WebUI's native PostgreSQL memory store (`openwebui` database on pgvector).
+- [x] **Database Dumps & Archival**: Generated full compressed SQL dumps for both `hindsight` (1.1 MB) and `memlord` (686 KB) under `archives/` before dropping databases from pgvector.
+- [x] **Decommission Containers & Purge Images**: Stopped and removed `hindsight` and `memlord` containers, removed Traefik routers (`hindsight.spencer.lan`, `memlord.spencer.lan`), deleted downloaded ONNX models (`model.onnx`, 450 MB), and purged container images, reclaiming ~7 GB of storage.
+- [x] **Configuration & Maintenance Updates**: Removed `HINDSIGHT_*` and `MEMLORD_*` keys from `.env` and `.env.example`, updated `scripts/pgvector-maintenance.sh` to vacuum active databases (`openwebui`, `litellm`, `authentik`, `gitea`), and archived documentation to `docs/archive/`.
 
 ---
 

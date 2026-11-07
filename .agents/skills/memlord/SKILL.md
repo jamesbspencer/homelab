@@ -3,9 +3,10 @@ name: memlord
 description: Structured workspace memory and procedural knowledge store. Use to store, retrieve, search, and manage project memories, architectural decisions, coding patterns, and cross-session homelab knowledge via Memlord MCP tools and REST API.
 ---
 
-# Memlord MCP & Procedural Memory Integration
+# Memlord MCP & Procedural Memory Integration (Deprecated)
 
-Memlord is a self-hosted Model Context Protocol (MCP) memory server engineered for persistent, structured agent memory with hybrid BM25 + pgvector KNN search fused via Reciprocal Rank Fusion (RRF).
+> [!WARNING]
+> **DEPRECATED & RETIRED**: Memlord MCP server was decommissioned on 2026-11-07. Its persistent procedural memories and vector embeddings have been imported into **Open WebUI** (`openwebui` database on pgvector) and backed up to `archives/memlord-dump-20261107.sql.gz`. This skill documentation is retained for reference only.
 
 ---
 

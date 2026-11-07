@@ -1,6 +1,9 @@
-# Memlord MCP Memory Server
+# Memlord MCP Memory Server (Archived)
 
-**Memlord** (`MyrikLD/memlord`) is a self-hosted **Model Context Protocol (MCP)** memory server engineered for persistent, structured, and multi-workspace agent memory. It features **hybrid search** combining BM25 full-text indexing with vector KNN (`pgvector`), fused via **Reciprocal Rank Fusion (RRF)**, and runs local ONNX embeddings with zero external API dependencies.
+> [!WARNING]
+> **DEPRECATED & RETIRED**: Memlord MCP Memory Server was decommissioned on 2026-11-07. Its PostgreSQL database was dumped to `archives/memlord-dump-20261107.sql.gz` and removed from `pgvector`. Downloaded ONNX model weights and container images have been purged. Persistent procedural memories and workspace knowledge were migrated into **Open WebUI** (`openwebui` database on pgvector). This guide is retained for historical and architectural reference only.
+
+**Memlord** (`MyrikLD/memlord`) was a self-hosted **Model Context Protocol (MCP)** memory server engineered for persistent, structured, and multi-workspace agent memory. It features **hybrid search** combining BM25 full-text indexing with vector KNN (`pgvector`), fused via **Reciprocal Rank Fusion (RRF)**, and runs local ONNX embeddings with zero external API dependencies.
 
 ---
 
@@ -45,14 +48,10 @@ Spencer's Homelab operates a synergistic dual-tier memory system:
 | **Tier 1: Episodic & Reflective** | **Hindsight** (`:8888`) | Implicit (Auto-Retain / Auto-Recall) | Vector graph in `hindsight` DB + Ollama LLM extraction | Cross-session narrative history, user preferences, entity resolution, and temporal observations. |
 | **Tier 2: Workspace & Procedural** | **Memlord** (`:8000`) | Explicit (11 MCP Tools) | BM25 (`tsvector`) + pgvector KNN fused with RRF in `memlord` DB | SOPs, repo conventions, project-specific notes, progressive disclosure snippets, and deliberate deduplication. |
 
-### 🔄 Continuous Memory Synchronization (Hermes Cron)
-Episodic observations and validated facts captured by Hindsight are periodically synchronized into Memlord's hybrid vector/BM25 database via an autonomous Hermes cron pipeline:
-* **Cron Task**: `hindsight-memlord-sync` (ID: `5fc9990b2434`)
-* **Schedule**: Hourly (`0 * * * *`)
-* **Runner**: [`hermes/scripts/sync-hindsight-to-memlord.py`](file:///data/homelab/hermes/scripts/sync-hindsight-to-memlord.py)
-* **Ingestion Transport**: MCP Streamable HTTP transport (`http://memlord:8000/mcp`) using `MCP_MEMLORD_API_KEY`.
-* **State Ledger**: Persistent tracking at `hermes/cron/hindsight_memlord_sync_state.json` ensuring sub-second incremental execution.
-* **Notification**: Dispatches run summaries to the `agent-memory` topic on ntfy.
+### 🔄 Memory Synchronization & Migration
+Episodic observations and validated facts captured in Hindsight were migrated and synchronized into Memlord's hybrid vector/BM25 database using [`hermes/scripts/sync-hindsight-to-memlord.py`](file:///data/homelab/hermes/scripts/sync-hindsight-to-memlord.py) and [`scripts/import-memories-to-openwebui.py`](file:///data/homelab/scripts/import-memories-to-openwebui.py):
+* **State Ledger**: Persistent tracking ensured all historical memories were ingested into Memlord and Open WebUI with deduplication.
+* **Ongoing Role**: Memlord serves as the centralized MCP memory and procedural knowledge layer across coding assistants (Antigravity, Cursor, Claude Desktop).
 
 ---
 
@@ -149,15 +148,7 @@ In Cursor Settings -> Features -> MCP Servers -> Add New MCP Server:
 * **Type**: `http`
 * **URL**: `https://memlord.spencer.lan/mcp`
 
-### 3. Hermes Agent (`hermes/config.yaml`)
-```yaml
-mcp_servers:
-  memlord:
-    url: "http://memlord:8000/mcp"
-    transport: "http"
-```
-
-### 4. Antigravity & Gemini (`~/.gemini/config/mcp_config.json` or `.agents/mcp_config.json`)
+### 3. Antigravity & Gemini (`~/.gemini/config/mcp_config.json` or `.agents/mcp_config.json`)
 ```json
 {
   "mcpServers": {
