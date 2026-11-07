@@ -105,7 +105,7 @@ When Hermes needs to execute shell commands or run scripts, it interacts with di
 | `HINDSIGHT_API_URL` | `http://hindsight:8888` | Internal Hindsight service endpoint |
 | `HINDSIGHT_BANK_ID` | `hermes` | Default memory bank identifier |
 | `HERMES_TERMINAL_ENV` | `docker` | Terminal execution environment driver |
-| `HERMES_TERMINAL_DOCKER_IMAGE` | `hermes-terminal:latest` | Container image used for sandbox execution |
+| `HERMES_TERMINAL_DOCKER_IMAGE` | `hermes-terminal:latest` | Container image used for sandbox execution (see [Custom Sandbox Image Guide](hermes-terminal-image/README.md)) |
 | `HERMES_TERMINAL_DOCKER_VOLUMES` | `["/data/homelab/hermes/workspace:/workspace", "/data/repos:/data/repos"]` | Host-to-sandbox volume mounts for terminal |
 
 ---

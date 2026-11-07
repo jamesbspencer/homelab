@@ -32,7 +32,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Removed Traefik reverse proxy routers for `hermes.jamesspencer.me`, `hermes-api.spencer.lan`, and `mcp.spencer.lan`.
   - Decommissioned Authentik OIDC application and provider for Hermes.
   - Removed Hermes Agent and Hermes API & MCP tiles from Homepage dashboard ([`homepage/config/services.yaml`](file:///data/homelab/homepage/config/services.yaml)).
-  - Archived complete runtime state to compressed storage (`archives/hermes-backup-20261107.tar.gz`), purged 726 MB of untracked runtime artifacts and state databases, and moved service documentation to [`docs/archive/hermes.md`](file:///data/homelab/docs/archive/hermes.md).
+  - Archived complete runtime state to compressed storage (`archives/hermes-backup-20261107.tar.gz`), purged 726 MB of untracked runtime artifacts and state databases, moved service documentation to [`docs/archive/hermes.md`](file:///data/homelab/docs/archive/hermes.md), and archived the execution sandbox build context to [`docs/archive/hermes-terminal-image/`](file:///data/homelab/docs/archive/hermes-terminal-image/README.md).
   - Sanitized obsolete `HERMES_*` configuration keys from `.env` and [`.env.example`](file:///data/homelab/.env.example).
 
 ### Added
