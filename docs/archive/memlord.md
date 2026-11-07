@@ -49,7 +49,7 @@ Spencer's Homelab operates a synergistic dual-tier memory system:
 | **Tier 2: Workspace & Procedural** | **Memlord** (`:8000`) | Explicit (11 MCP Tools) | BM25 (`tsvector`) + pgvector KNN fused with RRF in `memlord` DB | SOPs, repo conventions, project-specific notes, progressive disclosure snippets, and deliberate deduplication. |
 
 ### 🔄 Memory Synchronization & Migration
-Episodic observations and validated facts captured in Hindsight were migrated and synchronized into Memlord's hybrid vector/BM25 database using [`hermes/scripts/sync-hindsight-to-memlord.py`](file:///data/homelab/hermes/scripts/sync-hindsight-to-memlord.py) and [`scripts/import-memories-to-openwebui.py`](file:///data/homelab/scripts/import-memories-to-openwebui.py):
+Episodic observations and validated facts captured in Hindsight were migrated and synchronized into Memlord's hybrid vector/BM25 database using `scripts/sync-hindsight-to-memlord.py` (archived) and [`scripts/import-memories-to-openwebui.py`](file:///data/homelab/scripts/import-memories-to-openwebui.py):
 * **State Ledger**: Persistent tracking ensured all historical memories were ingested into Memlord and Open WebUI with deduplication.
 * **Ongoing Role**: Memlord serves as the centralized MCP memory and procedural knowledge layer across coding assistants (Antigravity, Cursor, Claude Desktop).
 

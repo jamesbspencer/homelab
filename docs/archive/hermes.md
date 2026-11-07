@@ -221,7 +221,7 @@ Users and the agent can explicitly trigger skill distillation via the `/learn` s
 
 ### 4. Gitea & `tea` CLI Integration (`gitea`, `tea`)
 Hermes includes an active skill for self-hosted Gitea repository management using the official `tea` CLI installed in `hermes-terminal:latest`:
-* **Skill Locations**: Maintained in centralized AI skills repo [`/data/repos/ai-skills/skills/gitea/`](file:///data/repos/ai-skills/skills/gitea/SKILL.md) and exposed via Hermes `skills.external_dirs` (with backwards-compatible symlinks at [`hermes/skills/devops/gitea/`](file:///data/homelab/hermes/skills/devops/gitea/SKILL.md), `tea`, and `gitea-tea`).
+* **Skill Locations**: Maintained in centralized AI skills repo [`/data/repos/ai-skills/skills/gitea/`](file:///data/repos/ai-skills/skills/gitea/SKILL.md) and exposed via Hermes `skills.external_dirs` (with backwards-compatible symlinks at `hermes/skills/devops/gitea/`, `tea`, and `gitea-tea`).
 * **Endpoint**: Targets `https://git.spencer.lan` (pass `--insecure` for self-signed certificates or connect to internal `http://gitea:3000`).
 * **Capabilities**: Issue tracking, PR workflows, release management, branch protections, labels, milestones, and API operations.
 
@@ -236,11 +236,11 @@ The memory engine (`hermes/hindsight/config.json`) is enriched with:
 Hermes manages persistent scheduled tasks with `--no-agent` zero-token script execution or scheduled agent invocations:
 * **Hindsight to Memlord Sync (`hindsight-memlord-sync`)**:
   * **Schedule**: Hourly (`0 * * * *`)
-  * **Script**: [`scripts/sync-hindsight-to-memlord.py`](file:///data/homelab/hermes/scripts/sync-hindsight-to-memlord.py)
+  * **Script**: `scripts/sync-hindsight-to-memlord.py` (archived in `archives/deprecated-services/`)
   * **Function**: Queries Hindsight (`:8888`) for new memory units, formats them into structured schemas, and streams them into Memlord (`:8000/mcp`) via MCP Streamable HTTP transport with local ledger state caching.
 * **Database & Vector Maintenance (`pgvector-maintenance`)**:
   * **Schedule**: Weekly Sunday at 03:00 UTC (`0 3 * * 0`)
-  * **Script**: [`scripts/pgvector-maintenance.sh`](file:///data/homelab/hermes/scripts/pgvector-maintenance.sh)
+  * **Script**: [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh)
   * **Function**: VACUUM (ANALYZE), HNSW/GIN re-indexing, log pruning, and ntfy alerts.
 
 ---

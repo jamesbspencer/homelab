@@ -12,7 +12,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ### Deprecated & Removed
 - **LiteLLM Gateway Decommissioning & PostgreSQL Archival**:
   - Decommissioned `litellm` container (`ghcr.io/berriai/litellm:main-latest`), removing the service definition, host port bindings, and PostgreSQL connection from [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
-  - Exported final compressed database backup of LiteLLM spend logs and user keys to [`pgvector/archives/litellm_final_backup.sql.gz`](file:///data/homelab/pgvector/archives/litellm_final_backup.sql.gz) (9.3 MB) and decoupled PostgreSQL maintenance routines in [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh) and [`hermes/scripts/pgvector-maintenance.sh`](file:///data/homelab/hermes/scripts/pgvector-maintenance.sh).
+  - Exported final compressed database backup of LiteLLM spend logs and user keys to [`pgvector/archives/litellm_final_backup.sql.gz`](file:///data/homelab/pgvector/archives/litellm_final_backup.sql.gz) (9.3 MB) and decoupled PostgreSQL maintenance routines in [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh).
   - Deprecated legacy LiteLLM environment keys in [`.env.example`](file:///data/homelab/.env.example).
   - Archived service documentation to [`docs/archive/litellm.md`](file:///data/homelab/docs/archive/litellm.md).
 - **Hindsight Long-Term Memory & Memlord MCP Decommissioning**:
@@ -102,11 +102,11 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - **Cluster Vacuuming**: Executes `VACUUM (ANALYZE)` across `hindsight`, `litellm`, `authentik`, and `gitea` to reclaim storage and refresh PostgreSQL optimizer statistics.
   - **ntfy Push Notifications**: Dispatches formatted completion summaries (reclaimed counts, sizes, durations) to user devices via [`scripts/notify.sh`](file:///data/homelab/scripts/notify.sh).
   - **Hermes Cron Automation**: Registered weekly scheduled job (`6ff939ca35e2`, `0 3 * * 0`) in Hermes Agent's background scheduler with `--no-agent` mode for zero LLM overhead.
-  - **Hermes DevOps Skill**: Created the `database-maintenance` skill ([`hermes/skills/devops/database-maintenance/SKILL.md`](file:///data/homelab/hermes/skills/devops/database-maintenance/SKILL.md)) for conversational inspection and on-demand maintenance runs.
+  - **Hermes DevOps Skill**: Created the `database-maintenance` skill (`hermes/skills/devops/database-maintenance/SKILL.md`) for conversational inspection and on-demand maintenance runs.
 - **Push Notification Loopback Resolve**:
   - Enhanced [`scripts/notify.sh`](file:///data/homelab/scripts/notify.sh) with automatic Traefik loopback resolve (`--resolve push.spencer.lan:443:127.0.0.1`), ensuring push notifications dispatch reliably from host scripts when local LAN DNS is not configured on the host machine.
 - **Hermes Custom Init & Skills Hub Quarantine Fix**:
-  - Renamed `hermes/init/03-mcp-server.sh` to [`hermes/init/03-custom-init.sh`](file:///data/homelab/hermes/init/03-custom-init.sh) and updated S6 volume mounts in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml), [`.gitignore`](file:///data/homelab/.gitignore), and [`docs/archive/hermes.md`](file:///data/homelab/docs/archive/hermes.md) to reflect its expanded role handling boot supervision, custom CA injection, OIDC cookie handling, and runtime patching.
+  - Renamed `hermes/init/03-mcp-server.sh` to `hermes/init/03-custom-init.sh` and updated S6 volume mounts in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml), [`.gitignore`](file:///data/homelab/.gitignore), and [`docs/archive/hermes.md`](file:///data/homelab/docs/archive/hermes.md) to reflect its expanded role handling boot supervision, custom CA injection, OIDC cookie handling, and runtime patching.
   - Resolved `FileExistsError` during skills hub bundle quarantine when community ZIPs contain directory entries without trailing slashes.
   - Integrated runtime filtering into `03-custom-init.sh` for `skills_hub_clawhub.py` and `skills_hub_install.py` to strip directory-name entries before file writing and quarantine scanning.
 
@@ -181,9 +181,9 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Enforced global protection on `websecure` entrypoint (`443`) with secure file-based key loading (`traefik/crowdsec_bouncer_key`) and private subnet whitelisting (`127.0.0.1/32`, `192.168.0.0/16`, `10.0.0.0/8`).
   - Added comprehensive operational guide to [`docs/crowdsec.md`](file:///data/homelab/docs/crowdsec.md) and updated [`docs/README.md`](file:///data/homelab/docs/README.md) and [`AGENTS.md`](file:///data/homelab/AGENTS.md).
 - **Hermes Model Context Protocol (MCP) Server**:
-  - Implemented dual-transport MCP server in [`hermes/scripts/hermes_mcp_server.py`](file:///data/homelab/hermes/scripts/hermes_mcp_server.py) wrapping Hermes `model_tools.handle_function_call`.
+  - Implemented dual-transport MCP server in `hermes/scripts/hermes_mcp_server.py` wrapping Hermes `model_tools.handle_function_call`.
   - Exposes 13 homelab tools to external AI clients: `web_search` (SearXNG), `web_extract` (Firecrawl), `execute_code`, `terminal`, `process` (Docker sandbox), `read_file`, `write_file`, `patch`, `search_files` (workspace), `vision_analyze` (multimodal vision), `text_to_speech` (TTS), and `skills_list` / `skill_view` (Hermes skills).
-  - Integrated into existing `hermes` container via s6-overlay boot script ([`hermes/init/03-custom-init.sh`](file:///data/homelab/hermes/init/03-custom-init.sh)) for automatic process supervision, failure recovery, and unified resource footprint without running duplicate containers.
+  - Integrated into existing `hermes` container via s6-overlay boot script (`hermes/init/03-custom-init.sh`) for automatic process supervision, failure recovery, and unified resource footprint without running duplicate containers.
   - Added Traefik edge routing on `net1` for `https://mcp.spencer.lan/sse` and message ingress at `/messages/` (port `8765`).
   - Enforced Bearer token authentication via `HERMES_MCP_KEY` with unauthenticated `/health` endpoint for monitoring.
   - Added client configuration examples for Claude Desktop (SSE and direct Docker stdio), Cursor / IDE extensions, and external MCP clients to [`docs/archive/hermes.md`](file:///data/homelab/docs/archive/hermes.md).
@@ -218,7 +218,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Configured `hermes` container with `HINDSIGHT_MODE=local_external`, `HINDSIGHT_API_URL=http://hindsight:8888`, and `HINDSIGHT_BANK_ID=hermes`.
   - Added `hindsight` to `depends_on` for `hermes` service in `docker-compose.yaml`.
   - Activated `hindsight` memory provider in `hermes/config.yaml`.
-  - Provisioned profile memory config in [`hermes/hindsight/config.json`](file:///data/homelab/hermes/hindsight/config.json) with auto-recall and auto-retain enabled.
+  - Provisioned profile memory config in `hermes/hindsight/config.json` with auto-recall and auto-retain enabled.
   - Updated [`docs/archive/hermes.md`](file:///data/homelab/docs/archive/hermes.md) with memory backend architecture diagram and tool descriptions.
 - **Dedicated pgvector Instance (`pgvector`)**:
   - Added standalone `pgvector` container running `pgvector/pgvector:${PGVECTOR_VERSION:-pg16}` for Hindsight long-term memory engine and future homelab microservices, decoupled from legacy databases.
