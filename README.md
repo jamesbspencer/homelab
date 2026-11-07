@@ -12,11 +12,11 @@ Detailed architectural designs, configuration options, environment variables, an
 |---|---|---|---|
 | **Traefik** | Reverse proxy, SSL, Geoblock (US Only) & edge router | `:80`, `:443` (`https://traefik.spencer.lan`) | [Traefik Guide](docs/traefik.md) |
 | **CrowdSec** | Intrusion detection & Traefik Bouncer plugin | `:8080` (Internal `net1` network) | [CrowdSec Guide](docs/crowdsec.md) |
-| **LiteLLM Proxy** | LLM routing gateway, spend manager & fallback router | `https://llm.spencer.lan` (:4000) | [LiteLLM Guide](docs/litellm.md) |
+| **OmniRoute Gateway** | Universal AI gateway, OpenAI/Anthropic proxy & dynamic router | `https://llm.spencer.lan` (:20128) | [OmniRoute Guide](docs/omniroute.md) |
 | **Open WebUI** | Multi-model generative AI chat & memory client | `https://chat.spencer.lan` / `https://ai.spencer.lan` (:8080) | [Open WebUI Guide](docs/open-webui.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
 | **MoMoE** | Hybrid MoE inference engine (GPU + 61 GiB RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](docs/momoe.md) |
-| **pgvector** | Unified vector & relational DB for LiteLLM, Open WebUI, Authentik & Gitea | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
+| **pgvector** | Unified vector & relational DB for Open WebUI, Authentik & Gitea | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](docs/valkey.md) |
@@ -47,7 +47,7 @@ flowchart TB
     subgraph Ingress ["🚪 Proxied Endpoints (net1)"]
         Traefik -->|sso / login| Authentik
         Traefik -->|chat / ai| OpenWebUI["Open WebUI :8080"]
-        Traefik -->|llm| LiteLLMUI["LiteLLM :4000"]
+        Traefik -->|llm| OmniRouteUI["OmniRoute :20128"]
         Traefik -->|logs| DozzleUI["Dozzle :8080"]
         Traefik -->|push| Ntfy["ntfy :80"]
         Traefik -->|vault| OpenBaoUI["OpenBao :8200"]
@@ -58,14 +58,14 @@ flowchart TB
 
     %% AI Agent & Inference Layer
     subgraph AICore ["🧠 AI Agent & Inference Layer (ai)"]
-        LiteLLM["LiteLLM Proxy\n(Unified Router & Fallbacks)"]
+        OmniRoute["OmniRoute AI Gateway\n(Universal Router, Optimizer & Cache)"]
         Ollama["Ollama (GPU Accelerated)\ngemma4:12b | nomic-embed"]
         MoMoE["MoMoE Hybrid MoE (GPU + RAM)\nornith-1.5-35b (64k)"]
         
-        OpenWebUI -->|LLM Requests| LiteLLM
-        LiteLLM -->|Local GPU Inference| Ollama
-        LiteLLM -->|Hybrid MoE 64k| MoMoE
-        LiteLLM -.->|Optional Cloud| CloudLLM[OpenRouter / Groq]
+        OpenWebUI -->|LLM Requests| OmniRoute
+        OmniRoute -->|Local GPU Inference| Ollama
+        OmniRoute -->|Hybrid MoE 64k| MoMoE
+        OmniRoute -.->|Optional Cloud| CloudLLM[OpenRouter / Groq / DeepSeek]
     end
 
     %% Tools, Search & Scraping Cluster
@@ -89,7 +89,7 @@ flowchart TB
     %% Data Plane & Storage
     subgraph DataPlane ["💾 Data & Caching Plane"]
         subgraph DBNet ["db Network"]
-            PGVector[("pgvector Database\n(litellm, openwebui, authentik & gitea)")]
+            PGVector[("pgvector Database\n(openwebui, authentik & gitea)")]
         end
         subgraph CacheNet ["redis Network"]
             Valkey[("Valkey In-Memory Cache\n(Search Cache & Rate Limiting)")]
@@ -97,7 +97,7 @@ flowchart TB
     end
 
     OpenWebUI -->|Memory & Vectors| PGVector
-    LiteLLM -->|Keys & Spend Audit| PGVector
+    OmniRoute <-->|Cache & Rate Limiting| Valkey
     SearXNG -->|Result Cache| Valkey
     Firecrawl -->|Rate Limiting| Valkey
 ```
@@ -127,27 +127,28 @@ flowchart TB
 │   ├── firecrawl.md         # Firecrawl architecture, queues & scraping
 │   ├── gitea.md             # Gitea Git repository manager & issue tracker guide
 │   ├── homepage.md          # Homepage service directory & health dashboard guide
-│   ├── litellm.md           # LiteLLM Proxy model router & spend tracker
 │   ├── momoe.md             # MoMoE hybrid MoE 64k inference engine guide
 │   ├── ntfy.md              # ntfy push notification gateway guide
 │   ├── ollama.md            # Ollama setup & GPU acceleration guide
+│   ├── omniroute.md         # OmniRoute universal AI gateway, proxy & optimizer guide
 │   ├── openbao.md           # OpenBao secrets & encryption management guide
 │   ├── open-webui.md        # Open WebUI generative chat & memory client guide
-│   ├── pgvector.md          # Dedicated pgvector database for LiteLLM, Open WebUI & Authentik
+│   ├── pgvector.md          # Dedicated pgvector database for Open WebUI, Authentik & Gitea
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
 │   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
 │   ├── valkey.md            # Valkey caching & healthcheck operations
-│   └── archive/             # Archived service guides (hermes, hindsight, memlord)
+│   └── archive/             # Archived service guides (litellm, hermes, hindsight, memlord)
 ├── authentik/               # Authentik configuration, media and templates
 ├── gitea/                   # Gitea repositories, git data and configs
 ├── homepage/                # Homepage service dashboard layout & configs
-├── litellm/                 # LiteLLM Proxy configuration (config.yaml)
 ├── momoe/                   # MoMoE hybrid MoE engine data, packs & entrypoint
 │   ├── data/                # Downloaded GGUF weights, packs, configs and logs
 │   └── docker-entrypoint.sh # Container startup orchestrator & CLI pass-through
 ├── ntfy/                    # ntfy notification cache & persistent alert store
 ├── nuq-postgres/            # NuQ PostgreSQL persistent crawl state database
 ├── ollama/                  # Cached LLM model weights
+├── omniroute/               # OmniRoute persistent SQLite data & secrets
+│   └── data/                # SQLite database (storage.sqlite), cache & server env
 ├── openbao/                 # OpenBao server configuration & Raft storage
 │   ├── config/              # OpenBao server configuration (bao.hcl)
 │   └── data/                # Persistent Raft transactional database
@@ -198,6 +199,12 @@ docker compose ps
 Navigate to `https://traefik.spencer.lan` or check logs:
 ```bash
 docker compose logs -f traefik
+```
+
+### Test OmniRoute AI Gateway
+```bash
+curl -kfsSL https://llm.spencer.lan/healthz
+curl -kfsSL https://llm.spencer.lan/v1/models -H "Authorization: Bearer ${OMNIROUTE_MASTER_KEY}"
 ```
 
 ### Test Ollama GPU Inference

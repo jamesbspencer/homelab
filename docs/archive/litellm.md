@@ -1,10 +1,10 @@
-# LiteLLM Proxy - Centralized Homelab LLM Router
+# [ARCHIVED] LiteLLM Proxy - Centralized Homelab LLM Router
 
-LiteLLM Proxy provides a unified, OpenAI-compatible proxy gateway and router for all local and external large language models in Spencer's Homelab.
+> ⚠️ **Status**: **Retired & Archived (November 2026)**. LiteLLM Proxy has been replaced by [OmniRoute](../omniroute.md) (`diegosouzapw/omniroute`). All homelab model routing, OpenAI/Anthropic proxying, RAG embeddings, and Valkey caching are now handled by OmniRoute. Database records have been archived to `pgvector/archives/litellm_final_backup.sql.gz`.
 
 ---
 
-## 🎯 Overview & Architecture
+## 🎯 Overview & Architecture (Historical Reference)
 
 * **Role**: Centralized LLM dispatch gateway, model router, and token/spend tracker.
 * **Container Name**: `litellm`

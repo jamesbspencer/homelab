@@ -9,9 +9,9 @@ This file defines guidelines, rules, and architecture constraints that AI agents
 - **Services**:
   - **Traefik Reverse Proxy**: Single entry point for all HTTP/HTTPS traffic to the homelab (`traefik.spencer.lan`).
   - **Ollama**: Local LLM server configured with NVIDIA GPU hardware acceleration.
-  - **MoMoE**: Hybrid Mixture-of-Experts (MoE) LLM inference engine combining GPU VRAM and host RAM/AVX-512 on internal port `8080` (accessible via LiteLLM).
-  - **LiteLLM Proxy**: Unified LLM routing gateway, spend manager, and model fallback router on internal port `4000` and `llm.spencer.lan`.
-  - **Open WebUI**: Multi-model generative AI chat interface and conversational memory client on internal port `8080` (`chat.spencer.lan`, `ai.spencer.lan`) with LiteLLM embedding offload and unified pgvector database.
+  - **MoMoE**: Hybrid Mixture-of-Experts (MoE) LLM inference engine combining GPU VRAM and host RAM/AVX-512 on internal port `8080` (accessible via OmniRoute).
+  - **OmniRoute AI Gateway**: Universal AI gateway, OpenAI/Anthropic model router, prompt compressor, and rate limiter on internal port `20128` and `llm.spencer.lan`.
+  - **Open WebUI**: Multi-model generative AI chat interface and conversational memory client on internal port `8080` (`chat.spencer.lan`, `ai.spencer.lan`) with OmniRoute embedding offload and unified pgvector database.
   - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
   - **Valkey**: High-performance in-memory key-value cache and rate limiter on internal port `6379`.
@@ -22,13 +22,13 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **OpenBao**: Open-source identity-based secrets and encryption management server on internal port `8200` (`vault.spencer.lan`, `openbao.spencer.lan`) with Raft transactional storage.
   - **Gitea**: Self-hosted lightweight Git platform and repository manager on internal port `3000` (`git.spencer.lan`, `gitea.spencer.lan`) with Git SSH on port `2222` and Authentik OIDC integration.
   - **Homepage**: Centralized homelab dashboard, service status monitor, and launch directory on internal port `3000` (`home.spencer.lan`, `homepage.spencer.lan`) protected by Authentik ForwardAuth.
-  - **PostgreSQL Database (`pgvector`)**: Unified relational and vector database container configured on the isolated `db` network for Open WebUI, LiteLLM, Authentik, and Gitea.
+  - **PostgreSQL Database (`pgvector`)**: Unified relational and vector database container configured on the isolated `db` network for Open WebUI, Authentik, and Gitea.
 - **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `sso.spencer.lan`, `login.spencer.lan`, `chat.spencer.lan`, `ai.spencer.lan`, `llm.spencer.lan`, `logs.spencer.lan`, `dozzle.spencer.lan`, `push.spencer.lan`, `ntfy.spencer.lan`, `vault.spencer.lan`, `openbao.spencer.lan`, `git.spencer.lan`, `gitea.spencer.lan`, `home.spencer.lan`, `homepage.spencer.lan`).
 - **Networking**:
-  - The Traefik container and proxied services requiring external web access (Open WebUI, LiteLLM, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
-  - Internal AI communication (between Open WebUI, LiteLLM, Ollama, MoMoE, OpenBao, SearXNG, Firecrawl, ntfy, Gitea, Homepage) occurs on the isolated bridge network named `ai`.
-  - Database services (`pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network (Open WebUI, LiteLLM, Authentik, Gitea).
-  - Cache services (Valkey, SearXNG, Firecrawl, Authentik sessions & queue, Gitea cache & queue) communicate on the dedicated bridge network named `redis`.
+  - The Traefik container and proxied services requiring external web access (Open WebUI, OmniRoute, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
+  - Internal AI communication (between Open WebUI, OmniRoute, Ollama, MoMoE, OpenBao, SearXNG, Firecrawl, ntfy, Gitea, Homepage) occurs on the isolated bridge network named `ai`.
+  - Database services (`pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network (Open WebUI, Authentik, Gitea).
+  - Cache services (Valkey, OmniRoute, SearXNG, Firecrawl, Authentik sessions & queue, Gitea cache & queue) communicate on the dedicated bridge network named `redis`.
   - Internal backend services (Firecrawl, SearXNG, Valkey, pgvector, MoMoE) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
 - **Documentation**: Detailed architecture, configuration, and operational guides for every service reside in [`docs/`](file:///data/homelab/docs/README.md). Always update the corresponding service guide when adding or modifying service configurations. Legacy/retired stack guides reside in [`docs/archive/`](file:///data/homelab/docs/archive/open-webui-legacy-stack.md).
 
@@ -81,7 +81,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
 - When researching service capabilities, schemas, environment variables, or debugging issues, agents **must prioritize information sources in the following order**:
   1. **Service APIs**: Query service REST/OpenAPI endpoints, discovery metadata, and health/introspection APIs.
   2. **Local Documentation**: Check workspace architecture and service guides in [`docs/`](file:///data/homelab/docs/README.md) and configuration files.
-  3. **Online Documentation & Web Search**: Consult official product and vendor documentation (e.g., LiteLLM, Authentik, Traefik docs) via web search or public docs.
+  3. **Online Documentation & Web Search**: Consult official product and vendor documentation (e.g., OmniRoute, Authentik, Traefik docs) via web search or public docs.
   4. **Container Code as Last Resort Only**: Do **not** inspect or grep through application code inside running containers (`docker exec ...`) unless APIs and documentation have been thoroughly exhausted.
 
 ### 7. Documentation Synchronization & Root Markdown Maintenance

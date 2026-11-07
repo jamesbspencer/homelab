@@ -3,8 +3,8 @@
 # pgvector-maintenance.sh - Spencer's Homelab Database & Vector Maintenance Pipeline
 #
 # Automates:
-#   1. Archival & pruning of aged LiteLLM spend logs (> 30 days default)
-#   2. Reclaiming bloat via VACUUM (ANALYZE) across active homelab databases (litellm, openwebui, authentik, gitea)
+#   1. Reclaiming bloat and optimizing performance via VACUUM (ANALYZE) across active homelab databases (openwebui, authentik, gitea)
+#   2. Optional archival & pruning of legacy LiteLLM spend logs if present
 #   3. Push notification summary delivery via ntfy
 #
 # Usage:
@@ -139,53 +139,67 @@ log "Archive Storage: ${ARCHIVE_DIR}"
 log "=================================================="
 
 # Collect initial database sizes
-LITELLM_SIZE_BEFORE=$(run_psql_val litellm "SELECT pg_size_pretty(pg_database_size('litellm'));")
-SPEND_LOGS_SIZE_BEFORE=$(run_psql_val litellm "SELECT pg_size_pretty(pg_total_relation_size('\"LiteLLM_SpendLogs\"'));")
+LITELLM_EXISTS=$(run_psql postgres -tAc "SELECT 1 FROM pg_database WHERE datname='litellm';" || echo "0")
+if [ "$LITELLM_EXISTS" = "1" ]; then
+    LITELLM_SIZE_BEFORE=$(run_psql_val litellm "SELECT pg_size_pretty(pg_database_size('litellm'));")
+    SPEND_LOGS_SIZE_BEFORE=$(run_psql_val litellm "SELECT pg_size_pretty(pg_total_relation_size('\"LiteLLM_SpendLogs\"'));" 2>/dev/null || echo "N/A")
+else
+    LITELLM_SIZE_BEFORE="Decommissioned"
+    SPEND_LOGS_SIZE_BEFORE="N/A"
+fi
 OPENWEBUI_SIZE_BEFORE=$(run_psql_val openwebui "SELECT pg_size_pretty(pg_database_size('openwebui'));")
 
 log "📊 Initial Database Sizes:"
-log "   • litellm DB:   ${LITELLM_SIZE_BEFORE} (LiteLLM_SpendLogs: ${SPEND_LOGS_SIZE_BEFORE})"
+if [ "$LITELLM_EXISTS" = "1" ]; then
+    log "   • litellm DB:   ${LITELLM_SIZE_BEFORE} (LiteLLM_SpendLogs: ${SPEND_LOGS_SIZE_BEFORE})"
+fi
 log "   • openwebui DB: ${OPENWEBUI_SIZE_BEFORE}"
 
-# --- STEP 1: LiteLLM Spend Logs Archival & Pruning ---
-log "\n🧹 Step 1: Evaluating LiteLLM Spend Logs (> ${SPEND_DAYS} days)..."
-SPEND_COUNT=$(run_psql_val litellm "SELECT count(*) FROM \"LiteLLM_SpendLogs\" WHERE \"startTime\" < NOW() - INTERVAL '${SPEND_DAYS} days';")
-log "   Found ${SPEND_COUNT} aged spend log records."
-
+# --- STEP 1: Legacy LiteLLM Spend Logs Archival & Pruning ---
 PRUNED_SPEND=0
-if [ "$SPEND_COUNT" -gt 0 ]; then
-    if [ "$DRY_RUN" = true ]; then
-        log "   [DRY-RUN] Would archive and delete ${SPEND_COUNT} spend logs."
-        PRUNED_SPEND="$SPEND_COUNT"
-    else
-        if [ "$DO_ARCHIVE" = true ]; then
-            SPEND_ARCHIVE="${ARCHIVE_DIR}/litellm_spend_logs_${TIMESTAMP}.csv.gz"
-            log "   📦 Archiving ${SPEND_COUNT} records to ${SPEND_ARCHIVE}..."
-            run_psql litellm -c "\COPY (SELECT * FROM \"LiteLLM_SpendLogs\" WHERE \"startTime\" < NOW() - INTERVAL '${SPEND_DAYS} days') TO STDOUT WITH CSV HEADER;" | gzip -9 > "$SPEND_ARCHIVE"
-            log "   ✓ Archive created ($(du -h "$SPEND_ARCHIVE" | awk '{print $1}'))."
-        fi
-        log "   🗑️ Deleting aged records from LiteLLM_SpendLogs..."
-        run_psql litellm -c "DELETE FROM \"LiteLLM_SpendLogs\" WHERE \"startTime\" < NOW() - INTERVAL '${SPEND_DAYS} days';"
-        PRUNED_SPEND="$SPEND_COUNT"
-    fi
-fi
+if [ "$LITELLM_EXISTS" = "1" ]; then
+    log "\n🧹 Step 1: Evaluating LiteLLM Spend Logs (> ${SPEND_DAYS} days)..."
+    SPEND_COUNT=$(run_psql_val litellm "SELECT count(*) FROM \"LiteLLM_SpendLogs\" WHERE \"startTime\" < NOW() - INTERVAL '${SPEND_DAYS} days';" 2>/dev/null || echo "0")
+    log "   Found ${SPEND_COUNT} aged spend log records."
 
-# Optional LiteLLM Workflow Event pruning
-WORKFLOW_COUNT=$(run_psql_val litellm "SELECT count(*) FROM \"LiteLLM_WorkflowEvent\" WHERE created_at < NOW() - INTERVAL '${SPEND_DAYS} days';" || echo "0")
-if [ "$WORKFLOW_COUNT" -gt 0 ] && [ "$DRY_RUN" = false ]; then
-    log "   🗑️ Pruning ${WORKFLOW_COUNT} aged LiteLLM_WorkflowEvent records..."
-    run_psql litellm -c "DELETE FROM \"LiteLLM_WorkflowEvent\" WHERE created_at < NOW() - INTERVAL '${SPEND_DAYS} days';" || true
+    if [ "$SPEND_COUNT" -gt 0 ]; then
+        if [ "$DRY_RUN" = true ]; then
+            log "   [DRY-RUN] Would archive and delete ${SPEND_COUNT} spend logs."
+            PRUNED_SPEND="$SPEND_COUNT"
+        else
+            if [ "$DO_ARCHIVE" = true ]; then
+                SPEND_ARCHIVE="${ARCHIVE_DIR}/litellm_spend_logs_${TIMESTAMP}.csv.gz"
+                log "   📦 Archiving ${SPEND_COUNT} records to ${SPEND_ARCHIVE}..."
+                run_psql litellm -c "\COPY (SELECT * FROM \"LiteLLM_SpendLogs\" WHERE \"startTime\" < NOW() - INTERVAL '${SPEND_DAYS} days') TO STDOUT WITH CSV HEADER;" | gzip -9 > "$SPEND_ARCHIVE"
+                log "   ✓ Archive created ($(du -h "$SPEND_ARCHIVE" | awk '{print $1}'))."
+            fi
+            log "   🗑️ Deleting aged records from LiteLLM_SpendLogs..."
+            run_psql litellm -c "DELETE FROM \"LiteLLM_SpendLogs\" WHERE \"startTime\" < NOW() - INTERVAL '${SPEND_DAYS} days';"
+            PRUNED_SPEND="$SPEND_COUNT"
+        fi
+    fi
+
+    # Optional LiteLLM Workflow Event pruning
+    WORKFLOW_COUNT=$(run_psql_val litellm "SELECT count(*) FROM \"LiteLLM_WorkflowEvent\" WHERE created_at < NOW() - INTERVAL '${SPEND_DAYS} days';" 2>/dev/null || echo "0")
+    if [ "$WORKFLOW_COUNT" -gt 0 ] && [ "$DRY_RUN" = false ]; then
+        log "   🗑️ Pruning ${WORKFLOW_COUNT} aged LiteLLM_WorkflowEvent records..."
+        run_psql litellm -c "DELETE FROM \"LiteLLM_WorkflowEvent\" WHERE created_at < NOW() - INTERVAL '${SPEND_DAYS} days';" || true
+    fi
+else
+    log "\n🧹 Step 1: Skipping LiteLLM Spend Logs (OmniRoute active, LiteLLM PostgreSQL database decommissioned)."
 fi
 
 # --- STEP 2: Vacuum & Analyze ---
 if [ "$DO_VACUUM" = true ]; then
     log "\n🧽 Step 2: Reclaiming storage and updating statistics with VACUUM ANALYZE..."
     if [ "$DRY_RUN" = true ]; then
-        log "   [DRY-RUN] Would run VACUUM ANALYZE across litellm, openwebui, authentik, and gitea."
+        log "   [DRY-RUN] Would run VACUUM ANALYZE across openwebui, authentik, gitea$( [ "$LITELLM_EXISTS" = "1" ] && echo ", and litellm" )."
     else
-        log "   • Vacuuming litellm DB..."
-        run_psql litellm -c "VACUUM (ANALYZE, VERBOSE) \"LiteLLM_SpendLogs\";"
-        run_psql litellm -c "VACUUM ANALYZE;"
+        if [ "$LITELLM_EXISTS" = "1" ]; then
+            log "   • Vacuuming litellm DB..."
+            run_psql litellm -c "VACUUM (ANALYZE, VERBOSE) \"LiteLLM_SpendLogs\";" 2>/dev/null || true
+            run_psql litellm -c "VACUUM ANALYZE;" 2>/dev/null || true
+        fi
 
         log "   • Vacuuming openwebui DB..."
         run_psql openwebui -c "VACUUM ANALYZE;"
@@ -202,8 +216,13 @@ else
 fi
 
 # --- STEP 3: Final Metrics & Summary ---
-LITELLM_SIZE_AFTER=$(run_psql_val litellm "SELECT pg_size_pretty(pg_database_size('litellm'));")
-SPEND_LOGS_SIZE_AFTER=$(run_psql_val litellm "SELECT pg_size_pretty(pg_total_relation_size('\"LiteLLM_SpendLogs\"'));")
+if [ "$LITELLM_EXISTS" = "1" ]; then
+    LITELLM_SIZE_AFTER=$(run_psql_val litellm "SELECT pg_size_pretty(pg_database_size('litellm'));" 2>/dev/null || echo "N/A")
+    SPEND_LOGS_SIZE_AFTER=$(run_psql_val litellm "SELECT pg_size_pretty(pg_total_relation_size('\"LiteLLM_SpendLogs\"'));" 2>/dev/null || echo "N/A")
+    LITELLM_SUMMARY="• litellm DB:   ${LITELLM_SIZE_BEFORE} ➔ ${LITELLM_SIZE_AFTER} (SpendLogs: ${SPEND_LOGS_SIZE_BEFORE} ➔ ${SPEND_LOGS_SIZE_AFTER})"
+else
+    LITELLM_SUMMARY="• Gateway DB:   OmniRoute active (local SQLite, zero PostgreSQL load)"
+fi
 OPENWEBUI_SIZE_AFTER=$(run_psql_val openwebui "SELECT pg_size_pretty(pg_database_size('openwebui'));")
 
 END_TIME=$(date +%s)
@@ -211,7 +230,7 @@ DURATION=$((END_TIME - START_TIME))
 
 SUMMARY_MSG="Database maintenance completed in ${DURATION}s.
 • Pruned: ${PRUNED_SPEND} LiteLLM spend logs
-• litellm DB:   ${LITELLM_SIZE_BEFORE} ➔ ${LITELLM_SIZE_AFTER} (SpendLogs: ${SPEND_LOGS_SIZE_BEFORE} ➔ ${SPEND_LOGS_SIZE_AFTER})
+${LITELLM_SUMMARY}
 • openwebui DB: ${OPENWEBUI_SIZE_BEFORE} ➔ ${OPENWEBUI_SIZE_AFTER}"
 
 log "\n=================================================="

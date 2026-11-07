@@ -32,7 +32,7 @@ flowchart TD
 
     subgraph Service Routing [*.spencer.lan]
         Router -->|chat.spencer.lan / ai.spencer.lan| OpenWebUI[Open WebUI :8080]
-        Router -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy & UI :4000]
+        Router -->|llm.spencer.lan| OmniRoute[OmniRoute Gateway & UI :20128]
         Router -->|vault.spencer.lan| OpenBaoUI[OpenBao Secrets :8200]
         Router -->|sso.spencer.lan| Authentik[Authentik Server :9000]
         Router -->|logs.spencer.lan| DozzleUI[Dozzle Logs :8080]

@@ -1,12 +1,12 @@
-# Dedicated pgvector Instance (LiteLLM, Open WebUI, Authentik & Gitea)
+# Dedicated pgvector Instance (Open WebUI, Authentik & Gitea)
 
-This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Open WebUI** (user conversation memory & RAG vector store), **LiteLLM Proxy** (spend tracking & key persistence), **Authentik** (centralized identity provider), and **Gitea** (repository metadata & issues).
+This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Open WebUI** (user conversation memory & RAG vector store), **Authentik** (centralized identity provider), and **Gitea** (repository metadata & issues). *(Note: Legacy LiteLLM database has been retired and archived to `pgvector/archives/litellm_final_backup.sql.gz`, as OmniRoute utilizes a zero-PostgreSQL local SQLite architecture).*
 
 ---
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Primary vector and relational database for Open WebUI, LiteLLM Proxy, Authentik, Gitea, and homelab services.
+* **Role**: Primary vector and relational database for Open WebUI, Authentik, Gitea, and homelab services.
 * **Container Name**: `pgvector` (Service name: `pgvector`)
 * **Image**: `pgvector/pgvector:${PGVECTOR_VERSION:-pg16}`
 * **Network**: `db` (Strictly isolated database network; does **not** join `ai` or bind to host ports)
@@ -18,7 +18,7 @@ This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extens
 ## 🔒 Security & Network Isolation
 
 * **Isolated `db` Network**: Connected strictly to the internal `db` bridge network.
-* **Service Access Requirement**: Any container requiring database access (Open WebUI, LiteLLM, Authentik, Gitea) must join the `db` network in `docker-compose.yaml`.
+* **Service Access Requirement**: Any container requiring database access (Open WebUI, Authentik, Gitea) must join the `db` network in `docker-compose.yaml`.
 * **Zero Host Exposure**: Port `5432` is not bound to the host, preventing external access.
 
 ---
@@ -34,12 +34,12 @@ This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extens
 | `OPENWEBUI_POSTGRES_DB` | `openwebui` | Dedicated database for Open WebUI user memory & RAG |
 | `OPENWEBUI_POSTGRES_USER` | `openwebui` | Service role for Open WebUI |
 | `OPENWEBUI_POSTGRES_PASSWORD` | `${OPENWEBUI_POSTGRES_PASSWORD}` in `.env` | Password for Open WebUI service role |
-| `LITELLM_POSTGRES_DB` | `litellm` | Dedicated database for LiteLLM key & spend persistence |
-| `LITELLM_POSTGRES_USER` | `litellm` | Service role for LiteLLM |
-| `LITELLM_POSTGRES_PASSWORD` | `${LITELLM_POSTGRES_PASSWORD}` in `.env` | Password for LiteLLM service role |
 | `AUTHENTIK_POSTGRES_DB` | `authentik` | Dedicated database for Authentik IAM |
 | `AUTHENTIK_POSTGRES_USER` | `authentik` | Service role for Authentik |
 | `AUTHENTIK_POSTGRES_PASSWORD` | `${AUTHENTIK_POSTGRES_PASSWORD}` in `.env` | Password for Authentik service role |
+| `GITEA_POSTGRES_DB` | `gitea` | Dedicated database for Gitea |
+| `GITEA_POSTGRES_USER` | `gitea` | Service role for Gitea |
+| `GITEA_POSTGRES_PASSWORD` | `${GITEA_POSTGRES_PASSWORD}` in `.env` | Password for Gitea service role |
 | `PUID` / `PGID` | `1000` / `1000` | Host UID/GID mapping for file ownership |
 
 ---
@@ -119,8 +119,8 @@ docker compose exec -T pgvector pg_dumpall -U postgres > pgvector_all_backup_$(d
 To prevent unbounded table growth and optimizer statistic decay, an automated pipeline is provided by [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh):
 
 ### Pipeline Operations
-1. **Spend Log Archival & Pruning**: Archives aged `LiteLLM_SpendLogs` (> 30 days) to compressed gzip CSVs in `./pgvector/archives/` before deleting rows.
-2. **Cluster-wide Vacuuming**: Runs `VACUUM (ANALYZE)` across active databases (`litellm`, `openwebui`, `authentik`, and `gitea`) to reclaim space and refresh PostgreSQL query planner statistics.
+1. **Spend Log Archival & Pruning**: Gracefully checks for and archives aged legacy spend logs to compressed gzip CSVs in `./pgvector/archives/`.
+2. **Cluster-wide Vacuuming**: Runs `VACUUM (ANALYZE)` across active databases (`openwebui`, `authentik`, and `gitea`) to reclaim space and refresh PostgreSQL query planner statistics.
 3. **Push Notifications**: Automatically dispatches a formatted run summary to Spencer's mobile and desktop devices via the self-hosted `ntfy` push gateway.
 
 ### Manual Execution

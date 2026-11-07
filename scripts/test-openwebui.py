@@ -5,7 +5,7 @@ test-openwebui.py - Full functional verification suite for Open WebUI deployment
 Tests:
 1. Ingress & TLS Redirection (chat.spencer.lan & ai.spencer.lan via Traefik).
 2. Admin Authentication & Session Management.
-3. Model Gateway Routing (LiteLLM, MoMoE 64k, Ollama).
+3. Model Gateway Routing (OmniRoute, MoMoE 64k, Ollama).
 4. End-to-End Chat Completion Inference.
 5. Memory Store & Semantic Vector Retrieval (pgvector + nomic-embed-text).
 6. Web Search Grounding (SearXNG).
@@ -147,7 +147,7 @@ class TestRunner:
         # Check for expected homelab models
         expected = ["gemma4:12b", "qwen2.5:14b", "ornith-1.5-35b"]
         found = [m for m in expected if any(m in mid for mid in model_ids)]
-        self.record_result("Homelab Model Ingress (LiteLLM & Ollama)", len(found) >= 2, f"Discovered: {', '.join(model_ids)}")
+        self.record_result("Homelab Model Ingress (OmniRoute & Ollama)", len(found) >= 2, f"Discovered: {', '.join(model_ids)}")
 
     def test_chat_inference(self):
         logger.info("--- Testing End-to-End Chat Completion ---")
@@ -177,7 +177,7 @@ class TestRunner:
                 {"role": "system", "content": "You are a concise homelab test assistant."},
                 {"role": "user", "content": "Respond strictly with the single word: READY."}
             ],
-            "max_tokens": 15,
+            "max_tokens": 60,
             "temperature": 0.1,
             "stream": False
         }
@@ -190,7 +190,8 @@ class TestRunner:
         try:
             choices = chat_res.get("choices", [])
             if choices:
-                content = choices[0].get("message", {}).get("content", "").strip()
+                msg = choices[0].get("message", {})
+                content = (msg.get("content") or msg.get("reasoning_content") or msg.get("reasoning") or "").strip()
         except Exception:
             content = raw
 

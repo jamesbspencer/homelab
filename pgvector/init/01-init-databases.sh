@@ -32,7 +32,7 @@ EOSQL
 EOSQL
 fi
 
-# Conditionally provision dedicated database & user for LiteLLM
+# Conditionally provision dedicated database & user for LiteLLM (Legacy / Archived - Replaced by OmniRoute SQLite)
 if [ -n "$LITELLM_POSTGRES_DB" ]; then
     LITELLM_USER="${LITELLM_POSTGRES_USER:-litellm}"
     LITELLM_PASS="${LITELLM_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"

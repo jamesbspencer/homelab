@@ -5,12 +5,12 @@
         description: "Modern Generative AI Chat & Multi-Model Interface"
         server: local-docker
         container: open-webui
-    - LiteLLM Gateway:
+    - OmniRoute Gateway:
         icon: openai.png
         href: https://llm.spencer.lan
-        description: "Unified LLM Router & Spend Gateway"
+        description: "Universal AI Gateway & Dynamic LLM Router"
         server: local-docker
-        container: litellm
+        container: omniroute
     - Ollama LLM:
         icon: ollama.png
         href: https://llm.spencer.lan

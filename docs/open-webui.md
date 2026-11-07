@@ -16,11 +16,11 @@ This document provides architecture specifications, integration details, configu
 | **Internal Port** | `8080` |
 | **Database** | PostgreSQL 16 on `pgvector` container (DB: `openwebui`, isolated `db` network) |
 | **Vector DB** | `pgvector` extension on PostgreSQL 16 (Collection: `user-memory-<user_id>`) |
-| **Embedding Engine** | Offloaded to LiteLLM / Ollama (`nomic-embed-text`, 768-dim) |
-| **Model Ingress** | Dual: LiteLLM Proxy (`http://litellm:4000/v1`) & Ollama (`http://ollama:11434`) |
+| **Embedding Engine** | Offloaded to OmniRoute / Ollama (`nomic-embed-text`, 768-dim) |
+| **Model Ingress** | Dual: OmniRoute Gateway (`http://omniroute:20128/v1`) & Ollama (`http://ollama:11434`) |
 | **Web Search Grounding** | Local Firecrawl Cluster (`http://firecrawl:3002`) & SearXNG (`http://searxng:8080`) |
 | **Web Loader / Scraper** | Firecrawl Headless Cluster (`http://firecrawl:3002/v2/scrape`) |
-| **Network Attachments**| `net1` (Traefik Ingress), `ai` (LiteLLM, Ollama, SearXNG, Firecrawl), `db` (pgvector) |
+| **Network Attachments**| `net1` (Traefik Ingress), `ai` (OmniRoute, Ollama, SearXNG, Firecrawl), `db` (pgvector) |
 | **Persistent Storage** | `/data/homelab/open-webui` (`/app/backend/data` in container) |
 
 ---
@@ -38,16 +38,16 @@ graph TD
     end
 
     subgraph AI Backends & Grounding
-        OWUI -->|ai network| LiteLLM["LiteLLM Gateway (:4000)<br/>OpenAI API Compatible"]
+        OWUI -->|ai network| OmniRoute["OmniRoute Gateway (:20128)<br/>OpenAI & Anthropic Compatible"]
         OWUI -->|ai network| Ollama["Ollama GPU Server (:11434)"]
         OWUI -->|ai network| Firecrawl["Firecrawl Scraper & Search (:3002)"]
         OWUI -->|ai network| SearXNG["SearXNG Search (:8080)"]
     end
 
     subgraph Embeddings & Memory
-        OWUI -->|POST /v1/embeddings| LiteLLM
-        LiteLLM -->|nomic-embed-text| Ollama
-        LiteLLM --> MoMoE["MoMoE 64k MoE Engine (:8080)"]
+        OWUI -->|POST /v1/embeddings| OmniRoute
+        OmniRoute -->|nomic-embed-text| Ollama
+        OmniRoute --> MoMoE["MoMoE 64k MoE Engine (:8080)"]
     end
 ```
 
@@ -56,10 +56,10 @@ graph TD
 ## 🧠 Memory Management & Cross-AI Synchronization
 
 ### 1. Zero-RAM In-Container Embedding Offload
-By default, Open WebUI loads PyTorch and SentenceTransformer weights in memory (~500 MB–1 GB RAM). In our modernized configuration, embeddings are completely offloaded to LiteLLM:
+By default, Open WebUI loads PyTorch and SentenceTransformer weights in memory (~500 MB–1 GB RAM). In our modernized configuration, embeddings are completely offloaded to OmniRoute:
 * `RAG_EMBEDDING_ENGINE=openai`
-* `RAG_OPENAI_API_BASE_URL=http://litellm:4000/v1`
-* `RAG_OPENAI_API_KEY=${LITELLM_MASTER_KEY}`
+* `RAG_OPENAI_API_BASE_URL=http://omniroute:20128/v1`
+* `RAG_OPENAI_API_KEY=${OMNIROUTE_MASTER_KEY}`
 * `RAG_EMBEDDING_MODEL=nomic-embed-text`
 
 Open WebUI acts as a pure API client, retaining a minimal memory footprint (~350 MB) while vectorizing documents and user memories at GPU speeds.

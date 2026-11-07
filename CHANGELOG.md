@@ -10,6 +10,11 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-11-07]
 
 ### Deprecated & Removed
+- **LiteLLM Gateway Decommissioning & PostgreSQL Archival**:
+  - Decommissioned `litellm` container (`ghcr.io/berriai/litellm:main-latest`), removing the service definition, host port bindings, and PostgreSQL connection from [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
+  - Exported final compressed database backup of LiteLLM spend logs and user keys to [`pgvector/archives/litellm_final_backup.sql.gz`](file:///data/homelab/pgvector/archives/litellm_final_backup.sql.gz) (9.3 MB) and decoupled PostgreSQL maintenance routines in [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh) and [`hermes/scripts/pgvector-maintenance.sh`](file:///data/homelab/hermes/scripts/pgvector-maintenance.sh).
+  - Deprecated legacy LiteLLM environment keys in [`.env.example`](file:///data/homelab/.env.example).
+  - Archived service documentation to [`docs/archive/litellm.md`](file:///data/homelab/docs/archive/litellm.md).
 - **Hindsight Long-Term Memory & Memlord MCP Decommissioning**:
   - Decommissioned `hindsight` (`ghcr.io/vectorize-io/hindsight`) and `memlord` (`ghcr.io/myrikld/memlord`) containers, removing both service blocks and pgvector environment variables from [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
   - Exported full compressed SQL dumps of both databases ([`archives/hindsight-dump-20261107.sql.gz`](file:///data/homelab/archives/hindsight-dump-20261107.sql.gz) and [`archives/memlord-dump-20261107.sql.gz`](file:///data/homelab/archives/memlord-dump-20261107.sql.gz)) and safely dropped `hindsight` and `memlord` databases and user roles from `pgvector`.
@@ -31,6 +36,16 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Sanitized obsolete `HERMES_*` configuration keys from `.env` and [`.env.example`](file:///data/homelab/.env.example).
 
 ### Added
+- **OmniRoute AI Gateway Deployment & Model Routing Migration**:
+  - Deployed [OmniRoute](https://github.com/diegosouzapw/omniroute) (`diegosouzapw/omniroute:latest`) on internal port `20128` as the centralized LLM gateway and routing proxy across `net1`, `ai`, and `redis` networks, replacing LiteLLM.
+  - Configured embedded local-first SQLite transactional storage ([`omniroute/data/storage.sqlite`](file:///data/homelab/omniroute/data/storage.sqlite)) backed by WAL mode, eliminating PostgreSQL runtime dependencies for LLM routing and spend logging.
+  - Connected local inference engines: Ollama (`http://ollama:11434/v1`) for dense LLMs (`gemma4:12b`, `qwen2.5:14b`) and embeddings (`nomic-embed-text`), and MoMoE (`http://momoe:8080/v1`) for 64k MoE inference (`ornith-1.5-35b`, `momoe`).
+  - Configured zero-latency model aliases (`gemma4:12b`, `qwen2.5:14b`, `momoe`, `nomic-embed-text`) in `key_value` table enabling un-prefixed OpenAI-compatible routing for Open WebUI and external developer tools.
+  - Integrated Valkey cache on `redis://valkey:6379` over the `redis` Docker network for semantic caching and request throttling.
+  - Reconfigured Traefik ingress (`llm.spencer.lan`) with wildcard TLS termination and direct access to OmniRoute's native Web UI dashboard and Bearer token API.
+  - Updated Open WebUI chat and RAG embedding offload to target `http://omniroute:20128/v1`, updating both environment definitions and Open WebUI's database config.
+  - Updated Homepage dashboard tile under `AI & Agents` to monitor OmniRoute health on `llm.spencer.lan`.
+  - Authored comprehensive service guide in [`docs/omniroute.md`](file:///data/homelab/docs/omniroute.md).
 - **Open WebUI Restoration & Upstream Upgrade (v0.13.0+)**:
   - Restored [Open WebUI](https://github.com/open-webui/open-webui) (`ghcr.io/open-webui/open-webui:main`, v0.13.0+) into the homelab stack, replacing the legacy isolated architecture.
   - Exposed publicly on WAN at `https://ai.jamesspencer.me` via Traefik reverse proxy with automated Let's Encrypt TLS certificate provisioning and CrowdSec edge bouncer protection.
@@ -135,7 +150,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Synchronized `context_length: 65536` and `ollama_num_ctx: 65536` in `hermes/config.yaml` and `hermes/context_length_cache.yaml`.
 - **LiteLLM Spend Logs & Dynamic Model Storage**:
   - Enabled `store_model_in_db: true` and `store_prompts_in_spend_logs: true` in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml) and `STORE_MODEL_IN_DB=True` in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
-  - Documented database persistence and spend log tracking in [`docs/litellm.md`](file:///data/homelab/docs/litellm.md).
+  - Documented database persistence and spend log tracking in [`docs/archive/litellm.md`](file:///data/homelab/docs/archive/litellm.md).
 - **Hermes Agent Configuration Sync**:
   - Updated `hermes/config.yaml` to Hermes Agent schema v39.
   - Configured `auxiliary` pipeline routing `curator` and `background_review` through `litellm` (`qwen2.5:14b`).

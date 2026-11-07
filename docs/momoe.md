@@ -6,7 +6,7 @@ MoMoE ([`aflin/momoe`](https://github.com/aflin/momoe), a fork of [`Niko1221/Str
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Hybrid VRAM + RAM Mixture-of-Experts (MoE) inference backend behind LiteLLM Proxy.
+* **Role**: Hybrid VRAM + RAM Mixture-of-Experts (MoE) inference backend behind OmniRoute AI Gateway.
 * **Container Name**: `momoe`
 * **Image**: `homelab/momoe:latest` (built locally from `./momoe/src` for NVIDIA `sm_86` RTX 3060)
 * **Network**: `ai` (Internal AI communication network; no host ports exposed)
@@ -18,7 +18,7 @@ MoMoE ([`aflin/momoe`](https://github.com/aflin/momoe), a fork of [`Niko1221/Str
 
 ```mermaid
 graph LR
-    LiteLLM[LiteLLM Proxy :4000] -->|http://momoe:8080/v1| MoMoE[MoMoE Server :8080]
+    OmniRoute[OmniRoute Gateway :20128] -->|http://momoe:8080/v1| MoMoE[MoMoE Server :8080]
     subgraph Hardware Memory Hierarchy
         MoMoE -->|Attention, KV Cache, MTP & Hot Experts| VRAM[RTX 3060 12 GB VRAM]
         MoMoE -->|Cold Experts & Resident Pack| RAM[Xeon W-2145 61 GiB DDR4 RAM]
@@ -38,7 +38,7 @@ Configured via environment variables in [`docker-compose.yaml`](../docker-compos
 | `MOMOE_CONTEXT` (`CONTEXT`) | `65536` | Maximum context window in tokens (64k enables large Firecrawl web scrapes in Open WebUI via KV streaming) |
 | `MOMOE_VISION` (`VISION`) | `no` | Vision encoder (`no`, `yes`, or `cpu`) |
 | `MOMOE_VRAM_RESERVE_MIB` (`VRAM_RESERVE_MIB`) | `2560` | Reserves 2.5 GiB of RTX 3060 VRAM so Ollama (`nomic-embed-text`) can coexist without OOM |
-| `MOMOE_API_KEY` (`API_KEY`) | `momoe-local` | Internal API key used between LiteLLM Proxy and MoMoE |
+| `MOMOE_API_KEY` (`API_KEY`) | `momoe-local` | Internal API key used between OmniRoute Gateway and MoMoE |
 | `STRATA_ALLOWED_HOSTS` | `momoe,localhost,127.0.0.1` | Whitelists internal Docker hostnames for MoMoE's HTTP server |
 | `GPU` | `0` | Pins execution to GPU `0` (NVIDIA GeForce RTX 3060) |
 
@@ -99,14 +99,14 @@ docker compose exec momoe curl -s http://127.0.0.1:8080/health
 docker compose exec momoe ./momoe status
 ```
 
-### Testing via LiteLLM Proxy
-MoMoE is registered in [`litellm/config.yaml`](../litellm/config.yaml) under both `ornith-1.5-35b` and `momoe`:
+### Testing via OmniRoute AI Gateway
+MoMoE is registered in OmniRoute's provider registry (`provider: llama-cpp`) under both `ornith-1.5-35b` and `momoe`:
 ```bash
-curl -s http://localhost:4000/v1/chat/completions \
-  -H "Authorization: Bearer $LITELLM_MASTER_KEY" \
+curl -s -k https://llm.spencer.lan/v1/chat/completions \
+  -H "Authorization: Bearer $OMNIROUTE_MASTER_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "ornith-1.5-35b",
+    "model": "momoe",
     "messages": [{"role": "user", "content": "Write a fast fib function in Python."}]
   }'
 ```

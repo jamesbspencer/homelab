@@ -315,56 +315,56 @@ services:
       # Load balancer service
       - "traefik.http.services.ntfy-svc.loadbalancer.server.port=80"
 
-  litellm:
-    image: ghcr.io/berriai/litellm:main-latest
-    container_name: litellm
+  omniroute:
+    image: diegosouzapw/omniroute:latest
+    container_name: omniroute
     restart: unless-stopped
+    stop_grace_period: 30s
     networks:
-      - ai
-      - db
       - net1
+      - ai
+      - redis
     volumes:
-      - ./litellm/config.yaml:/etc/litellm/config.yaml:ro
-    extra_hosts:
-      - "${SSO_PUBLIC_DOMAIN}:host-gateway"
+      - ./omniroute/data:/app/data
     environment:
-      - PORT=4000
-      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
-      - DATABASE_URL=postgresql://${LITELLM_POSTGRES_USER:-litellm}:${LITELLM_POSTGRES_PASSWORD}@pgvector:5432/${LITELLM_POSTGRES_DB:-litellm}
-      - STORE_MODEL_IN_DB=True
-      - FORWARDED_ALLOW_IPS=*
+      - PORT=20128
+      - JWT_SECRET=${OMNIROUTE_JWT_SECRET}
+      - API_KEY_SECRET=${OMNIROUTE_API_KEY_SECRET}
+      - INITIAL_PASSWORD=${OMNIROUTE_INITIAL_PASSWORD}
+      - REDIS_URL=redis://valkey:6379
+      - OMNIROUTE_MEMORY_MB=1024
+      - REQUIRE_API_KEY=true
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - MOMOE_API_KEY=${MOMOE_API_KEY:-momoe-local}
-      # Authentik OIDC SSO Integration
-      - PROXY_BASE_URL=https://llm.spencer.lan
-      - GENERIC_CLIENT_ID=${LITELLM_OIDC_CLIENT_ID:-litellm}
-      - GENERIC_CLIENT_SECRET=${LITELLM_OIDC_CLIENT_SECRET}
-      - GENERIC_AUTHORIZATION_ENDPOINT=https://${SSO_PUBLIC_DOMAIN}/application/o/authorize/
-      - GENERIC_TOKEN_ENDPOINT=https://${SSO_PUBLIC_DOMAIN}/application/o/token/
-      - GENERIC_USERINFO_ENDPOINT=https://${SSO_PUBLIC_DOMAIN}/application/o/userinfo/
-      - GENERIC_SCOPE=openid profile email
-      - GENERIC_USER_ID_ATTRIBUTE=preferred_username
-      - GENERIC_INCLUDE_CLIENT_ID=false
-    command: ["--config", "/etc/litellm/config.yaml", "--port", "4000"]
     depends_on:
-      pgvector:
+      valkey:
         condition: service_healthy
       ollama:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health/readiness')\" || exit 1"]
-      interval: 10s
+      test: ["CMD", "node", "/app/healthcheck.mjs"]
+      interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 25s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.litellm.rule=Host(`llm.spencer.lan`)"
-      - "traefik.http.routers.litellm.entrypoints=websecure"
-      - "traefik.http.routers.litellm.tls=true"
-      - "traefik.http.services.litellm.loadbalancer.server.port=4000"
+      # Internal LAN Router - Web UI Dashboard (Priority 50)
+      - "traefik.http.routers.omniroute-web.rule=Host(`llm.spencer.lan`)"
+      - "traefik.http.routers.omniroute-web.entrypoints=websecure"
+      - "traefik.http.routers.omniroute-web.tls=true"
+      - "traefik.http.routers.omniroute-web.priority=50"
+      - "traefik.http.routers.omniroute-web.service=omniroute-svc"
+      # Internal LAN Router - API & Models bypass ForwardAuth via Bearer auth (Priority 100)
+      - "traefik.http.routers.omniroute-api.rule=Host(`llm.spencer.lan`) && (PathPrefix(`/v1`) || PathPrefix(`/healthz`))"
+      - "traefik.http.routers.omniroute-api.entrypoints=websecure"
+      - "traefik.http.routers.omniroute-api.tls=true"
+      - "traefik.http.routers.omniroute-api.priority=100"
+      - "traefik.http.routers.omniroute-api.service=omniroute-svc"
+      # Load balancer service
+      - "traefik.http.services.omniroute-svc.loadbalancer.server.port=20128"
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:${OPENWEBUI_VERSION:-main}
@@ -387,15 +387,15 @@ services:
       - VECTOR_DB=pgvector
       - PGVECTOR_DB_URL=postgresql://${OPENWEBUI_POSTGRES_USER:-openwebui}:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/${OPENWEBUI_POSTGRES_DB:-openwebui}
 
-      # Model Providers: Dual LiteLLM + Ollama
-      - OPENAI_API_BASE_URL=http://litellm:4000/v1
-      - OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+      # Model Providers: Dual OmniRoute + Ollama
+      - OPENAI_API_BASE_URL=http://omniroute:20128/v1
+      - OPENAI_API_KEY=${OMNIROUTE_MASTER_KEY}
       - OLLAMA_BASE_URL=http://ollama:11434
 
-      # Offload RAG & Memory Embeddings to LiteLLM (Zero In-Container Model RAM)
+      # Offload RAG & Memory Embeddings to OmniRoute (Zero In-Container Model RAM)
       - RAG_EMBEDDING_ENGINE=openai
-      - RAG_OPENAI_API_BASE_URL=http://litellm:4000/v1
-      - RAG_OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+      - RAG_OPENAI_API_BASE_URL=http://omniroute:20128/v1
+      - RAG_OPENAI_API_KEY=${OMNIROUTE_MASTER_KEY}
       - RAG_EMBEDDING_MODEL=nomic-embed-text
 
       # Conversational Memory
@@ -423,7 +423,7 @@ services:
     depends_on:
       pgvector:
         condition: service_healthy
-      litellm:
+      omniroute:
         condition: service_healthy
       ollama:
         condition: service_started

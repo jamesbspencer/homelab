@@ -1,6 +1,9 @@
 # Hermes Custom Terminal Sandbox Image
 
-This directory contains the [`Dockerfile`](file:///data/homelab/hermes-terminal-image/Dockerfile) and instructions for building a custom Docker execution sandbox image used by **Nous Research Hermes Agent** (`terminal`, `execute_code`, and `process` tools).
+> [!WARNING]
+> **DEPRECATED & ARCHIVED**: This custom execution sandbox image was used by the Nous Research Hermes Agent, which was decommissioned on 2026-11-07. This build context is preserved for historical reference and reproducing sandbox environments only.
+
+This directory contains the [`Dockerfile`](file:///data/homelab/docs/archive/hermes-terminal-image/Dockerfile) and instructions for building a custom Docker execution sandbox image used by **Nous Research Hermes Agent** (`terminal`, `execute_code`, and `process` tools).
 
 ---
 
@@ -25,7 +28,7 @@ This custom image builds on **Ubuntu 26.04 LTS** and pre-bakes the most frequent
 
 ## 🔨 Building the Image
 
-From this directory (`/data/homelab/hermes-terminal-image`), build the image with a local tag:
+From this directory (`/data/homelab/docs/archive/hermes-terminal-image`), build the image with a local tag:
 
 ```bash
 docker build -t hermes-terminal:latest .
@@ -59,7 +62,7 @@ docker compose up -d hermes
 
 ### Option B: Via `hermes/config.yaml`
 
-Update the `terminal.docker_image` setting in [`/data/homelab/hermes/config.yaml`](file:///data/homelab/hermes/config.yaml):
+Update the `terminal.docker_image` setting in `hermes/config.yaml`:
 
 ```yaml
 terminal:
@@ -158,7 +161,7 @@ bws run -- 'python3 script.py'
 
 To add additional packages or libraries:
 
-1. **Apt Packages**: Add system packages to the `apt-get install` list in [`Dockerfile`](file:///data/homelab/hermes-terminal-image/Dockerfile).
+1. **Apt Packages**: Add system packages to the `apt-get install` list in [`Dockerfile`](file:///data/homelab/docs/archive/hermes-terminal-image/Dockerfile).
 2. **Python Packages**: Add packages to the `pip install` block or install them with `uv pip install --system`.
 3. **Node Packages**: Add global npm packages to the `npm install -g` block.
 4. Rebuild the image: `docker build -t hermes-terminal:latest .`.

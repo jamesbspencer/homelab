@@ -69,7 +69,7 @@ Defines dashboard header widgets:
 
 ### 4. `services.yaml`
 Organizes all services across Spencer's Homelab with custom dashboard icons and links:
-* **AI & Inference**: Open WebUI, LiteLLM Gateway, MoMoE Hybrid MoE, Ollama LLM.
+* **AI & Inference**: Open WebUI, OmniRoute Gateway, MoMoE Hybrid MoE, Ollama LLM.
 * **Search & Scrape**: SearXNG, Firecrawl.
 * **Core Infrastructure**: Traefik Proxy, Authentik IAM, CrowdSec.
 * **Developer Tools & Ops**: Gitea, Dozzle, ntfy.

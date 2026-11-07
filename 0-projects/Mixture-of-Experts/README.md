@@ -42,24 +42,24 @@ Instead of treating GPU VRAM as a hard capacity limit—or suffering severe PCIe
 
 ```mermaid
 graph TD
-    Traefik[Traefik Proxy] -->|llm.spencer.lan| LiteLLM[LiteLLM Proxy :4000]
+    Traefik[Traefik Proxy] -->|llm.spencer.lan| OmniRoute[OmniRoute Gateway :20128]
 
     subgraph Clients
-        OpenWebUI[Open WebUI] -->|http://litellm:4000/v1| LiteLLM
-        IDEs[Claude Code / IDEs / LAN] -->|https://llm.spencer.lan| LiteLLM
+        OpenWebUI[Open WebUI] -->|http://omniroute:20128/v1| OmniRoute
+        IDEs[Claude Code / IDEs / LAN] -->|https://llm.spencer.lan| OmniRoute
     end
 
     subgraph Local Inference Backends on 'ai' Network
-        LiteLLM -->|Fast Dense 12B-14B & Embeddings| Ollama[Ollama :11434 - RTX 3060 VRAM]
-        LiteLLM -->|Deep Reasoning 30B-125B MoE| MoE[MoMoE / ik_llama.cpp - Hybrid VRAM + Xeon RAM]
+        OmniRoute -->|Fast Dense 12B-14B & Embeddings| Ollama[Ollama :11434 - RTX 3060 VRAM]
+        OmniRoute -->|Deep Reasoning 30B-125B MoE| MoE[MoMoE / ik_llama.cpp - Hybrid VRAM + Xeon RAM]
     end
 ```
 
-### A. Drop-In Backend Behind LiteLLM (`llm.spencer.lan`)
-All homelab AI traffic is already unified behind [LiteLLM Proxy](../../docs/litellm.md) ([`litellm/config.yaml`](../../litellm/config.yaml)). Because both **Strata** and **MoMoE** expose local **OpenAI-compatible (`/v1/chat/completions`)** and **Anthropic-compatible (`/v1/messages`)** endpoints:
+### A. Drop-In Backend Behind OmniRoute (`llm.spencer.lan`)
+All homelab AI traffic is unified behind [OmniRoute Gateway](../../docs/omniroute.md). Because both **Strata** and **MoMoE** expose local **OpenAI-compatible (`/v1/chat/completions`)** and **Anthropic-compatible (`/v1/messages`)** endpoints:
 - Deploy MoMoE / Strata / `ik_llama.cpp` as a container on the internal `ai` Docker bridge network.
-- Register the backend in `litellm/config.yaml` (e.g., `model_name: local-moe-large`).
-- Every downstream service automatically gains access with centralized key management, PostgreSQL (`pgvector`) spend/prompt logging, and Authentik OIDC SSO protection intact.
+- Register the backend in OmniRoute's connection registry (`provider: llama-cpp`, `baseUrl: http://momoe:8080/v1`).
+- Every downstream service automatically gains access with centralized key management, Valkey distributed caching, and Traefik ForwardAuth dashboard protection intact.
 
 ### B. Stronger Autonomous Loops & Large Context Reasoning
 Routing complex tasks to a large local MoE model gives Open WebUI, Antigravity, and autonomous scripts significantly stronger planning and coding reliability over 64k contexts without sending private homelab data to external cloud providers (Groq, OpenRouter, DeepSeek).
@@ -68,7 +68,7 @@ Routing complex tasks to a large local MoE model gives Open WebUI, Antigravity, 
 Open WebUI and agent pipelines perform background knowledge indexing, fact deduplication, and reflective synthesis. Because background consolidation jobs are asynchronous and not latency-sensitive to the millisecond, running them against a large local MoE model produces cloud-grade knowledge extraction at zero API cost.
 
 ### D. Local Anthropic/OpenAI Harness for Claude Code & Developer Tools
-Both Strata and MoMoE natively implement the **Anthropic Messages API (`/v1/messages`)** alongside OpenAI's `/v1/chat/completions`, specifically tuned for agentic coding harnesses (Claude Code, Cursor, OpenCode, Aider). Exposed through LiteLLM (`https://llm.spencer.lan`), any workstation on `.spencer.lan` can connect to a local 100B+ MoE coding assistant.
+Both Strata and MoMoE natively implement the **Anthropic Messages API (`/v1/messages`)** alongside OpenAI's `/v1/chat/completions`, specifically tuned for agentic coding harnesses (Claude Code, Cursor, OpenCode, Aider). Exposed through OmniRoute (`https://llm.spencer.lan`), any workstation on `.spencer.lan` can connect to a local 100B+ MoE coding assistant.
 
 ---
 
@@ -107,13 +107,13 @@ Because the host has a single **RTX 3060 (12 GB VRAM)** for compute, running **O
 - [x] **Phase 2: Docker Service Deployment**
   - Cloned `aflin/momoe` into `./momoe/src` with persistent data/packs/models mounted at `./momoe/data:/data` and custom container entrypoint at `./momoe/docker-entrypoint.sh`.
   - Added the `momoe` service to [`docker-compose.yaml`](../../docker-compose.yaml) on the internal `ai` network (`http://momoe:8080/v1`) and documented in [`docs/momoe.md`](../../docs/momoe.md).
-- [x] **Phase 3: LiteLLM Integration & Benchmarking**
-  - Registered `ornith-1.5-35b` and `momoe` in [`litellm/config.yaml`](../../litellm/config.yaml) alongside `gemma4:12b` (`default`) and `qwen2.5:14b`.
+- [x] **Phase 3: Gateway Integration & Benchmarking**
+  - Registered `ornith-1.5-35b` and `momoe` in OmniRoute alongside `gemma4:12b` (`default`) and `qwen2.5:14b`.
   - **Measured Live Benchmark (`Ornith-1.5-35B-A3B IQ4_XS` on RTX 3060 12 GB + Xeon W-2145 61 GiB RAM)**:
-    - **Generation Speed (Decode + MTP Speculative Drafting)**: **112.5 tokens/sec** (300 tokens in 2.96s via LiteLLM)
+    - **Generation Speed (Decode + MTP Speculative Drafting)**: **112.5 tokens/sec** (300 tokens in 2.96s via gateway)
     - **Expert Cache Hit Rate**: **73.0%** in GPU VRAM (`3,857` experts in `6.00 GiB` VRAM cache, `+1.4%` routed over PCIe from `15.94 GiB` locked host RAM arena loaded at `9.27 GiB/s`)
     - **Memory Footprint**: `9,389 MiB` VRAM used (`2,523 MiB` VRAM free on RTX 3060); `28 GiB` host RAM used (`33 GiB` RAM available)
 - [x] **Phase 4: 64k Context & Multi-Agent Hardening**
   - Upgraded context window to **65,536 tokens** (`MOMOE_CONTEXT=65536`) with KV streaming across the 61 GiB DDR4 RAM arena.
-  - Aligned LiteLLM with `mode: chat`, `max_tokens: 65536`, `max_input_tokens: 57344`, and dynamic `MOMOE_API_KEY` credential forwarding.
+  - Aligned OmniRoute with OpenAI and Anthropic API endpoints, max context streaming, and dynamic `MOMOE_API_KEY` credential forwarding.
   - Aligned with autonomous Firecrawl web scraping, ending VRAM collisions between Gemma 4 and MoMoE.

@@ -6,7 +6,7 @@ Ollama provides local large language model inference with NVIDIA GPU acceleratio
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Local LLM and embedding execution engine serving LiteLLM Proxy, Open WebUI, and terminal tools.
+* **Role**: Local LLM and embedding execution engine serving OmniRoute Gateway, Open WebUI, and terminal tools.
 * **Container Name**: `ollama`
 * **Image**: `ollama/ollama`
 * **Network**: `ai` (Internal AI communication network)
@@ -70,4 +70,4 @@ docker compose exec ollama ollama ps
 
 Spencer's homelab runs both **Ollama** and **MoMoE** on a single NVIDIA GeForce RTX 3060 (12 GB VRAM):
 * **Embeddings**: `nomic-embed-text` (~500 MB VRAM) runs inside Ollama continuously, residing comfortably within MoMoE's `MOMOE_VRAM_RESERVE_MIB=2560` (2.5 GiB) reserve.
-* **Dense Chat Models**: If running Ollama dense models (`gemma4:12b` or `qwen2.5:14b`), remember they require 8–10 GB VRAM. To avoid CUDA OOM conflicts with MoMoE, large agent tasks and web extractions route through MoMoE (`ornith-1.5-35b`) via LiteLLM Proxy.
+* **Dense Chat Models**: If running Ollama dense models (`gemma4:12b` or `qwen2.5:14b`), remember they require 8–10 GB VRAM. To avoid CUDA OOM conflicts with MoMoE, large agent tasks and web extractions route through MoMoE (`ornith-1.5-35b`) via OmniRoute AI Gateway.

@@ -7,8 +7,8 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ## 🎯 Active Initiatives & Roadmap
 
 ### 1. 💾 Automated Backup & Disaster Recovery Pipeline
-- [ ] **Automated `pgvector` Backups**: Implement a lightweight backup sidecar or scheduled maintenance script executing transactional dumps (`pg_dumpall` or per-database `pg_dump`: `openwebui`, `litellm`, `authentik`, `gitea`) with retention rotation (e.g., 7 daily, 4 weekly).
-- [ ] **Encrypted State Archiving**: Snapshot critical runtime volumes (`./authentik/media`, `./traefik/certs`, `./pgvector/data`) using encrypted backup utilities (e.g., Restic or Borg).
+- [ ] **Automated `pgvector` Backups**: Implement a lightweight backup sidecar or scheduled maintenance script executing transactional dumps (`pg_dumpall` or per-database `pg_dump`: `openwebui`, `authentik`, `gitea`) with retention rotation (e.g., 7 daily, 4 weekly).
+- [ ] **Encrypted State Archiving**: Snapshot critical runtime volumes (`./authentik/media`, `./traefik/certs`, `./pgvector/data`, `./omniroute/data`) using encrypted backup utilities (e.g., Restic or Borg).
 - [ ] **Local NAS Replication**: Configure automated synchronization of encrypted snapshots and database dumps to the local NAS (via NFS/SMB mount or SSH/rsync) with retention cleanup.
 - [ ] **Restore & Recovery Runbook**: Document step-by-step restoration procedures in `docs/` and verify point-in-time recovery for database and certificate state.
 
@@ -19,10 +19,14 @@ This file tracks upcoming features, architectural improvements, and exploration 
 
 ---
 
-### 3. 🔀 Intelligent Multi-Tier Model Routing & Fallback Chains (LiteLLM)
-- [ ] **Automated Local-to-Cloud Fallback**: Configure LiteLLM fallback chains so if local Ollama (`qwen2.5:14b`) encounters high latency, GPU saturation, or errors, requests automatically failover to cloud providers (e.g., DeepSeek-V3 or Groq).
-- [ ] **Model Tiering by Capability**: Dynamically dispatch fast classification, code execution, and complex reasoning tasks to optimal backends.
-- [ ] **Budget & Token Rate Limiting**: Configure spend caps and TPM (tokens per minute) rate limits per virtual key in LiteLLM to prevent runaway agent loops.
+### 3. 🔀 OmniRoute AI Gateway & Intelligent Multi-Tier Model Routing
+- [x] **OmniRoute Gateway Deployment**: Replaced LiteLLM with OmniRoute (`diegosouzapw/omniroute:latest`) on `https://llm.spencer.lan` (internal port `20128`) with SQLite transactional storage, eliminating PostgreSQL database coupling.
+- [x] **Local Engine Integration & Model Aliases**: Connected Ollama (`http://ollama:11434/v1`) and MoMoE (`http://momoe:8080/v1`), mapping zero-prefix aliases for `gemma4:12b`, `qwen2.5:14b`, `ornith-1.5-35b`, `momoe`, and `nomic-embed-text`.
+- [x] **Client Switchover & Verification**: Re-routed Open WebUI chat and RAG embeddings to `http://omniroute:20128/v1`, verified full test suite (14/14 passing).
+- [x] **Cache & Database Maintenance**: Connected Valkey cache on `redis` network, archived final LiteLLM database backup (`archives/litellm_final_backup.sql.gz`), and updated `scripts/pgvector-maintenance.sh`.
+- [ ] **Automated Local-to-Cloud Fallback**: Configure multi-provider fallback chains in OmniRoute so if local Ollama or MoMoE encounters high latency, GPU saturation, or errors, requests automatically failover to cloud providers (e.g., DeepSeek-V3 or Groq).
+- [ ] **Model Tiering by Capability**: Dynamically dispatch fast classification, code execution, and complex reasoning tasks to optimal backends via custom OmniRoute routing rules.
+- [ ] **Budget & Token Rate Limiting**: Configure spend caps and TPM (tokens per minute) rate limits per virtual key in OmniRoute to prevent runaway agent loops.
 
 ---
 
@@ -31,7 +35,7 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **Cron & Task Migration**: Migrated `pgvector-maintenance.sh` from Hermes internal scheduler to host crontab (`0 3 * * 0 /data/homelab/scripts/pgvector-maintenance.sh`), verified dry-run and ntfy notifications.
 - [x] **Data Archival & Storage Reclamation**: Created timestamped compressed archive `archives/hermes-backup-20261107.tar.gz`, pruned untracked runtime cruft (`state.db`, caches, lockfiles), and deleted local Docker execution sandbox images (`hermes-terminal:latest`).
 - [x] **Ingress, SSO & Homepage Clean-up**: Unregistered Traefik routers (`hermes.jamesspencer.me`, `hermes-api.spencer.lan`, `mcp.spencer.lan`), decommissioned Authentik OIDC integration, and removed tiles from Homepage.
-- [x] **Documentation & Architecture Synchronization**: Archived `docs/hermes.md` to `docs/archive/hermes.md`, and updated `README.md`, `AGENTS.md`, and service guides.
+- [x] **Documentation & Architecture Synchronization**: Archived `docs/hermes.md` to `docs/archive/hermes.md`, moved `hermes-terminal-image/` to `docs/archive/hermes-terminal-image/`, and updated `README.md`, `AGENTS.md`, and service guides.
 
 ---
 

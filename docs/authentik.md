@@ -124,7 +124,7 @@ labels:
 
 ## 🔌 Integrating OIDC (OpenID Connect) Applications
 
-For applications that natively support OAuth2/OIDC (e.g. Gitea, LiteLLM, Nextcloud, Grafana):
+For applications that natively support OAuth2/OIDC (e.g. Gitea, Nextcloud, Grafana):
 
 1. In Authentik, an OAuth2/OpenID Provider can be created via Admin UI or programmatically via the **Authentik REST API** (`/api/v3/`):
    - **Endpoint**: `https://<sso-public-domain>/api/v3/providers/oauth2/`
@@ -133,14 +133,8 @@ For applications that natively support OAuth2/OIDC (e.g. Gitea, LiteLLM, Nextclo
    - **Redirect URIs**: Application callback URLs (Mode: `strict`, Type: `authorization`)
    - **Signing Key**: `authentik Self-signed Certificate` (RS256)
    - **Client ID & Secret**: Application credentials
-2. **LiteLLM Proxy Integration**:
-   - **Issuer URL**: `https://<sso-public-domain>/application/o/litellm/`
-   - **Discovery Metadata**: `https://<sso-public-domain>/application/o/litellm/.well-known/openid-configuration`
-   - **Client ID**: `litellm`
-   - **Client Secret**: In `.env` as `LITELLM_OIDC_CLIENT_SECRET`
-   - **Redirect URI**: `https://llm.spencer.lan/sso/callback`
-   - LiteLLM uses standard Generic OIDC SSO environment variables to authenticate users against Authentik for the Web Admin UI, maintaining machine token bypass for `/v1/*` API endpoints.
-3. **Archived / Decommissioned Integrations**:
+2. **Archived / Decommissioned Integrations**:
+   - **LiteLLM Proxy** (Archived): Formerly used Client ID `litellm`. Retired and replaced by [OmniRoute](omniroute.md).
    - **Hermes Agent** (Archived): Formerly used Client ID `hermes` with issuer `https://<sso-public-domain>/application/o/hermes/`. Retired alongside Hermes Agent.
 
 ---
@@ -149,7 +143,7 @@ For applications that natively support OAuth2/OIDC (e.g. Gitea, LiteLLM, Nextclo
 
 Autonomous agent tools and machine-to-machine APIs must not be blocked by SSO redirects. The following endpoints bypass ForwardAuth by omitting the `authentik@file` middleware:
 
-- `https://llm.spencer.lan/v1/*` (LiteLLM OpenAI-compatible router and health probes)
+- `https://llm.spencer.lan/v1/*` (OmniRoute OpenAI & Anthropic compatible router and health probes)
 
 ---
 
