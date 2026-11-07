@@ -56,6 +56,45 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+
+  momoe:
+    build:
+      context: ./momoe/src
+      args:
+        CUDA_ARCHITECTURES: "86"
+        BUILD_VISION: "0"
+    image: homelab/momoe:latest
+    container_name: momoe
+    restart: unless-stopped
+    networks:
+      - ai
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./momoe/data:/data
+      - ./momoe/docker-entrypoint.sh:/opt/strata/docker-entrypoint.sh:ro
+    environment:
+      - FAMILY=${MOMOE_FAMILY:-ornith}
+      - MODEL=${MOMOE_MODEL:-IQ4_XS}
+      - CONTEXT=${MOMOE_CONTEXT:-65536}
+      - KV_STREAMING=${MOMOE_KV_STREAMING:-on}
+      - VISION=${MOMOE_VISION:-no}
+      - HOST=0.0.0.0
+      - PORT=8080
+      - API_KEY=${MOMOE_API_KEY:-momoe-local}
+      - STRATA_ALLOWED_HOSTS=momoe,localhost,127.0.0.1
+      - GPU=0
+      - VRAM_RESERVE_MIB=${MOMOE_VRAM_RESERVE_MIB:-2560}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
+
   pgvector:
     image: pgvector/pgvector:${PGVECTOR_VERSION:-pg16}
     container_name: pgvector
@@ -396,6 +435,7 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - GROQ_API_KEY=${GROQ_API_KEY}
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - MOMOE_API_KEY=${MOMOE_API_KEY:-momoe-local}
       # Authentik OIDC SSO Integration
       - PROXY_BASE_URL=https://llm.spencer.lan
       - GENERIC_CLIENT_ID=${LITELLM_OIDC_CLIENT_ID:-litellm}

@@ -11,7 +11,7 @@ LiteLLM Proxy provides a unified, OpenAI-compatible proxy gateway and router for
 * **Image**: `ghcr.io/berriai/litellm:main-latest`
 * **Networks**:
   * `net1`: Traefik reverse proxy ingress (`llm.spencer.lan`).
-  * `ai`: Internal communication with Ollama (`ollama:11434`), Hermes Agent, and Hindsight.
+  * `ai`: Internal communication with Ollama (`ollama:11434`), MoMoE (`momoe:8080`), Hermes Agent, and Hindsight.
   * `db`: PostgreSQL connection to `pgvector` for key management, spend tracking, and audit logging.
 * **External Ingress & Ports**:
   * API Endpoint: `https://llm.spencer.lan/v1`
@@ -30,6 +30,7 @@ graph TD
 
     subgraph Backends & Storage
         LiteLLM -->|Local GPU Inference| Ollama[Ollama :11434]
+        LiteLLM -->|Hybrid MoE Inference 64k| MoMoE[MoMoE :8080]
         LiteLLM -->|Keys, Spend & Audit DB| PgVector[(pgvector :5432)]
         LiteLLM -.->|Optional Cloud Fallbacks| Cloud[Groq / OpenRouter / DeepSeek]
     end
@@ -43,8 +44,10 @@ Defined in [`litellm/config.yaml`](file:///data/homelab/litellm/config.yaml):
 
 | Model Name / Alias | Target Backend | Model Type | Capabilities |
 |---|---|---|---|
-| `qwen2.5:14b` | `ollama/qwen2.5:14b` via `http://ollama:11434` | Chat / Reasoning | GPU-accelerated local instruction & tool calling |
-| `default` | `ollama/qwen2.5:14b` via `http://ollama:11434` | Chat Alias | Default homelab fallback model |
+| `gemma4:12b` | `ollama_chat/gemma4:12b` via `http://ollama:11434` | Chat / Reasoning | GPU-accelerated local instruction & tool calling (64k context) |
+| `default` | `ollama_chat/gemma4:12b` via `http://ollama:11434` | Chat Alias | Default homelab fallback model |
+| `qwen2.5:14b` | `ollama_chat/qwen2.5:14b` via `http://ollama:11434` | Chat / Reasoning | GPU-accelerated local instruction & tool calling (32k context) |
+| `ornith-1.5-35b` / `momoe` | `openai/ornith-1.5-35b-a3b-iq4_xs` via `http://momoe:8080/v1` | Hybrid MoE (35B-A3B) | Agentic coding, deep reasoning & web research via MoMoE (64k KV streaming in RAM + MTP drafting) |
 | `nomic-embed-text` | `ollama/nomic-embed-text` via `http://ollama:11434` | Embeddings | High-performance text vector embeddings |
 | `groq/llama-3.3-70b-versatile` | Groq Cloud (`GROQ_API_KEY`) | Ultra-Fast Cloud | Fast cloud fallback when local GPU is saturated |
 | `openrouter/auto` | OpenRouter (`OPENROUTER_API_KEY`) | Auto-Routed Cloud | Flexible fallback routing to leading foundation models |

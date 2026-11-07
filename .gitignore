@@ -108,3 +108,8 @@ homepage/config/logs/*
 memlord/onnx/*
 !memlord/onnx/.gitkeep
 
+# MoMoE cloned source tree and runtime model/pack data
+momoe/src/
+momoe/data/*
+!momoe/data/.gitkeep
+!momoe/docker-entrypoint.sh

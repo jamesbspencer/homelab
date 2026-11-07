@@ -12,6 +12,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **CrowdSec** | Intrusion Detection & Traefik Bouncer | `:8080` (Internal `net1` network) | [CrowdSec Guide](crowdsec.md) |
 | **LiteLLM Proxy** | LLM Router & Spend Gateway | `llm.spencer.lan` (:4000) | [LiteLLM Guide](litellm.md) |
 | **Ollama** | LLM Engine (GPU Accelerated) | `:11434` (Internal `ai` network) | [Ollama Guide](ollama.md) |
+| **MoMoE** | Hybrid MoE Inference Engine (GPU + RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](momoe.md) |
 | **Hermes Agent** | Autonomous Agent, Dashboard & Code Sandbox | `hermes.spencer.lan`, `ai.spencer.lan`, `hermes-api.spencer.lan` | [Hermes Guide](hermes.md) |
 | **Hindsight** | Agent Long-Term Memory Engine | `:8888` (API), `hindsight.spencer.lan` (:9999) | [Hindsight Guide](hindsight.md) |
 | **Memlord** | MCP Vector & BM25 Memory Server | `memlord.spencer.lan` (:8000), `/mcp` | [Memlord Guide](memlord.md) |
@@ -31,6 +32,6 @@ This directory contains in-depth documentation, architecture designs, configurat
 ## 🌐 Network Topologies
 
 1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Hermes Gateway, Hermes Dashboard, Hindsight UI, Memlord Web UI, LiteLLM, Authentik Server, Dozzle, ntfy, Gitea, Homepage, Traefik API).
-2. **`ai`**: Private high-speed network for inter-service communication (Hermes, Hindsight, Memlord MCP, Ollama, LiteLLM, SearXNG, Firecrawl, ntfy, Homepage).
+2. **`ai`**: Private high-speed network for inter-service communication (Hermes, Hindsight, Memlord MCP, Ollama, MoMoE, LiteLLM, SearXNG, Firecrawl, ntfy, Homepage).
 3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Hindsight, Memlord, LiteLLM, Authentik, Gitea).
-4. **`redis`**: Dedicated caching network shared between Valkey, SearXNG, Firecrawl, and Authentik (sessions and task queue).
+4. **`redis`**: Dedicated caching network shared between Valkey, SearXNG, Firecrawl, Authentik (sessions and task queue), and Gitea (cache, session, and queue).

@@ -46,11 +46,11 @@ deploy:
 
 ## 🛠️ Management & Useful Commands
 
-### Pulling a Model
+### Pulling Models
 ```bash
+docker compose exec ollama ollama pull gemma4:12b
 docker compose exec ollama ollama pull qwen2.5:14b
 docker compose exec ollama ollama pull nomic-embed-text
-
 ```
 
 ### Listing Installed Models
@@ -58,8 +58,16 @@ docker compose exec ollama ollama pull nomic-embed-text
 docker compose exec ollama ollama list
 ```
 
-### Checking GPU Utilization
+### Checking GPU Utilization & Loaded Models
 ```bash
 nvidia-smi
 docker compose exec ollama ollama ps
 ```
+
+---
+
+## 🤝 VRAM Coexistence with MoMoE
+
+Spencer's homelab runs both **Ollama** and **MoMoE** on a single NVIDIA GeForce RTX 3060 (12 GB VRAM):
+* **Embeddings**: `nomic-embed-text` (~500 MB VRAM) runs inside Ollama continuously, residing comfortably within MoMoE's `MOMOE_VRAM_RESERVE_MIB=2560` (2.5 GiB) reserve.
+* **Dense Chat Models**: If running Ollama dense models (`gemma4:12b` or `qwen2.5:14b`), remember they require 8–10 GB VRAM. To avoid CUDA OOM conflicts with MoMoE, large agent tasks and web extractions route through MoMoE (`ornith-1.5-35b`) via LiteLLM Proxy.

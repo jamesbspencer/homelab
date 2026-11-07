@@ -29,6 +29,28 @@ model_list:
       max_input_tokens: 32768
       max_output_tokens: 8192
 
+  - model_name: ornith-1.5-35b
+    litellm_params:
+      model: openai/ornith-1.5-35b-a3b-iq4_xs
+      api_base: http://momoe:8080/v1
+      api_key: os.environ/MOMOE_API_KEY
+    model_info:
+      mode: chat
+      max_tokens: 65536
+      max_input_tokens: 57344
+      max_output_tokens: 8192
+
+  - model_name: momoe
+    litellm_params:
+      model: openai/ornith-1.5-35b-a3b-iq4_xs
+      api_base: http://momoe:8080/v1
+      api_key: os.environ/MOMOE_API_KEY
+    model_info:
+      mode: chat
+      max_tokens: 65536
+      max_input_tokens: 57344
+      max_output_tokens: 8192
+
   - model_name: nomic-embed-text
     litellm_params:
       model: ollama/nomic-embed-text

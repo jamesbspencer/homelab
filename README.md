@@ -14,14 +14,19 @@ Detailed architectural designs, configuration options, environment variables, an
 | **CrowdSec** | Intrusion detection & Traefik Bouncer plugin | `:8080` (Internal `net1` network) | [CrowdSec Guide](docs/crowdsec.md) |
 | **LiteLLM Proxy** | LLM routing gateway, spend manager & fallback router | `https://llm.spencer.lan` (:4000) | [LiteLLM Guide](docs/litellm.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
+| **MoMoE** | Hybrid MoE inference engine (GPU + 61 GiB RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](docs/momoe.md) |
 | **Hermes Agent** | Autonomous AI agent runtime, dashboard & MCP server | `https://hermes.spencer.lan` / `https://ai.spencer.lan` / `https://mcp.spencer.lan` | [Hermes Guide](docs/hermes.md) |
 | **Hindsight** | Long-term contextual memory engine for agents | `https://hindsight.spencer.lan` (:9999) / `:8888` | [Hindsight Guide](docs/hindsight.md) |
-| **pgvector** | Unified vector & relational DB for Hindsight & LiteLLM | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
+| **Memlord** | MCP vector & BM25 memory server | `https://memlord.spencer.lan` (:8000), `/mcp` | [Memlord Guide](docs/memlord.md) |
+| **pgvector** | Unified vector & relational DB for Hindsight, LiteLLM & Authentik | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](docs/valkey.md) |
 | **Authentik** | Centralized IAM, SSO, OIDC & Proxy Outposts | `https://sso.spencer.lan` / `https://login.spencer.lan` (:9000) | [Authentik Guide](docs/authentik.md) |
+| **Dozzle** | Real-time container log viewer & streamer | `https://logs.spencer.lan` / `https://dozzle.spencer.lan` | [Dozzle Guide](docs/dozzle.md) |
 | **ntfy** | Push notification gateway & system alerts | `https://push.spencer.lan` / `https://ntfy.spencer.lan` | [ntfy Guide](docs/ntfy.md) |
+| **Gitea** | Self-hosted Git platform & issue tracker | `https://git.spencer.lan` / `https://gitea.spencer.lan`, `:2222` (SSH) | [Gitea Guide](docs/gitea.md) |
+| **Homepage** | Centralized dashboard & service health monitor | `https://home.spencer.lan` / `https://homepage.spencer.lan` | [Homepage Guide](docs/homepage.md) |
 | *Legacy Stack* | *Archived / Retired Legacy Services* | *Reclaimed ~1.02 GB RAM* | [Legacy Stack Archive](docs/archive/open-webui-legacy-stack.md) |
 
 ---
@@ -47,7 +52,11 @@ flowchart TB
         Traefik -->|mcp| HermesMCP["MCP :8765"]
         Traefik -->|llm| LiteLLMUI["LiteLLM :4000"]
         Traefik -->|hindsight| HindsightUI["Hindsight :9999"]
+        Traefik -->|memlord| MemlordUI["Memlord :8000"]
+        Traefik -->|logs| DozzleUI["Dozzle :8080"]
         Traefik -->|push| Ntfy["ntfy :80"]
+        Traefik -->|git| GiteaUI["Gitea :3000"]
+        Traefik -->|home| HomeUI["Homepage :3000"]
         Traefik -->|traefik| TraefikDash["Traefik :internal"]
     end
 
@@ -55,7 +64,8 @@ flowchart TB
     subgraph AICore ["🧠 AI Agent & Inference Layer (ai)"]
         Hermes["Nous Hermes Agent Runtime\n(Supervised Gateway & Background Review)"]
         LiteLLM["LiteLLM Proxy\n(Unified Router & Fallbacks)"]
-        Ollama["Ollama (GPU Accelerated)\nqwen2.5:14b | nomic-embed"]
+        Ollama["Ollama (GPU Accelerated)\ngemma4:12b | nomic-embed"]
+        MoMoE["MoMoE Hybrid MoE (GPU + RAM)\nornith-1.5-35b (64k)"]
         Hindsight["Hindsight Memory Engine\n(Long-Term Memory & Graphs)"]
         Sandbox["Docker Sandbox\n(Ephemeral Container Runtime)"]
         
@@ -66,7 +76,8 @@ flowchart TB
         Hermes -->|LLM Requests| LiteLLM
         Hermes -->|Memory Retain / Recall| Hindsight
         Hermes -->|Code & Process Exec| Sandbox
-        LiteLLM -->|GPU Inference| Ollama
+        LiteLLM -->|Local GPU Inference| Ollama
+        LiteLLM -->|Hybrid MoE 64k| MoMoE
         LiteLLM -.->|Optional Cloud| CloudLLM[OpenRouter / Groq]
         Hindsight -->|Fact Extraction| Ollama
     end
@@ -93,7 +104,7 @@ flowchart TB
     %% Data Plane & Storage
     subgraph DataPlane ["💾 Data & Caching Plane"]
         subgraph DBNet ["db Network"]
-            PGVector[("pgvector Database\n(hindsight & litellm)")]
+            PGVector[("pgvector Database\n(hindsight, litellm, authentik, gitea & memlord)")]
         end
         subgraph CacheNet ["redis Network"]
             Valkey[("Valkey In-Memory Cache\n(Search Cache & Rate Limiting)")]
@@ -119,6 +130,7 @@ flowchart TB
 ├── AGENTS.md                # Workspace operational guidelines for AI agents
 ├── .env                     # Local environment secrets and configuration
 ├── .env.example             # Template file with documentation of all variables
+├── 0-projects/              # Architecture initiatives & research spikes (e.g. MoE)
 ├── crowdsec/                # CrowdSec intrusion detection configs & databases
 │   ├── config/              # CrowdSec engine & log acquisition rules (acquis.d/)
 │   └── data/                # SQLite event database and local intelligence store
@@ -126,25 +138,39 @@ flowchart TB
 │   ├── README.md            # Documentation directory index
 │   ├── authentik.md         # Authentik centralized IAM & SSO guide
 │   ├── crowdsec.md          # CrowdSec security engine & Traefik bouncer guide
+│   ├── dozzle.md            # Dozzle real-time container log viewer guide
 │   ├── firecrawl.md         # Firecrawl architecture, queues & scraping
+│   ├── gitea.md             # Gitea Git repository manager & issue tracker guide
 │   ├── hermes.md            # Hermes Agent runtime, dashboard, sandbox & MCP
 │   ├── hindsight.md         # Hindsight long-term agent memory engine
+│   ├── homepage.md          # Homepage service directory & health dashboard guide
 │   ├── litellm.md           # LiteLLM Proxy model router & spend tracker
+│   ├── memlord.md           # Memlord MCP hybrid vector & BM25 memory server
+│   ├── momoe.md             # MoMoE hybrid MoE 64k inference engine guide
+│   ├── ntfy.md              # ntfy push notification gateway guide
 │   ├── ollama.md            # Ollama setup & GPU acceleration guide
 │   ├── pgvector.md          # Dedicated pgvector database for Hindsight, LiteLLM & Authentik
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
 │   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
 │   └── valkey.md            # Valkey caching & healthcheck operations
 ├── authentik/               # Authentik configuration, media and templates
+├── gitea/                   # Gitea repositories, git data and configs
 ├── hermes/                  # Hermes Agent persistent state, skills, MCP scripts
 │   ├── config.yaml          # Hermes model providers, tools & memory configs
 │   ├── hindsight/           # Profile memory configuration (config.json)
 │   ├── init/                # Container s6 boot supervisor scripts (MCP server)
 │   └── scripts/             # Hermes MCP server implementation (SSE & stdio)
+├── homepage/                # Homepage service dashboard layout & configs
 ├── litellm/                 # LiteLLM Proxy configuration (config.yaml)
+├── memlord/                 # Memlord MCP memory server data & vector models
+├── momoe/                   # MoMoE hybrid MoE engine data, packs & entrypoint
+│   ├── data/                # Downloaded GGUF weights, packs, configs and logs
+│   └── docker-entrypoint.sh # Container startup orchestrator & CLI pass-through
+├── ntfy/                    # ntfy notification cache & persistent alert store
 ├── nuq-postgres/            # NuQ PostgreSQL persistent crawl state database
 ├── ollama/                  # Cached LLM model weights
 ├── pgvector/                # Dedicated pgvector database data & init scripts
+├── scripts/                 # Maintenance, notification & operational automation
 ├── searxng/                 # SearXNG configuration and cache directories
 ├── traefik/                 # Traefik static, dynamic, and TLS cert configurations
 │   ├── certs/               # Wildcard SSL certificates (*.spencer.lan)
@@ -195,6 +221,12 @@ docker compose logs -f traefik
 ```bash
 curl http://localhost:11434/api/tags
 docker compose exec ollama nvidia-smi
+```
+
+### Test MoMoE Hybrid MoE Inference
+```bash
+docker compose exec momoe curl -s http://127.0.0.1:8080/health
+docker compose exec momoe ./momoe status
 ```
 
 ### Test Internal Scraping (Firecrawl)

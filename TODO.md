@@ -51,3 +51,12 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **Evaluate Memlord Architecture**: Investigate [`memlord`](https://github.com/MyrikLD/memlord) (self-hosted MCP memory server with hybrid BM25 + pgvector KNN, local ONNX embeddings, workspaces, and dreaming consolidation) as a specialized per-project memory layer alongside Hindsight.
 - [x] **MCP Server Deployment**: Deploy `memlord` container on `net1`, `ai`, and `db` networks with Traefik routing, Authentik ForwardAuth for Web UI, direct `/mcp` ingress, and dedicated `memlord` pgvector database.
 - [x] **Client & Tooling Integration**: Document MCP connections for Hermes Agent, Claude Desktop, and Cursor, and register Memlord in Homepage dashboard.
+
+---
+
+### 8. ⚡ Hybrid Mixture-of-Experts (MoE) Inference Engine (MoMoE)
+- [x] **Architecture Research & Candidate Selection**: Explored Strata, aflin/momoe, KTransformers, and ik_llama.cpp for combining GPU VRAM and host quad-channel DDR4 memory.
+- [x] **Container Deployment & Build Optimization**: Cloned `aflin/momoe` into `momoe/src`, compiled native CUDA 86 binary for RTX 3060 (`homelab/momoe:latest`), and deployed on the `ai` bridge with custom entrypoint and 2.5 GiB VRAM reservation for Ollama coexistence.
+- [x] **LiteLLM Model Routing & 64k KV Streaming**: Integrated `ornith-1.5-35b` and `momoe` into LiteLLM Proxy with 65,536 context (`MOMOE_CONTEXT=65536`) utilizing RAM KV cache streaming, MTP speculative drafting (112.5 tok/s live throughput), and dynamic API key forwarding.
+- [x] **Hermes Agent Scraping & Tool Alignment**: Aligned Hermes's Firecrawl web extraction and deep reasoning tools with the 64k MoMoE engine, eliminating VRAM contention with dense Ollama models.
+- [x] **Multi-Agent Code Review & Documentation**: Conducted 4-agent security, systems, routing, and standards audit; updated `AGENTS.md`, `README.md`, `docs/momoe.md`, `docs/litellm.md`, `docs/ollama.md`, and Homepage dashboard.

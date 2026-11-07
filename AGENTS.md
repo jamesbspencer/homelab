@@ -9,9 +9,11 @@ This file defines guidelines, rules, and architecture constraints that AI agents
 - **Services**:
   - **Traefik Reverse Proxy**: Single entry point for all HTTP/HTTPS traffic to the homelab (`traefik.spencer.lan`).
   - **Ollama**: Local LLM server configured with NVIDIA GPU hardware acceleration.
+  - **MoMoE**: Hybrid Mixture-of-Experts (MoE) LLM inference engine combining GPU VRAM and host RAM/AVX-512 on internal port `8080` (accessible via LiteLLM).
   - **LiteLLM Proxy**: Unified LLM routing gateway, spend manager, and model fallback router on internal port `4000` and `llm.spencer.lan`.
   - **Nous Research Hermes Agent**: Autonomous AI agent runtime, management dashboard, and Model Context Protocol (MCP) server (`hermes.spencer.lan`, `ai.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`) with Docker execution sandbox.
   - **Hindsight Long-Term Memory**: Persistent memory engine for Hermes Agent on internal port `8888` and Control Plane UI on `hindsight.spencer.lan` (`:9999`).
+  - **Memlord**: Hybrid vector (ONNX) and BM25 MCP memory server with persistent workspace memory and procedural knowledge on internal port `8000` (`memlord.spencer.lan`).
   - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
   - **Valkey**: High-performance in-memory key-value cache and rate limiter on internal port `6379`.
@@ -24,11 +26,11 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **PostgreSQL Database (`pgvector`)**: Unified relational and vector database container configured on the isolated `db` network for Hindsight, LiteLLM, Authentik, and Gitea.
 - **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `sso.spencer.lan`, `login.spencer.lan`, `llm.spencer.lan`, `hermes.spencer.lan`, `ai.spencer.lan`, `hermes-api.spencer.lan`, `mcp.spencer.lan`, `hindsight.spencer.lan`, `logs.spencer.lan`, `dozzle.spencer.lan`, `push.spencer.lan`, `ntfy.spencer.lan`, `git.spencer.lan`, `gitea.spencer.lan`, `home.spencer.lan`, `homepage.spencer.lan`).
 - **Networking**:
-  - The Traefik container and proxied services requiring external web access (Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, LiteLLM, Authentik Server, Dozzle, ntfy, Gitea, Homepage) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
-  - Internal AI communication (between Hermes, Hindsight, LiteLLM, Ollama, SearXNG, Firecrawl, ntfy, Gitea, Homepage) occurs on the isolated bridge network named `ai`.
-  - Database services (`pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network (Hindsight, LiteLLM, Authentik, Gitea).
+  - The Traefik container and proxied services requiring external web access (Hermes Gateway, Hermes Dashboard, Hermes MCP, Hindsight UI, Memlord Web UI, LiteLLM, Authentik Server, Dozzle, ntfy, Gitea, Homepage) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
+  - Internal AI communication (between Hermes, Hindsight, Memlord MCP, LiteLLM, Ollama, MoMoE, SearXNG, Firecrawl, ntfy, Gitea, Homepage) occurs on the isolated bridge network named `ai`.
+  - Database services (`pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network (Hindsight, Memlord, LiteLLM, Authentik, Gitea).
   - Cache services (Valkey, SearXNG, Firecrawl, Authentik sessions & queue, Gitea cache & queue) communicate on the dedicated bridge network named `redis`.
-  - Internal backend services (Firecrawl, SearXNG, Valkey, pgvector) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
+  - Internal backend services (Firecrawl, SearXNG, Valkey, pgvector, MoMoE) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
 - **Documentation**: Detailed architecture, configuration, and operational guides for every service reside in [`docs/`](file:///data/homelab/docs/README.md). Always update the corresponding service guide when adding or modifying service configurations. Legacy/retired stack guides reside in [`docs/archive/`](file:///data/homelab/docs/archive/open-webui-legacy-stack.md).
 
 ---
@@ -82,4 +84,22 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   2. **Local Documentation**: Check workspace architecture and service guides in [`docs/`](file:///data/homelab/docs/README.md) and configuration files.
   3. **Online Documentation & Web Search**: Consult official product and vendor documentation (e.g., LiteLLM, Authentik, Traefik docs) via web search or public docs.
   4. **Container Code as Last Resort Only**: Do **not** inspect or grep through application code inside running containers (`docker exec ...`) unless APIs and documentation have been thoroughly exhausted.
+
+### 7. Documentation Synchronization & Root Markdown Maintenance
+- **Root Markdown Files Integrity**: Whenever adding, modifying, removing, or refactoring services, configurations, or architecture in `/data/homelab`, AI agents **must** keep the root markdown files up to date with recent changes:
+  - [`README.md`](file:///data/homelab/README.md): Keep the service directory table, the Mermaid architecture diagram, the repository file tree, and operational health checks aligned with active services.
+  - [`CHANGELOG.md`](file:///data/homelab/CHANGELOG.md): Record date-based entries (`[YYYY-MM-DD]`) detailing added, changed, deprecated, or removed services and configurations.
+  - [`TODO.md`](file:///data/homelab/TODO.md): Check off completed initiatives and register newly identified maintenance tasks or roadmap items.
+  - [`AGENTS.md`](file:///data/homelab/AGENTS.md): Keep the system context, service catalog, network boundaries, and operational rules synchronized.
+  - [`docs/`](file:///data/homelab/docs/README.md): Update the corresponding service guide and ensure the `docs/README.md` index reflects all deployed components.
+
+### 8. Strict Credential, Privacy & Network Sanitization (Zero-Leak Policy)
+- **Zero-Leak Guarantee**: Never commit or stage real credentials, secrets, tokens, passwords, private keys, personally identifiable usernames (PII), or sensitive internal IP addresses to version control or code files.
+- **Environment Parameterization**: Always enforce environment variables (`${VAR_NAME}`) and placeholder templates in `.env.example` (`your_secret_here`, `example.com`).
+- **Pre-Commit Audit**:
+  - Always execute pre-commit diff inspections (`git diff`, `git status`) to verify that no sensitive keys, private data, or real secrets have leaked into tracked files.
+  - Ensure `.gitignore` explicitly excludes all local secret files (`.env`, `.env.passwords`, `.bws`, keys, certs, token caches, large binary weights, and runtime databases).
+- **Network & Identity Privacy**:
+  - Mask or parameterize specific internal IP addresses (e.g., replace `192.168.x.x` or specific private subnets with standardized domain aliases, localhost, or environment variables).
+  - Strip personal machine usernames, absolute home paths with personal identifiers, and private account credentials from public code and commits.
 

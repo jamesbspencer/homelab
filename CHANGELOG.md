@@ -7,6 +7,27 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-11-07]
+
+### Added
+- **MoMoE Hybrid Mixture-of-Experts Inference Engine Deployment**:
+  - Deployed [MoMoE](https://github.com/aflin/momoe) (`homelab/momoe:latest`) built natively from `./momoe/src` for NVIDIA RTX 3060 (`sm_86`) and Intel Xeon W-2145 (AVX-512 with 61 GiB quad-channel DDR4 RAM).
+  - Attached strictly to the isolated `ai` network with no external ports or Traefik ingress (`http://momoe:8080/v1`).
+  - Configured 2.5 GiB VRAM reservation (`MOMOE_VRAM_RESERVE_MIB=2560`) ensuring Ollama embeddings (`nomic-embed-text`) run reliably without OOM collisions.
+  - Activated 65,536 context (`MOMOE_CONTEXT=65536`) with automated KV cache streaming into host DDR4 memory and Multi-Token Prediction (MTP) drafting, achieving 112.5 tok/s live throughput with a 73% GPU expert cache hit rate.
+  - Implemented container entrypoint [`momoe/docker-entrypoint.sh`](file:///data/homelab/momoe/docker-entrypoint.sh) supporting CLI diagnostics and dynamic `VRAM_RESERVE_MIB` overrides.
+- **LiteLLM Model Catalog & Security Hardening**:
+  - Registered `ornith-1.5-35b` and `momoe` aliases targeting `http://momoe:8080/v1` with dynamic API key forwarding (`os.environ/MOMOE_API_KEY`), `max_tokens: 65536`, `max_input_tokens: 57344`, and `mode: chat`.
+  - Forwarded `MOMOE_API_KEY` into `litellm` container environment in `docker-compose.yaml` and documented template in `.env.example`.
+- **Hermes Agent Scraping & Resource Alignment**:
+  - Aligned Hermes's Firecrawl web extraction and deep reasoning tools with the 64k MoMoE engine, providing unified context headroom and eliminating VRAM contention with dense Ollama models.
+- **Observability & Service Dashboard Integration**:
+  - Registered `MoMoE Engine` container in Homepage dashboard (`homepage/config/services.yaml`) under `AI & Agents` for real-time status monitoring.
+- **Workspace Agent Guidelines**:
+  - Added documentation synchronization rule to [`AGENTS.md`](file:///data/homelab/AGENTS.md) instructing AI agents to maintain root markdown files (`README.md`, `CHANGELOG.md`, `TODO.md`, `AGENTS.md`) upon every service or architecture change.
+
+---
+
 ## [2026-10-03]
 
 ### Added

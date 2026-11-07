@@ -29,6 +29,12 @@
           mappings:
             - field: models.length
               label: Models
+    - MoMoE Engine:
+        icon: mdi-cpu-64-bit
+        href: https://llm.spencer.lan
+        description: "Hybrid MoE 64k Inference Engine (GPU + RAM)"
+        server: local-docker
+        container: momoe
     - Hermes API & MCP:
         icon: mdi-api
         href: https://hermes-api.spencer.lan
