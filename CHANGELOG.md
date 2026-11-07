@@ -9,6 +9,14 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ## [2026-11-07]
 
+### Added
+- **Open Terminal Remote Shell & Agent Execution Substrate for Open WebUI**:
+  - Integrated `open-terminal` (`ghcr.io/open-webui/open-terminal:latest`) on the isolated `ai` bridge network as a companion sandbox for Open WebUI v0.13.0+.
+  - Configured persistent host bind mount at `/data/homelab/open-terminal/workspace` mapped to `/home/user` inside the container with UID 1000 permissions.
+  - Hardened security with bearer token API authentication (`OPEN_TERMINAL_API_KEY`), 2 GB container memory cap, and no host port or Docker socket exposure.
+  - Enabled `ENABLE_TOOL_SERVERS=True` and updated `open-webui` dependency chain in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
+  - Authored comprehensive service guide in [`docs/open-terminal.md`](file:///data/homelab/docs/open-terminal.md) and synchronized architecture documentation across [`README.md`](file:///data/homelab/README.md), [`AGENTS.md`](file:///data/homelab/AGENTS.md), and [`docs/README.md`](file:///data/homelab/docs/README.md).
+
 ### Deprecated & Removed
 - **LiteLLM Gateway Decommissioning & PostgreSQL Archival**:
   - Decommissioned `litellm` container (`ghcr.io/berriai/litellm:main-latest`), removing the service definition, host port bindings, and PostgreSQL connection from [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
@@ -41,6 +49,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Configured embedded local-first SQLite transactional storage ([`omniroute/data/storage.sqlite`](file:///data/homelab/omniroute/data/storage.sqlite)) backed by WAL mode, eliminating PostgreSQL runtime dependencies for LLM routing and spend logging.
   - Connected local inference engines: Ollama (`http://ollama:11434/v1`) for dense LLMs (`gemma4:12b`, `qwen2.5:14b`) and embeddings (`nomic-embed-text`), and MoMoE (`http://momoe:8080/v1`) for 64k MoE inference (`ornith-1.5-35b`, `momoe`).
   - Configured zero-latency model aliases (`gemma4:12b`, `qwen2.5:14b`, `momoe`, `nomic-embed-text`) in `key_value` table enabling un-prefixed OpenAI-compatible routing for Open WebUI and external developer tools.
+  - Tuned context window limits and token compression for MoMoE: overridden context length to 65,536 tokens in `model_context_overrides` and configured adaptive context budgeting (`replace-autotrigger` with 4096 output reserve) and auto-trigger stacked compression (`rtk` + `caveman` at 45k tokens) to eliminate 400 context overflow errors.
   - Integrated Valkey cache on `redis://valkey:6379` over the `redis` Docker network for semantic caching and request throttling.
   - Reconfigured Traefik ingress (`llm.spencer.lan`) with wildcard TLS termination and direct access to OmniRoute's native Web UI dashboard and Bearer token API.
   - Updated Open WebUI chat and RAG embedding offload to target `http://omniroute:20128/v1`, updating both environment definitions and Open WebUI's database config.

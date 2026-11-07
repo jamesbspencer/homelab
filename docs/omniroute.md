@@ -49,10 +49,35 @@ OmniRoute routes model requests across local hardware acceleration backends and 
 | `default` | `ollama-local` | `http://ollama:11434/v1` | Default homelab fallback model |
 | `qwen2.5:14b` | `ollama-local` | `http://ollama:11434/v1` | GPU-accelerated local instruction & tool calling (32k context) |
 | `nomic-embed-text` | `ollama-local` | `http://ollama:11434/v1` | High-performance text vector embeddings (768-dim) |
-| `ornith-1.5-35b` / `momoe` | `llama-cpp` | `http://momoe:8080/v1` | Agentic coding & deep reasoning via MoMoE (64k KV streaming in RAM + MTP drafting) |
+| `ornith-1.5-35b` / `momoe` | `llama-cpp` | `http://momoe:8080/v1` | Agentic coding & deep reasoning via MoMoE (64k KV streaming in RAM + MTP drafting; context window overridden to 65,536) |
 | `groq/llama-3.3-70b-versatile` | `groq` | Groq Cloud (`GROQ_API_KEY`) | Ultra-fast cloud fallback when local compute is saturated |
 | `openrouter/auto` | `openrouter` | OpenRouter (`OPENROUTER_API_KEY`) | Flexible fallback routing to foundation models |
 | `deepseek/deepseek-chat` | `deepseek` | DeepSeek (`DEEPSEEK_API_KEY`) | Cost-efficient large-context coding and reasoning |
+
+---
+
+## 🗜️ Context Window Management & Token Compression
+
+OmniRoute enforces context window safety and token optimization to prevent upstream backend refusals (e.g., MoMoE 64k context overflow):
+
+1. **Context Window Overrides (`model_context_overrides`)**:
+   * MoMoE models (`llamacpp/ornith-1.5-35b-a3b-iq4_xs`, `llama-cpp/ornith-1.5-35b-a3b-iq4_xs`, `momoe`) are explicitly pinned to **65,536 tokens** (`real_context: 65536`).
+   * This guarantees that `/v1/models` advertises `context_length: 65536` and `max_input_tokens: 65536` to clients (Open WebUI, Claude Code, Cursor), allowing clients to proactively trim chat histories within the valid window.
+
+2. **Adaptive Context Budgeting (`contextBudget`)**:
+   * **Mode**: `replace-autotrigger`
+   * **Policy**: `reserve-output`
+   * **Output Reserve**: `4096 tokens`
+   * **Safety Margin**: `2048 tokens`
+   * When an incoming prompt exceeds the model's budget (`context_limit - output_reserve - safety_margin`, e.g., 59,392 tokens for MoMoE), OmniRoute automatically engages the compression pipeline to dynamically fit the request into the context window.
+
+3. **Multi-Engine Token Compression Pipeline**:
+   * **Auto-Trigger Threshold**: `autoTriggerTokens: 45000`
+   * **Auto-Trigger Mode**: `stacked`
+   * **Stacked Pipeline**:
+     * `rtk` (Terminal Toolkit): Optimizes command outputs, logs, and structural tool results.
+     * `caveman`: Streamlines repetitive system text, prose overhead, and whitespace.
+   * **MCP Tool Description Optimization**: `mcpDescriptionCompressionEnabled: true` automatically prunes redundant tool schemas.
 
 ---
 

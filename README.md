@@ -14,6 +14,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **CrowdSec** | Intrusion detection & Traefik Bouncer plugin | `:8080` (Internal `net1` network) | [CrowdSec Guide](docs/crowdsec.md) |
 | **OmniRoute Gateway** | Universal AI gateway, OpenAI/Anthropic proxy & dynamic router | `https://llm.spencer.lan` (:20128) | [OmniRoute Guide](docs/omniroute.md) |
 | **Open WebUI** | Multi-model generative AI chat & memory client | `https://chat.spencer.lan` / `https://ai.spencer.lan` (:8080) | [Open WebUI Guide](docs/open-webui.md) |
+| **Open Terminal** | Sandboxed remote shell & agent execution substrate | `:8000` (Internal `ai` network) | [Open Terminal Guide](docs/open-terminal.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
 | **MoMoE** | Hybrid MoE inference engine (GPU + 61 GiB RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](docs/momoe.md) |
 | **pgvector** | Unified vector & relational DB for Open WebUI, Authentik & Gitea | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
@@ -61,8 +62,10 @@ flowchart TB
         OmniRoute["OmniRoute AI Gateway\n(Universal Router, Optimizer & Cache)"]
         Ollama["Ollama (GPU Accelerated)\ngemma4:12b | nomic-embed"]
         MoMoE["MoMoE Hybrid MoE (GPU + RAM)\nornith-1.5-35b (64k)"]
+        OpenTerminal["Open Terminal Sandbox\n:8000 (Agent Shell & Files)"]
         
         OpenWebUI -->|LLM Requests| OmniRoute
+        OpenWebUI -->|Remote Shell & Workspace| OpenTerminal
         OmniRoute -->|Local GPU Inference| Ollama
         OmniRoute -->|Hybrid MoE 64k| MoMoE
         OmniRoute -.->|Optional Cloud| CloudLLM[OpenRouter / Groq / DeepSeek]
@@ -132,6 +135,7 @@ flowchart TB
 │   ├── ollama.md            # Ollama setup & GPU acceleration guide
 │   ├── omniroute.md         # OmniRoute universal AI gateway, proxy & optimizer guide
 │   ├── openbao.md           # OpenBao secrets & encryption management guide
+│   ├── open-terminal.md     # Open Terminal agent execution sandbox guide
 │   ├── open-webui.md        # Open WebUI generative chat & memory client guide
 │   ├── pgvector.md          # Dedicated pgvector database for Open WebUI, Authentik & Gitea
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
@@ -152,6 +156,7 @@ flowchart TB
 ├── openbao/                 # OpenBao server configuration & Raft storage
 │   ├── config/              # OpenBao server configuration (bao.hcl)
 │   └── data/                # Persistent Raft transactional database
+├── open-terminal/           # Open Terminal persistent agent workspace & execution data
 ├── open-webui/              # Open WebUI runtime data, vectors and user uploads
 ├── pgvector/                # Dedicated pgvector database data & init scripts
 ├── scripts/                 # Maintenance, notification & operational automation

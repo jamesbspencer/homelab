@@ -86,3 +86,12 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **Dual Model Providers & Grounding**: Integrated LiteLLM Proxy (exposing hybrid MoMoE 64k and local Ollama) plus SearXNG search grounding.
 - [x] **Cross-AI Memory Import**: Migrated 400+ persistent procedural knowledge and conversational memory units from Memlord and Hindsight into Open WebUI.
 - [x] **Traefik Ingress & Homepage**: Configured dual routing on `chat.spencer.lan` and `ai.spencer.lan` with CrowdSec bouncer, and registered under "AI & Agents" in Homepage.
+
+---
+
+### 11. 💻 Open Terminal Agent Execution Substrate (Open WebUI)
+- [x] **Container Deployment & Network Integration**: Deployed `open-terminal` (`ghcr.io/open-webui/open-terminal:latest`) on the isolated `ai` network with 2 GB memory cap and healthchecks.
+- [x] **Workspace Storage & Permission Architecture**: Created persistent bind mount `./open-terminal/workspace` to `/home/user` with UID:GID 1000 permissions and zero git leakage.
+- [x] **Security Hardening**: Enforced bearer token authentication via `OPEN_TERMINAL_API_KEY` across `.env`, `.env.passwords`, and `.env.example`; eliminated host port exposure and Docker socket passthrough.
+- [x] **Multi-Phase Function Testing**: Execute container health probe, inter-service API auth verification, filesystem persistence probe, and Open WebUI end-to-end tool-calling test.
+- [x] **Documentation Synchronization**: Authored [`docs/open-terminal.md`](file:///data/homelab/docs/open-terminal.md), updated [`README.md`](file:///data/homelab/README.md), [`AGENTS.md`](file:///data/homelab/AGENTS.md), and [`docs/README.md`](file:///data/homelab/docs/README.md).

@@ -20,7 +20,8 @@ This document provides architecture specifications, integration details, configu
 | **Model Ingress** | Dual: OmniRoute Gateway (`http://omniroute:20128/v1`) & Ollama (`http://ollama:11434`) |
 | **Web Search Grounding** | Local Firecrawl Cluster (`http://firecrawl:3002`) & SearXNG (`http://searxng:8080`) |
 | **Web Loader / Scraper** | Firecrawl Headless Cluster (`http://firecrawl:3002/v2/scrape`) |
-| **Network Attachments**| `net1` (Traefik Ingress), `ai` (OmniRoute, Ollama, SearXNG, Firecrawl), `db` (pgvector) |
+| **Agent Action Substrate**| Open Terminal (`http://open-terminal:8000`, isolated `ai` network) |
+| **Network Attachments**| `net1` (Traefik Ingress), `ai` (OmniRoute, Ollama, SearXNG, Firecrawl, Open Terminal), `db` (pgvector) |
 | **Persistent Storage** | `/data/homelab/open-webui` (`/app/backend/data` in container) |
 
 ---
@@ -42,6 +43,7 @@ graph TD
         OWUI -->|ai network| Ollama["Ollama GPU Server (:11434)"]
         OWUI -->|ai network| Firecrawl["Firecrawl Scraper & Search (:3002)"]
         OWUI -->|ai network| SearXNG["SearXNG Search (:8080)"]
+        OWUI -->|ai network| OT["Open Terminal (:8000)<br/>Remote Shell & File Workspace"]
     end
 
     subgraph Embeddings & Memory
@@ -86,7 +88,26 @@ OPENWEBUI_PUBLIC_DOMAIN=ai.example.com
 OPENWEBUI_POSTGRES_DB=openwebui
 OPENWEBUI_POSTGRES_USER=openwebui
 OPENWEBUI_POSTGRES_PASSWORD=<secure-password>
+
+# Open Terminal Integration
+OPEN_TERMINAL_VERSION=latest
+OPEN_TERMINAL_API_KEY=<secure-terminal-api-key>
 ```
+
+---
+
+## 💻 Open Terminal Agent Execution Substrate
+
+Open WebUI integrates natively with **Open Terminal** (`ghcr.io/open-webui/open-terminal:latest`) to provide an isolated computer substrate for AI assistants:
+
+* **Internal Routing**: Communicates via `http://open-terminal:8000` on the private `ai` Docker network.
+* **Declarative Configuration**: Injected declaratively on container boot via `TERMINAL_SERVER_CONNECTIONS` in `docker-compose.yaml`:
+  ```json
+  [{"id":"open-terminal","name":"Open Terminal","enabled":true,"url":"http://open-terminal:8000","key":"${OPEN_TERMINAL_API_KEY}","auth_type":"bearer","config":{"access_grants":[]}}]
+  ```
+* **Capabilities**: Equips models with remote bash execution, Python scripting, Jupyter notebook execution, and workspace file management with real-time UI tabs.
+* **Backend Proxying**: All client interactions and WebSockets are authenticated and proxied through Open WebUI at `/api/v1/terminals/open-terminal/*`.
+* **Dedicated Guide**: See [`docs/open-terminal.md`](file:///data/homelab/docs/open-terminal.md) for full operational specifications.
 
 ---
 

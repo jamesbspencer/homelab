@@ -12,6 +12,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **MoMoE**: Hybrid Mixture-of-Experts (MoE) LLM inference engine combining GPU VRAM and host RAM/AVX-512 on internal port `8080` (accessible via OmniRoute).
   - **OmniRoute AI Gateway**: Universal AI gateway, OpenAI/Anthropic model router, prompt compressor, and rate limiter on internal port `20128` and `llm.spencer.lan`.
   - **Open WebUI**: Multi-model generative AI chat interface and conversational memory client on internal port `8080` (`chat.spencer.lan`, `ai.spencer.lan`) with OmniRoute embedding offload and unified pgvector database.
+  - **Open Terminal**: Sandboxed remote shell and agent execution substrate for Open WebUI on internal port `8000` with persistent `/home/user` workspace and bearer token security.
   - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
   - **Valkey**: High-performance in-memory key-value cache and rate limiter on internal port `6379`.
@@ -26,10 +27,10 @@ This file defines guidelines, rules, and architecture constraints that AI agents
 - **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `sso.spencer.lan`, `login.spencer.lan`, `chat.spencer.lan`, `ai.spencer.lan`, `llm.spencer.lan`, `logs.spencer.lan`, `dozzle.spencer.lan`, `push.spencer.lan`, `ntfy.spencer.lan`, `vault.spencer.lan`, `openbao.spencer.lan`, `git.spencer.lan`, `gitea.spencer.lan`, `home.spencer.lan`, `homepage.spencer.lan`).
 - **Networking**:
   - The Traefik container and proxied services requiring external web access (Open WebUI, OmniRoute, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
-  - Internal AI communication (between Open WebUI, OmniRoute, Ollama, MoMoE, OpenBao, SearXNG, Firecrawl, ntfy, Gitea, Homepage) occurs on the isolated bridge network named `ai`.
+  - Internal AI communication (between Open WebUI, Open Terminal, OmniRoute, Ollama, MoMoE, OpenBao, SearXNG, Firecrawl, ntfy, Gitea, Homepage) occurs on the isolated bridge network named `ai`.
   - Database services (`pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network (Open WebUI, Authentik, Gitea).
   - Cache services (Valkey, OmniRoute, SearXNG, Firecrawl, Authentik sessions & queue, Gitea cache & queue) communicate on the dedicated bridge network named `redis`.
-  - Internal backend services (Firecrawl, SearXNG, Valkey, pgvector, MoMoE) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
+  - Internal backend services (Open Terminal, Firecrawl, SearXNG, Valkey, pgvector, MoMoE) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
 - **Documentation**: Detailed architecture, configuration, and operational guides for every service reside in [`docs/`](file:///data/homelab/docs/README.md). Always update the corresponding service guide when adding or modifying service configurations. Legacy/retired stack guides reside in [`docs/archive/`](file:///data/homelab/docs/archive/open-webui-legacy-stack.md).
 
 ---
