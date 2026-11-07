@@ -60,3 +60,12 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **LiteLLM Model Routing & 64k KV Streaming**: Integrated `ornith-1.5-35b` and `momoe` into LiteLLM Proxy with 65,536 context (`MOMOE_CONTEXT=65536`) utilizing RAM KV cache streaming, MTP speculative drafting (112.5 tok/s live throughput), and dynamic API key forwarding.
 - [x] **Hermes Agent Scraping & Tool Alignment**: Aligned Hermes's Firecrawl web extraction and deep reasoning tools with the 64k MoMoE engine, eliminating VRAM contention with dense Ollama models.
 - [x] **Multi-Agent Code Review & Documentation**: Conducted 4-agent security, systems, routing, and standards audit; updated `AGENTS.md`, `README.md`, `docs/momoe.md`, `docs/litellm.md`, `docs/ollama.md`, and Homepage dashboard.
+
+---
+
+### 9. 🔐 Centralized Secret & Encryption Management (OpenBao)
+- [x] **Deploy OpenBao Vault**: Deployed Linux Foundation OpenBao (`openbao/openbao:latest`, v2.7.2) with persistent Raft integrated transactional storage.
+- [x] **Internal Traefik Routing**: Configured secure internal-only routing under `https://vault.spencer.lan` and `https://openbao.spencer.lan` with wildcard TLS certificate and no public exposure.
+- [x] **Isolated Networking & Privilege Posture**: Attached to `net1` for Traefik ingress and `ai` for internal agent/service access; configured drop-root initialization running as unprivileged `openbao` user.
+- [x] **Observability & Health Monitoring**: Added custom healthcheck with uninitialized/sealed tolerance; integrated OpenBao into Homepage dashboard under `Core Infrastructure`.
+- [x] **Documentation & Runbooks**: Authored comprehensive guide in [`docs/openbao.md`](file:///data/homelab/docs/openbao.md) with Web UI / CLI initialization, unsealing, snapshot backups, and operational commands.

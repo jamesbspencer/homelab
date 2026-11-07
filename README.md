@@ -25,6 +25,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **Authentik** | Centralized IAM, SSO, OIDC & Proxy Outposts | `https://sso.spencer.lan` / `https://login.spencer.lan` (:9000) | [Authentik Guide](docs/authentik.md) |
 | **Dozzle** | Real-time container log viewer & streamer | `https://logs.spencer.lan` / `https://dozzle.spencer.lan` | [Dozzle Guide](docs/dozzle.md) |
 | **ntfy** | Push notification gateway & system alerts | `https://push.spencer.lan` / `https://ntfy.spencer.lan` | [ntfy Guide](docs/ntfy.md) |
+| **OpenBao** | Identity-based secrets & encryption management | `https://vault.spencer.lan` / `https://openbao.spencer.lan` (:8200) | [OpenBao Guide](docs/openbao.md) |
 | **Gitea** | Self-hosted Git platform & issue tracker | `https://git.spencer.lan` / `https://gitea.spencer.lan`, `:2222` (SSH) | [Gitea Guide](docs/gitea.md) |
 | **Homepage** | Centralized dashboard & service health monitor | `https://home.spencer.lan` / `https://homepage.spencer.lan` | [Homepage Guide](docs/homepage.md) |
 | *Legacy Stack* | *Archived / Retired Legacy Services* | *Reclaimed ~1.02 GB RAM* | [Legacy Stack Archive](docs/archive/open-webui-legacy-stack.md) |
@@ -55,6 +56,7 @@ flowchart TB
         Traefik -->|memlord| MemlordUI["Memlord :8000"]
         Traefik -->|logs| DozzleUI["Dozzle :8080"]
         Traefik -->|push| Ntfy["ntfy :80"]
+        Traefik -->|vault| OpenBaoUI["OpenBao :8200"]
         Traefik -->|git| GiteaUI["Gitea :3000"]
         Traefik -->|home| HomeUI["Homepage :3000"]
         Traefik -->|traefik| TraefikDash["Traefik :internal"]
@@ -149,6 +151,7 @@ flowchart TB
 │   ├── momoe.md             # MoMoE hybrid MoE 64k inference engine guide
 │   ├── ntfy.md              # ntfy push notification gateway guide
 │   ├── ollama.md            # Ollama setup & GPU acceleration guide
+│   ├── openbao.md           # OpenBao secrets & encryption management guide
 │   ├── pgvector.md          # Dedicated pgvector database for Hindsight, LiteLLM & Authentik
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
 │   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
@@ -169,6 +172,9 @@ flowchart TB
 ├── ntfy/                    # ntfy notification cache & persistent alert store
 ├── nuq-postgres/            # NuQ PostgreSQL persistent crawl state database
 ├── ollama/                  # Cached LLM model weights
+├── openbao/                 # OpenBao server configuration & Raft storage
+│   ├── config/              # OpenBao server configuration (bao.hcl)
+│   └── data/                # Persistent Raft transactional database
 ├── pgvector/                # Dedicated pgvector database data & init scripts
 ├── scripts/                 # Maintenance, notification & operational automation
 ├── searxng/                 # SearXNG configuration and cache directories
@@ -244,4 +250,9 @@ docker compose exec hermes curl -s "http://searxng:8080/search?q=docker&format=j
 ### Test Database Readiness
 ```bash
 docker compose exec pgvector pg_isready -U postgres -d postgres
+```
+
+### Test OpenBao Vault Status
+```bash
+docker compose exec openbao bao status
 ```

@@ -113,3 +113,9 @@ momoe/src/
 momoe/data/*
 !momoe/data/.gitkeep
 !momoe/docker-entrypoint.sh
+
+# OpenBao Raft Storage & Vault Data
+openbao/data/*
+!openbao/data/.gitkeep
+openbao/unseal.keys
+openbao/*.keys

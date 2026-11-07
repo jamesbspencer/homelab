@@ -23,6 +23,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Authentik** | Centralized IAM, SSO, OIDC & Outposts | `sso.spencer.lan`, `login.spencer.lan` (:9000) | [Authentik Guide](authentik.md) |
 | **Dozzle** | Real-Time Container Log Viewer & Streamer | `logs.spencer.lan`, `dozzle.spencer.lan` (:8080) | [Dozzle Guide](dozzle.md) |
 | **ntfy** | Push Notification Gateway & System Alerts | `push.spencer.lan`, `ntfy.spencer.lan`, `:80` | [ntfy Guide](ntfy.md) |
+| **OpenBao** | Secrets & Encryption Management Service | `vault.spencer.lan`, `openbao.spencer.lan` (:8200) | [OpenBao Guide](openbao.md) |
 | **Gitea** | Self-Hosted Git Platform & Issue Tracker | `git.spencer.lan`, `gitea.spencer.lan`, `:2222` (SSH) | [Gitea Guide](gitea.md) |
 | **Homepage** | Unified Homelab Dashboard & Service Directory | `home.spencer.lan`, `homepage.spencer.lan` (:3000) | [Homepage Guide](homepage.md) |
 | *Retired Services* | *Archived Services Stack* | *Retired (legacy chat, database, agent vault, infisical)* | [Legacy Stack](archive/open-webui-legacy-stack.md), [Agent Vault](archive/agent-vault.md), [Infisical](archive/infisical.md) |
@@ -31,7 +32,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 
 ## 🌐 Network Topologies
 
-1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Hermes Gateway, Hermes Dashboard, Hindsight UI, Memlord Web UI, LiteLLM, Authentik Server, Dozzle, ntfy, Gitea, Homepage, Traefik API).
-2. **`ai`**: Private high-speed network for inter-service communication (Hermes, Hindsight, Memlord MCP, Ollama, MoMoE, LiteLLM, SearXNG, Firecrawl, ntfy, Homepage).
+1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Hermes Gateway, Hermes Dashboard, Hindsight UI, Memlord Web UI, LiteLLM, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage, Traefik API).
+2. **`ai`**: Private high-speed network for inter-service communication (Hermes, Hindsight, Memlord MCP, Ollama, MoMoE, LiteLLM, OpenBao, SearXNG, Firecrawl, ntfy, Homepage).
 3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Hindsight, Memlord, LiteLLM, Authentik, Gitea).
 4. **`redis`**: Dedicated caching network shared between Valkey, SearXNG, Firecrawl, Authentik (sessions and task queue), and Gitea (cache, session, and queue).

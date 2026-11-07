@@ -95,6 +95,8 @@ if [ -n "$GITEA_POSTGRES_DB" ]; then
         WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$GITEA_POSTGRES_DB')\gexec
         GRANT ALL PRIVILEGES ON DATABASE "$GITEA_POSTGRES_DB" TO "$GITEA_USER";
 EOSQL
+fi
+
 # Conditionally provision dedicated database & user for Memlord
 if [ -n "$MEMLORD_POSTGRES_DB" ]; then
     MEMLORD_USER="${MEMLORD_POSTGRES_USER:-memlord}"

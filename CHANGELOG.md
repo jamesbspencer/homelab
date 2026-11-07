@@ -10,6 +10,16 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-11-07]
 
 ### Added
+- **OpenBao Secrets & Encryption Management Service Deployment**:
+  - Deployed [OpenBao](https://github.com/openbao/openbao) (`openbao/openbao:latest`, v2.7.2) stewarded under the Linux Foundation as an open-source identity-based secrets and transit encryption engine.
+  - Configured internal-only Traefik ingress routing (`vault.spencer.lan` and `openbao.spencer.lan`) under entrypoint `websecure` with local wildcard TLS termination and no external public router.
+  - Configured persistent Raft integrated transactional storage backend (`storage "raft"`) with mount path `./openbao/data` mapped to `/openbao/file`.
+  - Configured non-root execution posture where container entrypoint manages volume permissions and drops privileges via `su-exec` to unprivileged user `openbao`.
+  - Bound OpenBao to both `net1` (reverse proxy edge) and `ai` (internal AI agent communication via `http://openbao:8200`).
+  - Added OpenBao healthcheck query with uninitialized and sealed HTTP code tolerances (`?uninitcode=200&sealedcode=200`).
+  - Integrated OpenBao Vault into Homepage dashboard under `Core Infrastructure` (`homepage/config/services.yaml`).
+  - Authored comprehensive service documentation in [`docs/openbao.md`](file:///data/homelab/docs/openbao.md) with initialization, unsealing, snapshot, and operational commands.
+  - Fixed conditional block syntax in `pgvector/init/01-init-databases.sh`.
 - **MoMoE Hybrid Mixture-of-Experts Inference Engine Deployment**:
   - Deployed [MoMoE](https://github.com/aflin/momoe) (`homelab/momoe:latest`) built natively from `./momoe/src` for NVIDIA RTX 3060 (`sm_86`) and Intel Xeon W-2145 (AVX-512 with 61 GiB quad-channel DDR4 RAM).
   - Attached strictly to the isolated `ai` network with no external ports or Traefik ingress (`http://momoe:8080/v1`).
@@ -49,7 +59,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 - **Push Notification Loopback Resolve**:
   - Enhanced [`scripts/notify.sh`](file:///data/homelab/scripts/notify.sh) with automatic Traefik loopback resolve (`--resolve push.spencer.lan:443:127.0.0.1`), ensuring push notifications dispatch reliably from host scripts when local LAN DNS is not configured on the host machine.
 - **Hermes Custom Init & Skills Hub Quarantine Fix**:
-  - Renamed [`hermes/init/03-mcp-server.sh`](file:///data/homelab/hermes/init/03-mcp-server.sh) to [`hermes/init/03-custom-init.sh`](file:///data/homelab/hermes/init/03-custom-init.sh) and updated S6 volume mounts in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml), [`.gitignore`](file:///data/homelab/.gitignore), and [`docs/hermes.md`](file:///data/homelab/docs/hermes.md) to reflect its expanded role handling boot supervision, custom CA injection, OIDC cookie handling, and runtime patching.
+  - Renamed `hermes/init/03-mcp-server.sh` to [`hermes/init/03-custom-init.sh`](file:///data/homelab/hermes/init/03-custom-init.sh) and updated S6 volume mounts in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml), [`.gitignore`](file:///data/homelab/.gitignore), and [`docs/hermes.md`](file:///data/homelab/docs/hermes.md) to reflect its expanded role handling boot supervision, custom CA injection, OIDC cookie handling, and runtime patching.
   - Resolved `FileExistsError` during skills hub bundle quarantine when community ZIPs contain directory entries without trailing slashes.
   - Integrated runtime filtering into `03-custom-init.sh` for `skills_hub_clawhub.py` and `skills_hub_install.py` to strip directory-name entries before file writing and quarantine scanning.
 
@@ -126,7 +136,7 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 - **Hermes Model Context Protocol (MCP) Server**:
   - Implemented dual-transport MCP server in [`hermes/scripts/hermes_mcp_server.py`](file:///data/homelab/hermes/scripts/hermes_mcp_server.py) wrapping Hermes `model_tools.handle_function_call`.
   - Exposes 13 homelab tools to external AI clients: `web_search` (SearXNG), `web_extract` (Firecrawl), `execute_code`, `terminal`, `process` (Docker sandbox), `read_file`, `write_file`, `patch`, `search_files` (workspace), `vision_analyze` (multimodal vision), `text_to_speech` (TTS), and `skills_list` / `skill_view` (Hermes skills).
-  - Integrated into existing `hermes` container via s6-overlay boot script ([`hermes/init/03-mcp-server.sh`](file:///data/homelab/hermes/init/03-mcp-server.sh)) for automatic process supervision, failure recovery, and unified resource footprint without running duplicate containers.
+  - Integrated into existing `hermes` container via s6-overlay boot script ([`hermes/init/03-custom-init.sh`](file:///data/homelab/hermes/init/03-custom-init.sh)) for automatic process supervision, failure recovery, and unified resource footprint without running duplicate containers.
   - Added Traefik edge routing on `net1` for `https://mcp.spencer.lan/sse` and message ingress at `/messages/` (port `8765`).
   - Enforced Bearer token authentication via `HERMES_MCP_KEY` with unauthenticated `/health` endpoint for monitoring.
   - Added client configuration examples for Claude Desktop (SSE and direct Docker stdio), Cursor / IDE extensions, and external MCP clients to [`docs/hermes.md`](file:///data/homelab/docs/hermes.md).

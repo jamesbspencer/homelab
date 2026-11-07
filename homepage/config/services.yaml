@@ -69,6 +69,12 @@
         description: "Edge Reverse Proxy & TLS Ingress"
         server: local-docker
         container: traefik
+    - OpenBao Vault:
+        icon: vault.png
+        href: https://vault.spencer.lan
+        description: "Identity-Based Secrets & Encryption Management"
+        server: local-docker
+        container: openbao
     - Authentik IAM:
         icon: authentik.png
         href: https://sso.spencer.lan

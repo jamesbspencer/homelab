@@ -724,6 +724,57 @@ services:
       # Load balancer service
       - "traefik.http.services.homepage-svc.loadbalancer.server.port=3000"
 
+  openbao:
+    image: openbao/openbao:${OPENBAO_VERSION:-latest}
+    container_name: openbao
+    restart: unless-stopped
+    user: root
+    environment:
+      - BAO_ADDR=http://127.0.0.1:8200
+      - BAO_API_ADDR=https://vault.spencer.lan
+    volumes:
+      - ./openbao/config:/openbao/config
+      - ./openbao/data:/openbao/file
+    networks:
+      - net1
+      - ai
+    command: ["server"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8200/v1/sys/health?uninitcode=200\\&sealedcode=200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      # Local LAN Router (Internal only: vault.spencer.lan / openbao.spencer.lan)
+      - "traefik.http.routers.openbao.rule=Host(`vault.spencer.lan`) || Host(`openbao.spencer.lan`)"
+      - "traefik.http.routers.openbao.entrypoints=websecure"
+      - "traefik.http.routers.openbao.tls=true"
+      - "traefik.http.routers.openbao.service=openbao-svc"
+      # Load balancer service
+      - "traefik.http.services.openbao-svc.loadbalancer.server.port=8200"
+
+  openbao-unseal:
+    image: alpine:latest
+    container_name: openbao-unseal
+    restart: unless-stopped
+    depends_on:
+      openbao:
+        condition: service_healthy
+    networks:
+      - net1
+    volumes:
+      - ./openbao/unseal.sh:/unseal.sh:ro
+      - ./.env.passwords:/unseal/.env.passwords:ro
+      - ./openbao:/openbao:ro
+    environment:
+      - BAO_ADDR=http://openbao:8200
+      - KEYS_FILE=/openbao/unseal.keys
+      - PASSWORDS_FILE=/unseal/.env.passwords
+      - INTERVAL=10
+    entrypoint: ["/bin/sh", "/unseal.sh"]
+
 networks:
   net1:
     name: net1
