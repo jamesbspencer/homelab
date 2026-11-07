@@ -69,3 +69,13 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **Isolated Networking & Privilege Posture**: Attached to `net1` for Traefik ingress and `ai` for internal agent/service access; configured drop-root initialization running as unprivileged `openbao` user.
 - [x] **Observability & Health Monitoring**: Added custom healthcheck with uninitialized/sealed tolerance; integrated OpenBao into Homepage dashboard under `Core Infrastructure`.
 - [x] **Documentation & Runbooks**: Authored comprehensive guide in [`docs/openbao.md`](file:///data/homelab/docs/openbao.md) with Web UI / CLI initialization, unsealing, snapshot backups, and operational commands.
+
+---
+
+### 10. 💬 Open WebUI Restoration & Cross-AI Memory Synchronization
+- [x] **Upstream Release Deployment**: Deployed latest `ghcr.io/open-webui/open-webui:main` (v0.13.0+) on `net1`, `ai`, and `db` networks.
+- [x] **Unified PostgreSQL & pgvector Integration**: Connected to shared `pgvector` container with dedicated `openwebui` database/user, eliminating standalone DB containers.
+- [x] **Embedding Offload to LiteLLM**: Configured `RAG_EMBEDDING_ENGINE=openai` pointing to LiteLLM's `nomic-embed-text` endpoint, freeing ~1 GB of container RAM.
+- [x] **Dual Model Providers & Grounding**: Integrated LiteLLM Proxy (exposing hybrid MoMoE 64k and local Ollama) plus SearXNG search grounding.
+- [x] **Cross-AI Memory Import**: Migrated 400+ persistent procedural knowledge and conversational memory units from Memlord and Hindsight into Open WebUI.
+- [x] **Traefik Ingress & Homepage**: Configured dual routing on `chat.spencer.lan` and `ai.spencer.lan` with CrowdSec bouncer, and registered under "AI & Agents" in Homepage.

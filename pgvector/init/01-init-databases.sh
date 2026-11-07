@@ -122,6 +122,31 @@ EOSQL
 EOSQL
 fi
 
+# Conditionally provision dedicated database & user for Open WebUI
+if [ -n "$OPENWEBUI_POSTGRES_DB" ]; then
+    OPENWEBUI_USER="${OPENWEBUI_POSTGRES_USER:-openwebui}"
+    OPENWEBUI_PASS="${OPENWEBUI_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"
+
+    echo "Provisioning dedicated user '$OPENWEBUI_USER' and database '$OPENWEBUI_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        DO \$\$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$OPENWEBUI_USER') THEN
+                CREATE ROLE "$OPENWEBUI_USER" WITH LOGIN PASSWORD '$OPENWEBUI_PASS';
+            END IF;
+        END
+        \$\$;
+        SELECT 'CREATE DATABASE "$OPENWEBUI_POSTGRES_DB" OWNER "$OPENWEBUI_USER"'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$OPENWEBUI_POSTGRES_DB')\gexec
+        GRANT ALL PRIVILEGES ON DATABASE "$OPENWEBUI_POSTGRES_DB" TO "$OPENWEBUI_USER";
+EOSQL
+
+    echo "Enabling pgvector extension on '$OPENWEBUI_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$OPENWEBUI_POSTGRES_DB" <<-EOSQL
+        CREATE EXTENSION IF NOT EXISTS vector;
+EOSQL
+fi
+
 echo "pgvector initialization completed successfully."
 
 

@@ -10,6 +10,16 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-11-07]
 
 ### Added
+- **Open WebUI Restoration & Upstream Upgrade (v0.13.0+)**:
+  - Restored [Open WebUI](https://github.com/open-webui/open-webui) (`ghcr.io/open-webui/open-webui:main`, v0.13.0+) into the homelab stack, replacing the legacy isolated architecture.
+  - Connected directly to unified [`pgvector`](file:///data/homelab/docker-compose.yaml#L98) PostgreSQL 16 database on the `db` network (database & user: `openwebui`), eliminating redundant standalone PostgreSQL containers.
+  - Offloaded RAG and user memory vector embeddings to LiteLLM Proxy (`RAG_EMBEDDING_ENGINE=openai`, model: `nomic-embed-text`), eliminating in-container PyTorch/SentenceTransformers memory footprint and saving ~1 GB of host container RAM.
+  - Configured dual model routing targeting LiteLLM Gateway (`http://litellm:4000/v1`) for MoMoE 64k and Ollama models, as well as direct Ollama fallback (`http://ollama:11434`).
+  - Integrated local Firecrawl cluster (`http://firecrawl:3002`) on the `ai` network for headless web search grounding (`/v2/search`) and full-content markdown web scraping (`/v2/scrape`), with fallback SearXNG support.
+  - Configured Traefik reverse proxy routing with dual host rules (`chat.spencer.lan` primary, `ai.spencer.lan` alias, and WAN domain) with wildcard TLS termination and CrowdSec bouncer protection.
+  - Registered Open WebUI in Homepage dashboard under `AI & Agents` (`homepage/config/services.yaml`).
+  - Created automated migration script [`scripts/import-memories-to-openwebui.py`](file:///data/homelab/scripts/import-memories-to-openwebui.py) and imported 412 deduplicated memories from Memlord and Hindsight into Open WebUI's user memory store with pgvector embeddings.
+  - Authored comprehensive service documentation in [`docs/open-webui.md`](file:///data/homelab/docs/open-webui.md).
 - **OpenBao Secrets & Encryption Management Service Deployment**:
   - Deployed [OpenBao](https://github.com/openbao/openbao) (`openbao/openbao:latest`, v2.7.2) stewarded under the Linux Foundation as an open-source identity-based secrets and transit encryption engine.
   - Configured internal-only Traefik ingress routing (`vault.spencer.lan` and `openbao.spencer.lan`) under entrypoint `websecure` with local wildcard TLS termination and no external public router.

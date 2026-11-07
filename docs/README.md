@@ -11,6 +11,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Traefik** | Reverse Proxy & Ingress | `:80`, `:443` (Hosts `traefik.spencer.lan`) | [Traefik Guide](traefik.md) |
 | **CrowdSec** | Intrusion Detection & Traefik Bouncer | `:8080` (Internal `net1` network) | [CrowdSec Guide](crowdsec.md) |
 | **LiteLLM Proxy** | LLM Router & Spend Gateway | `llm.spencer.lan` (:4000) | [LiteLLM Guide](litellm.md) |
+| **Open WebUI** | Multi-Model Generative AI Chat Interface | `chat.spencer.lan`, `ai.spencer.lan` (:8080) | [Open WebUI Guide](open-webui.md) |
 | **Ollama** | LLM Engine (GPU Accelerated) | `:11434` (Internal `ai` network) | [Ollama Guide](ollama.md) |
 | **MoMoE** | Hybrid MoE Inference Engine (GPU + RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](momoe.md) |
 | **Hermes Agent** | Autonomous Agent, Dashboard & Code Sandbox | `hermes.spencer.lan`, `ai.spencer.lan`, `hermes-api.spencer.lan` | [Hermes Guide](hermes.md) |
@@ -32,7 +33,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 
 ## 🌐 Network Topologies
 
-1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Hermes Gateway, Hermes Dashboard, Hindsight UI, Memlord Web UI, LiteLLM, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage, Traefik API).
-2. **`ai`**: Private high-speed network for inter-service communication (Hermes, Hindsight, Memlord MCP, Ollama, MoMoE, LiteLLM, OpenBao, SearXNG, Firecrawl, ntfy, Homepage).
-3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Hindsight, Memlord, LiteLLM, Authentik, Gitea).
+1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Open WebUI, Hermes Gateway, Hermes Dashboard, Hindsight UI, Memlord Web UI, LiteLLM, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage, Traefik API).
+2. **`ai`**: Private high-speed network for inter-service communication (Open WebUI, Hermes, Hindsight, Memlord MCP, Ollama, MoMoE, LiteLLM, OpenBao, SearXNG, Firecrawl, ntfy, Homepage).
+3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Open WebUI, Hindsight, Memlord, LiteLLM, Authentik, Gitea).
 4. **`redis`**: Dedicated caching network shared between Valkey, SearXNG, Firecrawl, Authentik (sessions and task queue), and Gitea (cache, session, and queue).

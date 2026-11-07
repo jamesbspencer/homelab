@@ -121,6 +121,9 @@ services:
       MEMLORD_POSTGRES_DB: ${MEMLORD_POSTGRES_DB:-memlord}
       MEMLORD_POSTGRES_USER: ${MEMLORD_POSTGRES_USER:-memlord}
       MEMLORD_POSTGRES_PASSWORD: ${MEMLORD_POSTGRES_PASSWORD}
+      OPENWEBUI_POSTGRES_DB: ${OPENWEBUI_POSTGRES_DB:-openwebui}
+      OPENWEBUI_POSTGRES_USER: ${OPENWEBUI_POSTGRES_USER:-openwebui}
+      OPENWEBUI_POSTGRES_PASSWORD: ${OPENWEBUI_POSTGRES_PASSWORD}
     volumes:
       - ./pgvector/data:/var/lib/postgresql/data
       - ./pgvector/init:/docker-entrypoint-initdb.d:ro
@@ -464,6 +467,90 @@ services:
       - "traefik.http.routers.litellm.entrypoints=websecure"
       - "traefik.http.routers.litellm.tls=true"
       - "traefik.http.services.litellm.loadbalancer.server.port=4000"
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:${OPENWEBUI_VERSION:-main}
+    container_name: open-webui
+    restart: unless-stopped
+    networks:
+      - net1
+      - ai
+      - db
+    volumes:
+      - ./open-webui:/app/backend/data
+    environment:
+      # Application Core
+      - WEBUI_SECRET_KEY=${OPENWEBUI_SECRET_KEY}
+      - WEBUI_NAME=Homelab AI
+      - GLOBAL_LOG_LEVEL=INFO
+
+      # Database & Persistence (Unified pgvector)
+      - DATABASE_URL=postgresql://${OPENWEBUI_POSTGRES_USER:-openwebui}:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/${OPENWEBUI_POSTGRES_DB:-openwebui}
+      - VECTOR_DB=pgvector
+      - PGVECTOR_DB_URL=postgresql://${OPENWEBUI_POSTGRES_USER:-openwebui}:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/${OPENWEBUI_POSTGRES_DB:-openwebui}
+
+      # Model Providers: Dual LiteLLM + Ollama
+      - OPENAI_API_BASE_URL=http://litellm:4000/v1
+      - OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+      - OLLAMA_BASE_URL=http://ollama:11434
+
+      # Offload RAG & Memory Embeddings to LiteLLM (Zero In-Container Model RAM)
+      - RAG_EMBEDDING_ENGINE=openai
+      - RAG_OPENAI_API_BASE_URL=http://litellm:4000/v1
+      - RAG_OPENAI_API_KEY=${LITELLM_MASTER_KEY}
+      - RAG_EMBEDDING_MODEL=nomic-embed-text
+
+      # Conversational Memory
+      - ENABLE_MEMORIES=True
+
+      # Search Engine & Web Loader Grounding (Firecrawl & SearXNG)
+      - ENABLE_RAG_WEB_SEARCH=True
+      - RAG_WEB_SEARCH_ENGINE=firecrawl
+      - RAG_WEB_LOADER_ENGINE=firecrawl
+      - FIRECRAWL_API_BASE_URL=http://firecrawl:3002
+      - FIRECRAWL_API_KEY=
+      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
+      - WEB_SEARCH_TRUST_ENV=True
+      - AIOHTTP_CLIENT_ASYNC_DNS_RESOLVER=False
+
+      # Security & Signup
+      - WEBUI_AUTH=True
+      - ENABLE_SIGNUP=True
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 512M
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      litellm:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      firecrawl:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8080/health')\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      - "traefik.enable=true"
+      # Local LAN Routing
+      - "traefik.http.routers.open-webui.rule=Host(`chat.spencer.lan`) || Host(`ai.spencer.lan`)"
+      - "traefik.http.routers.open-webui.entrypoints=websecure"
+      - "traefik.http.routers.open-webui.tls=true"
+      - "traefik.http.routers.open-webui.service=open-webui-svc"
+      - "traefik.http.services.open-webui-svc.loadbalancer.server.port=8080"
+      # Public WAN Routing
+      - "traefik.http.routers.open-webui-public.rule=Host(`${OPENWEBUI_PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.open-webui-public.entrypoints=websecure"
+      - "traefik.http.routers.open-webui-public.tls=true"
+      - "traefik.http.routers.open-webui-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.open-webui-public.service=open-webui-svc"
 
   hermes:
     image: nousresearch/hermes-agent:latest

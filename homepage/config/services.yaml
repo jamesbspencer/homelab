@@ -1,4 +1,10 @@
 - AI & Agents:
+    - Open WebUI:
+        icon: open-webui.png
+        href: https://chat.spencer.lan
+        description: "Modern Generative AI Chat & Multi-Model Interface"
+        server: local-docker
+        container: open-webui
     - Hermes Agent:
         icon: mdi-robot-excited-outline
         href: https://hermes.spencer.lan

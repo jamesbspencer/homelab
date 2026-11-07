@@ -13,6 +13,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **Traefik** | Reverse proxy, SSL, Geoblock (US Only) & edge router | `:80`, `:443` (`https://traefik.spencer.lan`) | [Traefik Guide](docs/traefik.md) |
 | **CrowdSec** | Intrusion detection & Traefik Bouncer plugin | `:8080` (Internal `net1` network) | [CrowdSec Guide](docs/crowdsec.md) |
 | **LiteLLM Proxy** | LLM routing gateway, spend manager & fallback router | `https://llm.spencer.lan` (:4000) | [LiteLLM Guide](docs/litellm.md) |
+| **Open WebUI** | Multi-model generative AI chat & memory client | `https://chat.spencer.lan` / `https://ai.spencer.lan` (:8080) | [Open WebUI Guide](docs/open-webui.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
 | **MoMoE** | Hybrid MoE inference engine (GPU + 61 GiB RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](docs/momoe.md) |
 | **Hermes Agent** | Autonomous AI agent runtime, dashboard & MCP server | `https://hermes.spencer.lan` / `https://ai.spencer.lan` / `https://mcp.spencer.lan` | [Hermes Guide](docs/hermes.md) |
@@ -48,7 +49,8 @@ flowchart TB
     %% Exposed Ingress Routes (net1)
     subgraph Ingress ["🚪 Proxied Endpoints (net1)"]
         Traefik -->|sso / login| Authentik
-        Traefik -->|hermes / ai| HermesDash["Dashboard :9119"]
+        Traefik -->|chat / ai| OpenWebUI["Open WebUI :8080"]
+        Traefik -->|hermes| HermesDash["Dashboard :9119"]
         Traefik -->|hermes-api| HermesAPI["API :8642"]
         Traefik -->|mcp| HermesMCP["MCP :8765"]
         Traefik -->|llm| LiteLLMUI["LiteLLM :4000"]
@@ -152,6 +154,7 @@ flowchart TB
 │   ├── ntfy.md              # ntfy push notification gateway guide
 │   ├── ollama.md            # Ollama setup & GPU acceleration guide
 │   ├── openbao.md           # OpenBao secrets & encryption management guide
+│   ├── open-webui.md        # Open WebUI generative chat & memory client guide
 │   ├── pgvector.md          # Dedicated pgvector database for Hindsight, LiteLLM & Authentik
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
 │   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
@@ -175,6 +178,7 @@ flowchart TB
 ├── openbao/                 # OpenBao server configuration & Raft storage
 │   ├── config/              # OpenBao server configuration (bao.hcl)
 │   └── data/                # Persistent Raft transactional database
+├── open-webui/              # Open WebUI runtime data, vectors and user uploads
 ├── pgvector/                # Dedicated pgvector database data & init scripts
 ├── scripts/                 # Maintenance, notification & operational automation
 ├── searxng/                 # SearXNG configuration and cache directories

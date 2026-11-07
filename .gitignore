@@ -119,3 +119,7 @@ openbao/data/*
 !openbao/data/.gitkeep
 openbao/unseal.keys
 openbao/*.keys
+
+# Open WebUI runtime data and uploads
+open-webui/*
+!open-webui/.gitkeep
