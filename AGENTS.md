@@ -23,7 +23,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **OpenBao**: Open-source identity-based secrets and encryption management server on internal port `8200` (`vault.spencer.lan`, `openbao.spencer.lan`) with Raft transactional storage.
   - **Gitea**: Self-hosted lightweight Git platform and repository manager on internal port `3000` (`git.spencer.lan`, `gitea.spencer.lan`) with Git SSH on port `2222` and Authentik OIDC integration.
   - **Homepage**: Centralized homelab dashboard, service status monitor, and launch directory on internal port `3000` (`home.spencer.lan`, `homepage.spencer.lan`) protected by Authentik ForwardAuth.
-  - **PostgreSQL Database (`pgvector`)**: Unified relational and vector database container configured on the isolated `db` network for Open WebUI, Authentik, and Gitea.
+  - **PostgreSQL Database (`pgvector`)**: Unified relational and vector database container configured on the isolated `db` network for Open WebUI (relational and dedicated `openwebui_knowledge` vector store), Authentik, and Gitea.
 - **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `sso.spencer.lan`, `login.spencer.lan`, `chat.spencer.lan`, `ai.spencer.lan`, `llm.spencer.lan`, `logs.spencer.lan`, `dozzle.spencer.lan`, `push.spencer.lan`, `ntfy.spencer.lan`, `vault.spencer.lan`, `openbao.spencer.lan`, `git.spencer.lan`, `gitea.spencer.lan`, `home.spencer.lan`, `homepage.spencer.lan`).
 - **Networking**:
   - The Traefik container and proxied services requiring external web access (Open WebUI, OmniRoute, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.

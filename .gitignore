@@ -76,10 +76,6 @@ gitea/*
 homepage/config/logs/*
 !homepage/config/logs/.gitkeep
 
-# Memlord ONNX model and tokenizer data
-memlord/onnx/*
-!memlord/onnx/.gitkeep
-
 # MoMoE cloned source tree and runtime model/pack data
 momoe/src/
 momoe/data/*

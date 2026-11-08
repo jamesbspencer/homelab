@@ -97,7 +97,7 @@ if [ -n "$GITEA_POSTGRES_DB" ]; then
 EOSQL
 fi
 
-# Conditionally provision dedicated database & user for Memlord
+# Conditionally provision dedicated database & user for Memlord (Legacy / Archived - Consolidated into Open WebUI)
 if [ -n "$MEMLORD_POSTGRES_DB" ]; then
     MEMLORD_USER="${MEMLORD_POSTGRES_USER:-memlord}"
     MEMLORD_PASS="${MEMLORD_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"
@@ -144,6 +144,24 @@ EOSQL
     echo "Enabling pgvector extension on '$OPENWEBUI_POSTGRES_DB'..."
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$OPENWEBUI_POSTGRES_DB" <<-EOSQL
         CREATE EXTENSION IF NOT EXISTS vector;
+EOSQL
+fi
+
+# Conditionally provision dedicated vector database for Open WebUI External Knowledge / RAG
+if [ -n "$OPENWEBUI_KNOWLEDGE_POSTGRES_DB" ]; then
+    OPENWEBUI_USER="${OPENWEBUI_POSTGRES_USER:-openwebui}"
+
+    echo "Provisioning dedicated knowledge database '$OPENWEBUI_KNOWLEDGE_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        SELECT 'CREATE DATABASE "$OPENWEBUI_KNOWLEDGE_POSTGRES_DB" OWNER "$OPENWEBUI_USER"'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$OPENWEBUI_KNOWLEDGE_POSTGRES_DB')\gexec
+        GRANT ALL PRIVILEGES ON DATABASE "$OPENWEBUI_KNOWLEDGE_POSTGRES_DB" TO "$OPENWEBUI_USER";
+EOSQL
+
+    echo "Enabling pgvector extension on '$OPENWEBUI_KNOWLEDGE_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$OPENWEBUI_KNOWLEDGE_POSTGRES_DB" <<-EOSQL
+        CREATE EXTENSION IF NOT EXISTS vector;
+        GRANT ALL ON SCHEMA public TO "$OPENWEBUI_USER";
 EOSQL
 fi
 

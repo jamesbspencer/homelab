@@ -118,6 +118,7 @@ services:
       OPENWEBUI_POSTGRES_DB: ${OPENWEBUI_POSTGRES_DB:-openwebui}
       OPENWEBUI_POSTGRES_USER: ${OPENWEBUI_POSTGRES_USER:-openwebui}
       OPENWEBUI_POSTGRES_PASSWORD: ${OPENWEBUI_POSTGRES_PASSWORD}
+      OPENWEBUI_KNOWLEDGE_POSTGRES_DB: ${OPENWEBUI_KNOWLEDGE_POSTGRES_DB:-openwebui_knowledge}
     volumes:
       - ./pgvector/data:/var/lib/postgresql/data
       - ./pgvector/init:/docker-entrypoint-initdb.d:ro
@@ -382,10 +383,10 @@ services:
       - WEBUI_NAME=Homelab AI
       - GLOBAL_LOG_LEVEL=INFO
 
-      # Database & Persistence (Unified pgvector)
+      # Database & Persistence (pgvector for Core State + Dedicated External Knowledge Vector Store)
       - DATABASE_URL=postgresql://${OPENWEBUI_POSTGRES_USER:-openwebui}:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/${OPENWEBUI_POSTGRES_DB:-openwebui}
       - VECTOR_DB=pgvector
-      - PGVECTOR_DB_URL=postgresql://${OPENWEBUI_POSTGRES_USER:-openwebui}:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/${OPENWEBUI_POSTGRES_DB:-openwebui}
+      - PGVECTOR_DB_URL=postgresql://${OPENWEBUI_POSTGRES_USER:-openwebui}:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/${OPENWEBUI_KNOWLEDGE_POSTGRES_DB:-openwebui_knowledge}
 
       # Model Providers: Dual OmniRoute + Ollama
       - OPENAI_API_BASE_URL=http://omniroute:20128/v1

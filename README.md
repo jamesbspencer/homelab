@@ -17,7 +17,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **Open Terminal** | Sandboxed remote shell & agent execution substrate | `:8000` (Internal `ai` network) | [Open Terminal Guide](docs/open-terminal.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
 | **MoMoE** | Hybrid MoE inference engine (GPU + 61 GiB RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](docs/momoe.md) |
-| **pgvector** | Unified vector & relational DB for Open WebUI, Authentik & Gitea | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
+| **pgvector** | Unified vector & relational DB (Open WebUI relational + knowledge, Authentik & Gitea) | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
 | **Valkey** | High-performance in-memory cache & rate limiter | `valkey:6379` (Internal `redis` network) | [Valkey Guide](docs/valkey.md) |
@@ -92,7 +92,7 @@ flowchart TB
     %% Data Plane & Storage
     subgraph DataPlane ["💾 Data & Caching Plane"]
         subgraph DBNet ["db Network"]
-            PGVector[("pgvector Database\n(openwebui, authentik & gitea)")]
+            PGVector[("pgvector Database\n(openwebui, openwebui_knowledge, authentik & gitea)")]
         end
         subgraph CacheNet ["redis Network"]
             Valkey[("Valkey In-Memory Cache\n(Search Cache & Rate Limiting)")]
@@ -137,7 +137,7 @@ flowchart TB
 │   ├── openbao.md           # OpenBao secrets & encryption management guide
 │   ├── open-terminal.md     # Open Terminal agent execution sandbox guide
 │   ├── open-webui.md        # Open WebUI generative chat & memory client guide
-│   ├── pgvector.md          # Dedicated pgvector database for Open WebUI, Authentik & Gitea
+│   ├── pgvector.md          # Dedicated pgvector database for Open WebUI (core + knowledge), Authentik & Gitea
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
 │   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
 │   ├── valkey.md            # Valkey caching & healthcheck operations

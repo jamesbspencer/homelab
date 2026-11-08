@@ -31,7 +31,8 @@ This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extens
 | `PGVECTOR_USER` | `postgres` | Superuser / administrator username |
 | `PGVECTOR_PASSWORD` | `${PGVECTOR_PASSWORD}` in `.env` | Superuser password |
 | `PGVECTOR_DB` | `postgres` | Default administrative database |
-| `OPENWEBUI_POSTGRES_DB` | `openwebui` | Dedicated database for Open WebUI user memory & RAG |
+| `OPENWEBUI_POSTGRES_DB` | `openwebui` | Dedicated relational database for Open WebUI state |
+| `OPENWEBUI_KNOWLEDGE_POSTGRES_DB` | `openwebui_knowledge` | Dedicated vector database for Open WebUI external knowledge & RAG |
 | `OPENWEBUI_POSTGRES_USER` | `openwebui` | Service role for Open WebUI |
 | `OPENWEBUI_POSTGRES_PASSWORD` | `${OPENWEBUI_POSTGRES_PASSWORD}` in `.env` | Password for Open WebUI service role |
 | `AUTHENTIK_POSTGRES_DB` | `authentik` | Dedicated database for Authentik IAM |
@@ -55,9 +56,13 @@ The container mounts `./pgvector/init/01-init-databases.sh` to `/docker-entrypoi
 
 ### Connection Strings
 
-* **Open WebUI Service**:
+* **Open WebUI Relational Service**:
   ```
   postgresql://openwebui:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/openwebui
+  ```
+* **Open WebUI Vector Knowledge Service (`PGVECTOR_DB_URL`)**:
+  ```
+  postgresql://openwebui:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/openwebui_knowledge
   ```
 * **LiteLLM Proxy Service**:
   ```

@@ -7,7 +7,7 @@ This file tracks upcoming features, architectural improvements, and exploration 
 ## 🎯 Active Initiatives & Roadmap
 
 ### 1. 💾 Automated Backup & Disaster Recovery Pipeline
-- [ ] **Automated `pgvector` Backups**: Implement a lightweight backup sidecar or scheduled maintenance script executing transactional dumps (`pg_dumpall` or per-database `pg_dump`: `openwebui`, `authentik`, `gitea`) with retention rotation (e.g., 7 daily, 4 weekly).
+- [ ] **Automated `pgvector` Backups**: Implement a lightweight backup sidecar or scheduled maintenance script executing transactional dumps (`pg_dumpall` or per-database `pg_dump`: `openwebui`, `openwebui_knowledge`, `authentik`, `gitea`) with retention rotation (e.g., 7 daily, 4 weekly).
 - [ ] **Encrypted State Archiving**: Snapshot critical runtime volumes (`./authentik/media`, `./traefik/certs`, `./pgvector/data`, `./omniroute/data`) using encrypted backup utilities (e.g., Restic or Borg).
 - [ ] **Local NAS Replication**: Configure automated synchronization of encrypted snapshots and database dumps to the local NAS (via NFS/SMB mount or SSH/rsync) with retention cleanup.
 - [ ] **Restore & Recovery Runbook**: Document step-by-step restoration procedures in `docs/` and verify point-in-time recovery for database and certificate state.
@@ -58,6 +58,7 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **Database Dumps & Archival**: Generated full compressed SQL dumps for both `hindsight` (1.1 MB) and `memlord` (686 KB) under `archives/` before dropping databases from pgvector.
 - [x] **Decommission Containers & Purge Images**: Stopped and removed `hindsight` and `memlord` containers, removed Traefik routers (`hindsight.spencer.lan`, `memlord.spencer.lan`), deleted downloaded ONNX models (`model.onnx`, 450 MB), and purged container images, reclaiming ~7 GB of storage.
 - [x] **Configuration & Maintenance Updates**: Removed `HINDSIGHT_*` and `MEMLORD_*` keys from `.env` and `.env.example`, updated `scripts/pgvector-maintenance.sh` to vacuum active databases (`openwebui`, `litellm`, `authentik`, `gitea`), and archived documentation to `docs/archive/`.
+- [x] **Workspace Archival & Skill Purge**: Removed obsolete `memlord/` runtime directory and `.agents/skills/memlord/` skill from git and workspace; preserved all configuration assets, dumps, and skills in `archives/deprecated-services/memlord/`.
 
 ---
 

@@ -15,7 +15,7 @@ This document provides architecture specifications, integration details, configu
 | **Routing Domains** | `https://chat.spencer.lan` (Primary), `https://ai.spencer.lan` (Legacy Alias), `https://${OPENWEBUI_PUBLIC_DOMAIN}` |
 | **Internal Port** | `8080` |
 | **Database** | PostgreSQL 16 on `pgvector` container (DB: `openwebui`, isolated `db` network) |
-| **Vector DB** | `pgvector` extension on PostgreSQL 16 (Collection: `user-memory-<user_id>`) |
+| **Vector Knowledge DB** | Dedicated PostgreSQL 16 database (`openwebui_knowledge` on `pgvector` container) for RAG document chunks, external knowledge collections, web cache, and user memory vectors (`VECTOR_DB=pgvector`) |
 | **Embedding Engine** | Offloaded to OmniRoute / Ollama (`nomic-embed-text`, 768-dim) |
 | **Model Ingress** | Dual: OmniRoute Gateway (`http://omniroute:20128/v1`) & Ollama (`http://ollama:11434`) |
 | **Web Search Grounding** | Local Firecrawl Cluster (`http://firecrawl:3002`) & SearXNG (`http://searxng:8080`) |
@@ -34,7 +34,8 @@ graph TD
     Traefik -->|Forward :8080| OWUI["Open WebUI (v0.13.0+)<br/>ghcr.io/open-webui/open-webui:main"]
 
     subgraph Storage & Data
-        OWUI -->|db network| PG["pgvector (PostgreSQL 16)<br/>openwebui DB & user-memory vector tables"]
+        OWUI -->|db network: core state| PG["pgvector (PostgreSQL 16)<br/>openwebui DB (relational)"]
+        OWUI -->|db network: RAG vectors| PGK["pgvector (PostgreSQL 16)<br/>openwebui_knowledge DB (vectors)"]
         OWUI -->|local volume| Disk["/data/homelab/open-webui<br/>(/app/backend/data)"]
     end
 
@@ -86,6 +87,7 @@ OPENWEBUI_PUBLIC_DOMAIN=ai.example.com
 
 # PostgreSQL & pgvector
 OPENWEBUI_POSTGRES_DB=openwebui
+OPENWEBUI_KNOWLEDGE_POSTGRES_DB=openwebui_knowledge
 OPENWEBUI_POSTGRES_USER=openwebui
 OPENWEBUI_POSTGRES_PASSWORD=<secure-password>
 

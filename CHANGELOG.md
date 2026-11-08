@@ -10,6 +10,13 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-11-07]
 
 ### Added
+- **Dedicated External Knowledge Vector Database in pgvector for Open WebUI**:
+  - Provisioned dedicated `openwebui_knowledge` database in the `pgvector` container with `vector` extension enabled and full role permissions for `openwebui`.
+  - Configured `PGVECTOR_DB_URL=postgresql://${OPENWEBUI_POSTGRES_USER:-openwebui}:${OPENWEBUI_POSTGRES_PASSWORD}@pgvector:5432/${OPENWEBUI_KNOWLEDGE_POSTGRES_DB:-openwebui_knowledge}` in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) to separate vector embeddings and RAG document chunks from core relational state (`openwebui` database).
+  - Migrated existing document chunks and vector indices with zero loss, preserving all user personalization memories and RAG embeddings.
+  - Updated auto-provisioning bootstrap script in [`pgvector/init/01-init-databases.sh`](file:///data/homelab/pgvector/init/01-init-databases.sh) and updated environment templates in [`.env.example`](file:///data/homelab/.env.example).
+  - Synchronized documentation in [`docs/open-webui.md`](file:///data/homelab/docs/open-webui.md) and [`docs/pgvector.md`](file:///data/homelab/docs/pgvector.md).
+
 - **Open Terminal Remote Shell & Agent Execution Substrate for Open WebUI**:
   - Integrated `open-terminal` (`ghcr.io/open-webui/open-terminal:latest`) on the isolated `ai` bridge network as a companion sandbox for Open WebUI v0.13.0+.
   - Configured persistent host bind mount at `/data/homelab/open-terminal/workspace` mapped to `/home/user` inside the container with UID 1000 permissions.
@@ -32,6 +39,11 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
   - Modernized [`scripts/pgvector-maintenance.sh`](file:///data/homelab/scripts/pgvector-maintenance.sh) to vacuum and size active databases (`litellm`, `openwebui`, `authentik`, and `gitea`).
   - Sanitized obsolete `HINDSIGHT_*` and `MEMLORD_*` configuration variables from `.env` and [`.env.example`](file:///data/homelab/.env.example).
   - Archived service guides to [`docs/archive/hindsight.md`](file:///data/homelab/docs/archive/hindsight.md) and [`docs/archive/memlord.md`](file:///data/homelab/docs/archive/memlord.md).
+- **Memlord Workspace Archival & Tree Cleanup**:
+  - Removed obsolete `memlord/` workspace runtime directory and `.agents/skills/memlord/` agent skill following migration of all persistent memories to Open WebUI.
+  - Purged obsolete `memlord/onnx/*` ignore patterns from [`.gitignore`](file:///data/homelab/.gitignore).
+  - Preserved standalone [`SKILL.md`](file:///data/homelab/archives/deprecated-services/memlord/SKILL.md), service guide, repository asset archive, and database dump under `archives/deprecated-services/memlord/`.
+  - Maintained `.agents/skills/.gitkeep` placeholder for future agent skill definitions.
 - **Nous Research Hermes Agent Decommissioning & Workload Migration**:
   - Decommissioned `hermes` container (`nousresearch/hermes-agent:latest`) and removed the service definition, port allocations (`9119`, `8642`, `8765`), and environment variables from [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml).
   - Hardened host security posture by removing the host Docker socket (`/var/run/docker.sock`) volume mount and purging local execution sandbox images (`hermes-terminal:latest`) and cached weights, reclaiming ~6 GB of container image storage.

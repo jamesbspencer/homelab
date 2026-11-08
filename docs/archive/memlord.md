@@ -1,7 +1,7 @@
 # Memlord MCP Memory Server (Archived)
 
 > [!WARNING]
-> **DEPRECATED & RETIRED**: Memlord MCP Memory Server was decommissioned on 2026-11-07. Its PostgreSQL database was dumped to `archives/memlord-dump-20261107.sql.gz` and removed from `pgvector`. Downloaded ONNX model weights and container images have been purged. Persistent procedural memories and workspace knowledge were migrated into **Open WebUI** (`openwebui` database on pgvector). This guide is retained for historical and architectural reference only.
+> **DEPRECATED & RETIRED**: Memlord MCP Memory Server was decommissioned on 2026-11-07. Its PostgreSQL database was dumped to `archives/memlord-dump-20261107.sql.gz` and removed from `pgvector`. Downloaded ONNX model weights and container images have been purged. Persistent procedural memories and workspace knowledge were migrated into **Open WebUI** (`openwebui` database on pgvector), and all workspace configurations/skills have been archived to `archives/deprecated-services/memlord/`. This guide is retained for historical and architectural reference only.
 
 **Memlord** (`MyrikLD/memlord`) was a self-hosted **Model Context Protocol (MCP)** memory server engineered for persistent, structured, and multi-workspace agent memory. It features **hybrid search** combining BM25 full-text indexing with vector KNN (`pgvector`), fused via **Reciprocal Rank Fusion (RRF)**, and runs local ONNX embeddings with zero external API dependencies.
 
@@ -51,7 +51,7 @@ Spencer's Homelab operates a synergistic dual-tier memory system:
 ### 🔄 Memory Synchronization & Migration
 Episodic observations and validated facts captured in Hindsight were migrated and synchronized into Memlord's hybrid vector/BM25 database using `scripts/sync-hindsight-to-memlord.py` (archived) and [`scripts/import-memories-to-openwebui.py`](file:///data/homelab/scripts/import-memories-to-openwebui.py):
 * **State Ledger**: Persistent tracking ensured all historical memories were ingested into Memlord and Open WebUI with deduplication.
-* **Ongoing Role**: Memlord serves as the centralized MCP memory and procedural knowledge layer across coding assistants (Antigravity, Cursor, Claude Desktop).
+* **Historical Role**: Memlord previously served as the centralized MCP memory and procedural knowledge layer across coding assistants before consolidation into Open WebUI.
 
 ---
 

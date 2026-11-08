@@ -148,12 +148,21 @@ else
     SPEND_LOGS_SIZE_BEFORE="N/A"
 fi
 OPENWEBUI_SIZE_BEFORE=$(run_psql_val openwebui "SELECT pg_size_pretty(pg_database_size('openwebui'));")
+KNOWLEDGE_EXISTS=$(run_psql postgres -tAc "SELECT 1 FROM pg_database WHERE datname='openwebui_knowledge';" || echo "0")
+if [ "$KNOWLEDGE_EXISTS" = "1" ]; then
+    KNOWLEDGE_SIZE_BEFORE=$(run_psql_val openwebui_knowledge "SELECT pg_size_pretty(pg_database_size('openwebui_knowledge'));")
+else
+    KNOWLEDGE_SIZE_BEFORE="N/A"
+fi
 
 log "📊 Initial Database Sizes:"
 if [ "$LITELLM_EXISTS" = "1" ]; then
     log "   • litellm DB:   ${LITELLM_SIZE_BEFORE} (LiteLLM_SpendLogs: ${SPEND_LOGS_SIZE_BEFORE})"
 fi
 log "   • openwebui DB: ${OPENWEBUI_SIZE_BEFORE}"
+if [ "$KNOWLEDGE_EXISTS" = "1" ]; then
+    log "   • openwebui_knowledge DB: ${KNOWLEDGE_SIZE_BEFORE}"
+fi
 
 # --- STEP 1: Legacy LiteLLM Spend Logs Archival & Pruning ---
 PRUNED_SPEND=0
@@ -204,6 +213,12 @@ if [ "$DO_VACUUM" = true ]; then
         log "   • Vacuuming openwebui DB..."
         run_psql openwebui -c "VACUUM ANALYZE;"
 
+        KNOWLEDGE_EXISTS=$(run_psql postgres -tAc "SELECT 1 FROM pg_database WHERE datname='openwebui_knowledge';" || echo "0")
+        if [ "$KNOWLEDGE_EXISTS" = "1" ]; then
+            log "   • Vacuuming openwebui_knowledge DB..."
+            run_psql openwebui_knowledge -c "VACUUM ANALYZE;"
+        fi
+
         log "   • Vacuuming authentik DB..."
         run_psql authentik -c "VACUUM ANALYZE;"
 
@@ -224,6 +239,12 @@ else
     LITELLM_SUMMARY="• Gateway DB:   OmniRoute active (local SQLite, zero PostgreSQL load)"
 fi
 OPENWEBUI_SIZE_AFTER=$(run_psql_val openwebui "SELECT pg_size_pretty(pg_database_size('openwebui'));")
+if [ "$KNOWLEDGE_EXISTS" = "1" ]; then
+    KNOWLEDGE_SIZE_AFTER=$(run_psql_val openwebui_knowledge "SELECT pg_size_pretty(pg_database_size('openwebui_knowledge'));")
+    KNOWLEDGE_SUMMARY="\n• openwebui_knowledge DB: ${KNOWLEDGE_SIZE_BEFORE} ➔ ${KNOWLEDGE_SIZE_AFTER}"
+else
+    KNOWLEDGE_SUMMARY=""
+fi
 
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))
@@ -231,7 +252,7 @@ DURATION=$((END_TIME - START_TIME))
 SUMMARY_MSG="Database maintenance completed in ${DURATION}s.
 • Pruned: ${PRUNED_SPEND} LiteLLM spend logs
 ${LITELLM_SUMMARY}
-• openwebui DB: ${OPENWEBUI_SIZE_BEFORE} ➔ ${OPENWEBUI_SIZE_AFTER}"
+• openwebui DB: ${OPENWEBUI_SIZE_BEFORE} ➔ ${OPENWEBUI_SIZE_AFTER}${KNOWLEDGE_SUMMARY}"
 
 log "\n=================================================="
 log "🎉 Maintenance Run Complete!"
