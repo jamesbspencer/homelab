@@ -93,8 +93,9 @@ open-webui/*
 !open-webui/.gitkeep
 
 # Open Terminal persistent agent workspace and data
-open-terminal/*
-!open-terminal/.gitkeep
+open-terminal/workspace/*
+!open-terminal/workspace/.gitkeep
+!open-terminal/Dockerfile
 
 # OmniRoute runtime data and SQLite storage
 omniroute/data/*

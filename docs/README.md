@@ -12,7 +12,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **CrowdSec** | Intrusion Detection & Traefik Bouncer | `:8080` (Internal `net1` network) | [CrowdSec Guide](crowdsec.md) |
 | **OmniRoute Gateway** | Universal AI Gateway & LLM Router | `llm.spencer.lan` (:20128) | [OmniRoute Guide](omniroute.md) |
 | **Open WebUI** | Multi-Model Generative AI Chat Interface | `chat.spencer.lan`, `ai.spencer.lan` (:8080) | [Open WebUI Guide](open-webui.md) |
-| **Open Terminal** | Sandboxed Remote Shell & Agent Execution Substrate | `:8000` (Internal `ai` network) | [Open Terminal Guide](open-terminal.md) |
+| **Open Terminal** | Sandboxed Remote Shell & Agent Substrate (OpenBao, GitHub & Gitea CLIs pre-installed) | `:8000` (Internal `ai` network) | [Open Terminal Guide](open-terminal.md) |
 | **Ollama** | LLM Engine (GPU Accelerated) | `:11434` (Internal `ai` network) | [Ollama Guide](ollama.md) |
 | **MoMoE** | Hybrid MoE Inference Engine (GPU + RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](momoe.md) |
 | **pgvector** | Unified Vector & Relational Database | `:5432` (Internal `db` network) | [pgvector Guide](pgvector.md) |

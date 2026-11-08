@@ -12,7 +12,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   - **MoMoE**: Hybrid Mixture-of-Experts (MoE) LLM inference engine combining GPU VRAM and host RAM/AVX-512 on internal port `8080` (accessible via OmniRoute).
   - **OmniRoute AI Gateway**: Universal AI gateway, OpenAI/Anthropic model router, prompt compressor, and rate limiter on internal port `20128` and `llm.spencer.lan`.
   - **Open WebUI**: Multi-model generative AI chat interface and conversational memory client on internal port `8080` (`chat.spencer.lan`, `ai.spencer.lan`) with OmniRoute embedding offload, unified pgvector database, and Fernet (AES-128) valve encryption at rest.
-  - **Open Terminal**: Sandboxed remote shell and agent execution substrate for Open WebUI on internal port `8000` with persistent `/home/user` workspace and bearer token security.
+  - **Open Terminal**: Sandboxed remote shell and agent execution substrate for Open WebUI on internal port `8000` with persistent `/home/user` workspace, bearer token security, and pre-installed developer CLIs: OpenBao (`bao`, `openbao`, `vault`), GitHub CLI (`gh`), and Gitea CLI (`gt`, `tea`, `gitea-cli`).
   - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
   - **Valkey**: High-performance in-memory key-value cache and rate limiter on internal port `6379`.

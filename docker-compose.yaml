@@ -492,7 +492,16 @@ services:
       - "traefik.http.routers.open-webui-public.service=open-webui-svc"
 
   open-terminal:
-    image: ghcr.io/open-webui/open-terminal:${OPEN_TERMINAL_VERSION:-latest}
+    build:
+      context: ./open-terminal
+      dockerfile: Dockerfile
+      args:
+        OPEN_TERMINAL_VERSION: ${OPEN_TERMINAL_VERSION:-latest}
+        OPENBAO_VERSION: ${OPENBAO_VERSION:-latest}
+        GITEA_CLI_VERSION: ${GITEA_CLI_VERSION:-0.1.0}
+        TEA_VERSION: ${TEA_VERSION:-0.16.0}
+        GH_CLI_VERSION: ${GH_CLI_VERSION:-2.103.3}
+    image: homelab/open-terminal:${OPEN_TERMINAL_VERSION:-latest}
     container_name: open-terminal
     restart: unless-stopped
     networks:
@@ -507,6 +516,10 @@ services:
       - OPEN_TERMINAL_FILE_BROWSER_ROOT=home
       - OPEN_TERMINAL_PACKAGES=${OPEN_TERMINAL_PACKAGES:-curl git jq tree}
       - OPEN_TERMINAL_PIP_PACKAGES=${OPEN_TERMINAL_PIP_PACKAGES:-httpx requests pydantic}
+      - BAO_ADDR=http://openbao:8200
+      - VAULT_ADDR=http://openbao:8200
+      - GITEA_INSTANCE_URL=http://gitea:3000
+      - GITEA_SERVER_URL=http://gitea:3000
     deploy:
       resources:
         limits:

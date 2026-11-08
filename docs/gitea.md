@@ -178,7 +178,19 @@ Configured in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) 
   # Expected: "PTY allocation request failed on channel 0" or "Hi there, You've successfully authenticated"
   ```
 
-* **Gitea CLI Commands**:
+* **Gitea CLI Client Access from Open Terminal**:
+  The `open-terminal` sandbox includes pre-installed Gitea CLI binaries (`gt`, `tea`, `gitea-cli`) with `GITEA_INSTANCE_URL=http://gitea:3000` pre-configured over the private `ai` network:
+  ```bash
+  # Check status / issues / PRs via modern gt CLI
+  docker exec -it open-terminal gt auth login --host http://gitea:3000
+  docker exec -it open-terminal gt issue list
+
+  # Or using classic tea CLI
+  docker exec -it open-terminal tea login add --name homelab --url http://gitea:3000 --token <token>
+  docker exec -it open-terminal tea issues
+  ```
+
+* **Gitea CLI Commands (Server Host / Admin)**:
   Execute CLI operations directly inside the container as user `1000`:
   ```bash
   # Create an administrator user

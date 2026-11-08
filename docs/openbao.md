@@ -212,6 +212,7 @@ Two purpose-built credential sets and policies are provisioned in OpenBao:
      * **Userpass**: Username `ai`
      * **Service Token**: 1-year renewable service token (`ai-agent`)
    * **Stored Details**: Managed securely in OpenBao at `kv/credentials/ai`.
+   * **CLI Substrate**: The `open-terminal` execution environment provides the `bao` (and `openbao`/`vault` symlinks) CLI pre-configured with `BAO_ADDR=http://openbao:8200`.
 
 #### Usage Examples
 

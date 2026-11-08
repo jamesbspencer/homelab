@@ -10,6 +10,22 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-11-08]
 
 ### Added
+- **GitHub & Gitea CLI Developer Tooling in Open Terminal**:
+  - Installed official upstream GitHub CLI (`gh` v2.103.3) directly into `/usr/bin/gh` with system package bash completions.
+  - Installed both modern Gitea CLI (`gt` v0.1.0) and classic Gitea CLI (`tea` v0.16.0) into `/usr/local/bin` along with compatibility symlink `/usr/local/bin/gitea-cli -> gt`.
+  - Configured native auto-generated bash completion for `gt` and `tea` in `/usr/share/bash-completion/completions/`.
+  - Configured system-wide environment variables `GITEA_INSTANCE_URL=http://gitea:3000` and `GITEA_SERVER_URL=http://gitea:3000` in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml), `/etc/profile.d/homelab.sh`, and [`open-terminal/workspace/.bashrc`](file:///data/homelab/open-terminal/workspace/.bashrc) for zero-config CLI interaction with homelab Gitea over the internal `ai` Docker network.
+  - Parameterized `GH_CLI_VERSION`, `GITEA_CLI_VERSION`, and `TEA_VERSION` in [`.env.example`](file:///data/homelab/.env.example).
+  - Synchronized documentation across [`docs/open-terminal.md`](file:///data/homelab/docs/open-terminal.md), [`docs/gitea.md`](file:///data/homelab/docs/gitea.md), [`docs/README.md`](file:///data/homelab/docs/README.md), [`README.md`](file:///data/homelab/README.md), and [`AGENTS.md`](file:///data/homelab/AGENTS.md).
+
+- **OpenBao CLI Integration in Open Terminal**:
+  - Authored custom container image recipe in [`open-terminal/Dockerfile`](file:///data/homelab/open-terminal/Dockerfile) multi-staging the official `bao` CLI binary directly from `openbao/openbao:latest` (`v2.7.2`).
+  - Configured compatibility symlinks for `/usr/local/bin/openbao` and `/usr/local/bin/vault` alongside `/usr/local/bin/bao`.
+  - Configured `BAO_ADDR=http://openbao:8200` and `VAULT_ADDR=http://openbao:8200` in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) and [`open-terminal/workspace/.bashrc`](file:///data/homelab/open-terminal/workspace/.bashrc) for seamless zero-config API connectivity over the internal `ai` bridge network.
+  - Enabled bash CLI autocompletion for `bao`, `openbao`, and `vault`.
+  - Rebuilt and deployed `homelab/open-terminal:latest`, verified CLI binary execution and vault health status probes directly from user shell.
+  - Synchronized documentation in [`docs/open-terminal.md`](file:///data/homelab/docs/open-terminal.md), [`docs/openbao.md`](file:///data/homelab/docs/openbao.md), [`README.md`](file:///data/homelab/README.md), and [`AGENTS.md`](file:///data/homelab/AGENTS.md).
+
 - **NVIDIA GPU Performance Telemetry on Homepage via Glances**:
   - Deployed `glances` container (`nicolargo/glances:ubuntu-latest-full`) with full NVIDIA GPU device passthrough (`driver: nvidia`, `count: all`, `capabilities: [gpu]`) on the isolated `ai` and `net1` bridge networks.
   - Utilized the `ubuntu-latest-full` (glibc) image base to ensure compatibility with host NVML (`libnvidia-ml.so.1`) drivers, avoiding Alpine musl `dlvsym` library loading issues.

@@ -10,8 +10,8 @@ This document provides architecture specifications, integration details, configu
 |---|---|
 | **Service Name** | `open-terminal` |
 | **Container Name** | `open-terminal` |
-| **Image** | `ghcr.io/open-webui/open-terminal:latest` |
-| **Role** | Computer substrate & sandboxed remote shell execution environment for Open WebUI |
+| **Image** | `homelab/open-terminal:latest` (built from `./open-terminal/Dockerfile`) |
+| **Role** | Computer substrate & sandboxed remote shell execution environment for Open WebUI with OpenBao, GitHub, and Gitea CLIs |
 | **Internal Access** | `http://open-terminal:8000` (on internal `ai` network) |
 | **Authentication** | Bearer Token API Key (`OPEN_TERMINAL_API_KEY`) |
 | **Client / Consumer** | Open WebUI (`open-webui` container) |
@@ -69,6 +69,45 @@ Open Terminal is configured via environment variables in `/data/homelab/docker-c
 | `OPEN_TERMINAL_FILE_BROWSER_ROOT` | `home` | Visual file browser root set to `/home/user` |
 | `OPEN_TERMINAL_PACKAGES` | `curl git jq tree` | Space-separated `apt` packages installed on container startup |
 | `OPEN_TERMINAL_PIP_PACKAGES` | `httpx requests pydantic` | Space-separated Python packages installed via `pip` on startup |
+| `BAO_ADDR` | `http://openbao:8200` | OpenBao server address on the internal `ai` Docker network |
+| `VAULT_ADDR` | `http://openbao:8200` | Vault-compatible fallback address for OpenBao |
+| `GITEA_INSTANCE_URL` | `http://gitea:3000` | Default instance URL for the modern Gitea CLI (`gt`) |
+| `GITEA_SERVER_URL` | `http://gitea:3000` | Default instance URL for the classic Gitea CLI (`tea`) |
+
+---
+
+## 🔐 OpenBao CLI Integration
+
+Open Terminal includes the **OpenBao CLI** (`bao`), providing direct secret management, KV storage inspection, and encryption operations directly from terminal sessions and AI agent executions:
+
+* **Installed Binaries & Compatibility Aliases**:
+  * `/usr/local/bin/bao`: Official OpenBao CLI binary (sourced directly from `openbao/openbao`).
+  * `/usr/local/bin/openbao`: Symlink alias to `bao`.
+  * `/usr/local/bin/vault`: Symlink alias to `bao` for legacy Vault CLI scripts and tools.
+* **Environment Configuration**: Pre-configured with `BAO_ADDR=http://openbao:8200` and `VAULT_ADDR=http://openbao:8200` in container environment, `/etc/profile.d/homelab.sh`, and `/home/user/.bashrc`.
+* **Shell Autocompletion**: Auto-completion pre-configured in `/etc/bash.bashrc` and `.bashrc` for `bao`, `openbao`, and `vault`.
+* **Network Connectivity**: Operates over the internal `ai` network, communicating directly with OpenBao on port `8200`.
+
+---
+
+## 🐙 GitHub & Gitea CLI Integration
+
+Open Terminal provides official command-line tooling for both cloud (GitHub) and self-hosted (Gitea) version control platforms:
+
+### 1. GitHub CLI (`gh`)
+* **Installed Version**: Official upstream release (`v2.103.3`+) installed at `/usr/bin/gh`.
+* **Features**: PR management, repository operations, issue tracking, and GitHub Actions orchestration.
+* **Shell Autocompletion**: Installed natively via package in `/usr/share/bash-completion/completions/gh`.
+* **Authentication**: Run `gh auth login` or export `GITHUB_TOKEN` / `GH_TOKEN`.
+
+### 2. Gitea CLI (`gt` & `tea`)
+* **Installed Binaries**:
+  * `/usr/local/bin/gt`: Modern official Gitea CLI (v0.1.0+) providing GitHub-like workflows (`gt pr`, `gt issue`, `gt repo`, `gt run`).
+  * `/usr/local/bin/gitea-cli`: Symlink alias to `gt`.
+  * `/usr/local/bin/tea`: Classic Gitea CLI (v0.16.0+) for backwards compatibility with legacy automation and tea-specific scripts.
+* **Homelab Service Routing**: Default `GITEA_INSTANCE_URL=http://gitea:3000` and `GITEA_SERVER_URL=http://gitea:3000` configured system-wide over the private `ai` network.
+* **Shell Autocompletion**: Native completion scripts compiled into `/usr/share/bash-completion/completions/gt` and `/usr/share/bash-completion/completions/tea`.
+* **Authentication**: Run `gt auth login` or export `GITEA_TOKEN` / `TEA_TOKEN`.
 
 ---
 
