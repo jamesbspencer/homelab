@@ -10,6 +10,23 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-11-08]
 
 ### Added
+- **OpenWrt Router DNS Provisioning for Knowledge Search & Homelab Services**:
+  - Connected to the OpenWrt router (`192.168.77.1`) via ubus JSON-RPC and provisioned static DNS domain records in `dnsmasq` under the local `.spencer.lan` zone targeting the homelab host (`192.168.77.40`).
+  - Added DNS records for `knowledge.spencer.lan`, `rag.spencer.lan`, `chat.spencer.lan`, `glances.spencer.lan`, `stats.spencer.lan`, and `dozzle.spencer.lan`.
+  - Applied UCI changes and reloaded `dnsmasq` via `rc.init`, verifying name resolution directly over UDP port 53.
+
+- **pgvector Knowledge Search Web UI & Retrieval Substrate**:
+  - Built and deployed `knowledge-search` container (`homelab/knowledge-search:latest`) on port `8000`, accessible via local ingress [`https://knowledge.spencer.lan`](https://knowledge.spencer.lan) and [`https://rag.spencer.lan`](https://rag.spencer.lan).
+  - Implemented multi-mode retrieval engine supporting:
+    - **Hybrid Search**: Reciprocal Rank Fusion (RRF) combining dense semantic vector cosine similarity with sparse full-text keyword rank.
+    - **Dense Semantic Vector Search**: Direct cosine similarity (`1 - (vector <=> $1)`) against pgvector, offloading real-time query embeddings to companion `llama-embed` (`nomic-embed-text` with AVX-512 acceleration, zero-padded from 768 to 1536 dimensions).
+    - **Sparse Keyword / Full-Text Search**: Leverages PostgreSQL GIN `to_tsvector('simple', text)` indexing with `ts_rank_cd` and substring `ILIKE` fallback for code and symbols.
+    - **Nearest Neighbor Similarity Explorer**: One-click cosine similarity comparison across chunks and collections.
+  - Developed responsive, modern dark-themed single-page web UI featuring real-time search, interactive Markdown chunk rendering, JSON metadata inspection, vector telemetry drawer, and collection partition directory.
+  - Configured Traefik reverse proxy labels with wildcard TLS encryption on `net1`, `db`, and `ai` bridge networks with automated container healthcheck.
+  - Added Knowledge Search service tile and health widget to Homepage under the **Search & Scrape** group ([`homepage/config/services.yaml`](file:///data/homelab/homepage/config/services.yaml)).
+  - Authored dedicated service documentation in [`docs/knowledge-search.md`](file:///data/homelab/docs/knowledge-search.md) and synchronized [`docs/README.md`](file:///data/homelab/docs/README.md), [`README.md`](file:///data/homelab/README.md), and [`AGENTS.md`](file:///data/homelab/AGENTS.md).
+
 - **64k Context Window & Open WebUI Full Tooling Integration**:
   - Expanded `llama-server` context size to **65,536 tokens** using unified KV cache (`--kv-unified --kv-unified-per-slot 65536 -np 2`), resolving 32k context boundary errors with zero VRAM overflow (resident at 11,689 MiB on RTX 3060).
   - Pre-configured `qwen3.6-35b-a3b` persistent model preset in Open WebUI with default Web Search, all tools (`openbao_client`, `ubuntu_ssh_client`, `openwrt_client`), client skills, and Open Terminal execution substrate.

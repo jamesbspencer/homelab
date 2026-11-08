@@ -15,6 +15,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **Open Terminal** | Sandboxed Remote Shell & Agent Substrate (OpenBao, GitHub & Gitea CLIs pre-installed) | `:8000` (Internal `ai` network) | [Open Terminal Guide](open-terminal.md) |
 | **Llama.cpp Server** | Hybrid MoE LLM Engine (--n-cpu-moe GPU + RAM) | `:8080` (Internal `ai` network) | [Llama.cpp Guide](llama-cpp.md) |
 | **Llama.cpp Embed** | Zero-VRAM Text Embeddings (CPU AVX-512) | `:8081` (Internal `ai` network) | [Llama.cpp Guide](llama-cpp.md#mounted-volumes--models) |
+| **Knowledge Search** | Vector & Full-Text Knowledge Chunk Retrieval Substrate | `knowledge.spencer.lan`, `rag.spencer.lan` (:8000) | [Knowledge Search Guide](knowledge-search.md) |
 | **pgvector** | Unified Vector & Relational Database | `:5432` (Internal `db` network) | [pgvector Guide](pgvector.md) |
 | **Firecrawl Stack** | Web Scraper, Crawler & Search | `:3002` (Internal `ai` & `redis` networks) | [Firecrawl Guide](firecrawl.md) |
 | **SearXNG** | Metasearch Engine | `:8080` (Internal `ai` & `redis` networks) | [SearXNG Guide](searxng.md) |

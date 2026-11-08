@@ -17,6 +17,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **Open Terminal** | Sandboxed remote shell & agent execution substrate (OpenBao, GitHub & Gitea CLIs pre-installed) | `:8000` (Internal `ai` network) | [Open Terminal Guide](docs/open-terminal.md) |
 | **Llama.cpp Server** | Hybrid MoE LLM inference engine (--n-cpu-moe GPU + RAM) | `:8080` (Internal `ai` network) | [Llama.cpp Guide](docs/llama-cpp.md) |
 | **Llama.cpp Embed** | Zero-VRAM text embedding runtime (CPU AVX-512) | `:8081` (Internal `ai` network) | [Llama.cpp Guide](docs/llama-cpp.md#mounted-volumes--models) |
+| **Knowledge Search** | Vector & full-text knowledge retrieval substrate and web UI | `https://knowledge.spencer.lan` / `https://rag.spencer.lan` (:8000) | [Knowledge Search Guide](docs/knowledge-search.md) |
 | **pgvector** | Unified vector & relational DB (Open WebUI relational + knowledge, Authentik & Gitea) | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
@@ -49,6 +50,7 @@ flowchart TB
     subgraph Ingress ["🚪 Proxied Endpoints (net1)"]
         Traefik -->|sso / login| Authentik
         Traefik -->|chat / ai| OpenWebUI["Open WebUI :8080"]
+        Traefik -->|knowledge / rag| KnowledgeSearchUI["Knowledge Search :8000"]
         Traefik -->|llm| OmniRouteUI["OmniRoute :20128"]
         Traefik -->|logs| DozzleUI["Dozzle :8080"]
         Traefik -->|push| Ntfy["ntfy :80"]
@@ -132,7 +134,8 @@ flowchart TB
 │   ├── firecrawl.md         # Firecrawl architecture, queues & scraping
 │   ├── gitea.md             # Gitea Git repository manager & issue tracker guide
 │   ├── homepage.md          # Homepage service directory & health dashboard guide
-│   ├── momoe.md             # MoMoE hybrid MoE 64k inference engine guide
+│   ├── knowledge-search.md  # pgvector knowledge chunk search Web UI & API guide
+│   ├── llama-cpp.md         # Llama.cpp MoE engine & zero-VRAM embeddings guide
 │   ├── ntfy.md              # ntfy push notification gateway guide
 │   ├── ollama.md            # Ollama setup & GPU acceleration guide
 │   ├── omniroute.md         # OmniRoute universal AI gateway, proxy & optimizer guide
@@ -147,6 +150,11 @@ flowchart TB
 ├── authentik/               # Authentik configuration, media and templates
 ├── gitea/                   # Gitea repositories, git data and configs
 ├── homepage/                # Homepage service dashboard layout & configs
+├── knowledge-search/        # pgvector Knowledge Search web application & API
+│   ├── Dockerfile           # Python 3.12 slim application image recipe
+│   ├── requirements.txt     # FastAPI, Uvicorn, asyncpg & httpx dependencies
+│   ├── main.py              # Asynchronous search, RRF & vector retrieval service
+│   └── static/              # Modern single-page web UI (HTML/JS/CSS)
 ├── momoe/                   # MoMoE hybrid MoE engine data, packs & entrypoint
 │   ├── data/                # Downloaded GGUF weights, packs, configs and logs
 │   └── docker-entrypoint.sh # Container startup orchestrator & CLI pass-through

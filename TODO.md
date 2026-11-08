@@ -100,3 +100,11 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **OpenBao CLI Integration**: Built custom image recipe (`open-terminal/Dockerfile`) packaging `bao` CLI and symlink aliases (`openbao`, `vault`) from `openbao/openbao:latest`, configured `BAO_ADDR` and `VAULT_ADDR` targeting `http://openbao:8200` on the `ai` network, and enabled bash completion.
 - [x] **Developer VCS Tooling Integration (GitHub & Gitea)**: Packaged official GitHub CLI (`gh` v2.103.3) and dual Gitea CLIs (modern `gt` v0.1.0 and classic `tea` v0.16.0 with `gitea-cli` symlink), configured system-wide auto-completions, and pre-configured default `GITEA_INSTANCE_URL=http://gitea:3000` over the internal `ai` network.
 - [x] **Documentation Synchronization**: Authored [`docs/open-terminal.md`](file:///data/homelab/docs/open-terminal.md), updated [`README.md`](file:///data/homelab/README.md), [`AGENTS.md`](file:///data/homelab/AGENTS.md), and [`docs/README.md`](file:///data/homelab/docs/README.md).
+
+---
+
+### 12. 🔎 pgvector Knowledge Retrieval & Chunk Exploration Substrate
+- [x] **Knowledge Search Web UI & Retrieval Engine**: Deployed `knowledge-search` container (`homelab/knowledge-search:latest`) on port `8000` (`https://knowledge.spencer.lan`, `https://rag.spencer.lan`).
+- [x] **Multi-Mode Search Pipeline**: Implemented Hybrid Search (Reciprocal Rank Fusion - RRF), Dense Vector Cosine Similarity (nomic-embed-text zero-padded to 1536 dims), Sparse Full-Text GIN Search, and Cosine Nearest Neighbors (`/api/similar`).
+- [x] **Metadata & Partition Resolution**: Integrated auto-enrichment linking collection UUIDs to human-readable names from `openwebui.knowledge` and `openwebui.file`.
+- [x] **Homepage & Traefik Integration**: Registered Traefik routers with wildcard TLS and created a service tile with live status widget on Homepage.

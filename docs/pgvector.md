@@ -1,6 +1,6 @@
-# Dedicated pgvector Instance (Open WebUI, Authentik & Gitea)
+# Dedicated pgvector Instance (Open WebUI, Knowledge Search, Authentik & Gitea)
 
-This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Open WebUI** (user conversation memory & RAG vector store), **Authentik** (centralized identity provider), and **Gitea** (repository metadata & issues). *(Note: Legacy LiteLLM database has been retired and archived to `pgvector/archives/litellm_final_backup.sql.gz`, as OmniRoute utilizes a zero-PostgreSQL local SQLite architecture).*
+This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extension enabled for **Open WebUI** (user conversation memory & RAG vector store), **Knowledge Search** (vector & full-text chunk retrieval), **Authentik** (centralized identity provider), and **Gitea** (repository metadata & issues). *(Note: Legacy LiteLLM database has been retired and archived to `pgvector/archives/litellm_final_backup.sql.gz`, as OmniRoute utilizes a zero-PostgreSQL local SQLite architecture).*
 
 ---
 
@@ -18,7 +18,7 @@ This dedicated `pgvector` service provides PostgreSQL with the `pgvector` extens
 ## 🔒 Security & Network Isolation
 
 * **Isolated `db` Network**: Connected strictly to the internal `db` bridge network.
-* **Service Access Requirement**: Any container requiring database access (Open WebUI, Authentik, Gitea) must join the `db` network in `docker-compose.yaml`.
+* **Service Access Requirement**: Any container requiring database access (Open WebUI, Knowledge Search, Authentik, Gitea) must join the `db` network in `docker-compose.yaml`.
 * **Zero Host Exposure**: Port `5432` is not bound to the host, preventing external access.
 
 ---

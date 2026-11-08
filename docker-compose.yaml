@@ -542,6 +542,52 @@ services:
       retries: 5
       start_period: 25s
 
+  knowledge-search:
+    build:
+      context: ./knowledge-search
+      dockerfile: Dockerfile
+    image: homelab/knowledge-search:latest
+    container_name: knowledge-search
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://${PGVECTOR_USER:-postgres}:${PGVECTOR_PASSWORD}@pgvector:5432/${OPENWEBUI_KNOWLEDGE_POSTGRES_DB:-openwebui_knowledge}
+      - CORE_DATABASE_URL=postgresql://${PGVECTOR_USER:-postgres}:${PGVECTOR_PASSWORD}@pgvector:5432/${OPENWEBUI_POSTGRES_DB:-openwebui}
+      - LLAMA_EMBED_URL=http://llama-embed:8081/v1/embeddings
+      - LLAMA_EMBED_API_KEY=${LLAMA_EMBED_API_KEY:-llama-local}
+      - LLAMA_EMBED_MODEL=nomic-embed-text
+      - VECTOR_TARGET_DIMS=1536
+    networks:
+      - net1
+      - db
+      - ai
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      llama-embed:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net1"
+      # Local LAN Router
+      - "traefik.http.routers.knowledge-search.rule=Host(`knowledge.spencer.lan`) || Host(`rag.spencer.lan`)"
+      - "traefik.http.routers.knowledge-search.entrypoints=websecure"
+      - "traefik.http.routers.knowledge-search.tls=true"
+      - "traefik.http.routers.knowledge-search.service=knowledge-search-svc"
+      # Load balancer service
+      - "traefik.http.services.knowledge-search-svc.loadbalancer.server.port=8000"
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq

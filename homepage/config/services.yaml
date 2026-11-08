@@ -49,6 +49,18 @@
           refreshInterval: 5000
 
 - Search & Scrape:
+    - Knowledge Search:
+        icon: mdi-database-search
+        href: https://knowledge.spencer.lan
+        description: "Vector & Full-Text Search Explorer for pgvector Knowledge Chunks"
+        server: local-docker
+        container: knowledge-search
+        widget:
+          type: customapi
+          url: http://knowledge-search:8000/healthz
+          mappings:
+            - field: status
+              label: Status
     - SearXNG:
         icon: searxng.png
         href: https://search.spencer.lan
