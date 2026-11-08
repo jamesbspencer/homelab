@@ -87,6 +87,7 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **Dual Model Providers & Grounding**: Integrated LiteLLM Proxy (exposing hybrid MoMoE 64k and local Ollama) plus SearXNG search grounding.
 - [x] **Cross-AI Memory Import**: Migrated 400+ persistent procedural knowledge and conversational memory units from Memlord and Hindsight into Open WebUI.
 - [x] **Traefik Ingress & Homepage**: Configured dual routing on `chat.spencer.lan` and `ai.spencer.lan` with CrowdSec bouncer, and registered under "AI & Agents" in Homepage.
+- [x] **Valve Encryption at Rest**: Enforced `ENABLE_VALVE_ENCRYPTION=True` using Fernet (AES-128) derived from `OPENWEBUI_SECRET_KEY` to secure tool/function configurations, plugin API keys, and user secrets at rest in PostgreSQL.
 
 ---
 

@@ -84,6 +84,8 @@ Key environment variables in [`.env`](file:///data/homelab/.env) and [`docker-co
 OPENWEBUI_VERSION=main
 OPENWEBUI_SECRET_KEY=<secure-secret-key>
 OPENWEBUI_PUBLIC_DOMAIN=ai.example.com
+ENABLE_SIGNUP=False
+ENABLE_VALVE_ENCRYPTION=True
 
 # PostgreSQL & pgvector
 OPENWEBUI_POSTGRES_DB=openwebui
@@ -118,6 +120,7 @@ Open WebUI integrates natively with **Open Terminal** (`ghcr.io/open-webui/open-
 * **Middlewares**: Protected globally on Traefik entryPoint `websecure` with `geoblock@file` and `crowdsec-bouncer@file`.
 * **TLS**: Traefik automatically terminates TLS using homelab wildcard certificates (`*.spencer.lan`) and Let's Encrypt for public WAN domains.
 * **Authentication**: Native user authentication (`WEBUI_AUTH=True`) with email/password and role-based permissions (`admin`, `user`).
+* **Valve Encryption at Rest**: Enabled via `ENABLE_VALVE_ENCRYPTION=True`. Open WebUI encrypts all Tool and Function plugin configurations, sensitive API keys, and user valves stored in PostgreSQL using Fernet (AES-128) symmetric encryption. Cryptographic keys are derived deterministically from the persistent `OPENWEBUI_SECRET_KEY` (see [Open WebUI Valves Documentation](https://docs.openwebui.com/features/extensibility/plugin/development/valves/)). Existing unencrypted valve dictionaries remain readable and will be encrypted upon subsequent saves.
 
 ---
 

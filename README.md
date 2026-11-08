@@ -13,7 +13,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **Traefik** | Reverse proxy, SSL, Geoblock (US Only) & edge router | `:80`, `:443` (`https://traefik.spencer.lan`) | [Traefik Guide](docs/traefik.md) |
 | **CrowdSec** | Intrusion detection & Traefik Bouncer plugin | `:8080` (Internal `net1` network) | [CrowdSec Guide](docs/crowdsec.md) |
 | **OmniRoute Gateway** | Universal AI gateway, OpenAI/Anthropic proxy & dynamic router | `https://llm.spencer.lan` (:20128) | [OmniRoute Guide](docs/omniroute.md) |
-| **Open WebUI** | Multi-model generative AI chat & memory client | `https://chat.spencer.lan` / `https://ai.spencer.lan` (:8080) | [Open WebUI Guide](docs/open-webui.md) |
+| **Open WebUI** | Multi-model generative AI chat & memory client (Fernet valve encryption at rest) | `https://chat.spencer.lan` / `https://ai.spencer.lan` (:8080) | [Open WebUI Guide](docs/open-webui.md) |
 | **Open Terminal** | Sandboxed remote shell & agent execution substrate | `:8000` (Internal `ai` network) | [Open Terminal Guide](docs/open-terminal.md) |
 | **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
 | **MoMoE** | Hybrid MoE inference engine (GPU + 61 GiB RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](docs/momoe.md) |

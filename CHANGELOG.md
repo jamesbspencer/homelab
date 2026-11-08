@@ -7,6 +7,16 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-11-08]
+
+### Added
+- **Open WebUI Valve Encryption at Rest**:
+  - Configured `ENABLE_VALVE_ENCRYPTION=True` in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) and parameterized in [`.env.example`](file:///data/homelab/.env.example) and `.env`.
+  - Enables Fernet (AES-128) symmetric encryption for all Tool and Function plugin valves and user valves stored in PostgreSQL, deriving the encryption key deterministically from `OPENWEBUI_SECRET_KEY`.
+  - Updated service architecture and security documentation in [`docs/open-webui.md`](file:///data/homelab/docs/open-webui.md) and [`AGENTS.md`](file:///data/homelab/AGENTS.md).
+
+---
+
 ## [2026-11-07]
 
 ### Added
