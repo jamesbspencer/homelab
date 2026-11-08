@@ -8,10 +8,10 @@ This file defines guidelines, rules, and architecture constraints that AI agents
 
 - **Services**:
   - **Traefik Reverse Proxy**: Single entry point for all HTTP/HTTPS traffic to the homelab (`traefik.spencer.lan`).
-  - **Ollama**: Local LLM server configured with NVIDIA GPU hardware acceleration.
-  - **MoMoE**: Hybrid Mixture-of-Experts (MoE) LLM inference engine combining GPU VRAM and host RAM/AVX-512 on internal port `8080` (accessible via OmniRoute).
-  - **OmniRoute AI Gateway**: Universal AI gateway, OpenAI/Anthropic model router, prompt compressor, and rate limiter on internal port `20128` and `llm.spencer.lan`.
-  - **Open WebUI**: Multi-model generative AI chat interface and conversational memory client on internal port `8080` (`chat.spencer.lan`, `ai.spencer.lan`) with OmniRoute embedding offload, unified pgvector database, and Fernet (AES-128) valve encryption at rest.
+  - **Llama.cpp Server (`llama-server`)**: Hybrid Mixture-of-Experts (MoE) LLM inference engine combining RTX 3060 12GB VRAM and host RAM/AVX-512 via `--n-cpu-moe` on internal port `8080`.
+  - **Llama.cpp Embeddings (`llama-embed`)**: Dedicated zero-VRAM text vector embedding runtime on internal port `8081` running `nomic-embed-text` with CPU AVX-512 acceleration.
+  - **OmniRoute AI Gateway**: Universal AI gateway, model router, prompt compressor, and rate limiter on internal port `20128` and `llm.spencer.lan` (standalone; decoupled from Open WebUI's direct inference path).
+  - **Open WebUI**: Multi-model generative AI chat interface and conversational memory client on internal port `8080` (`chat.spencer.lan`, `ai.spencer.lan`) connected directly to `llama-server` and `llama-embed`, with unified pgvector database and Fernet (AES-128) valve encryption at rest.
   - **Open Terminal**: Sandboxed remote shell and agent execution substrate for Open WebUI on internal port `8000` with persistent `/home/user` workspace, bearer token security, and pre-installed developer CLIs: OpenBao (`bao`, `openbao`, `vault`), GitHub CLI (`gh`), and Gitea CLI (`gt`, `tea`, `gitea-cli`).
   - **Firecrawl Stack**: Web scraping, crawling, and search cluster (`firecrawl`, `rabbitmq`, `nuq-postgres`, `playwright-service`) on internal port `3002`.
   - **SearXNG**: Privacy-respecting metasearch engine providing JSON search endpoints on internal port `8080`.
@@ -28,10 +28,10 @@ This file defines guidelines, rules, and architecture constraints that AI agents
 - **Domain Suffix**: All services in this homelab are routed under the local `.spencer.lan` domain (e.g., `traefik.spencer.lan`, `sso.spencer.lan`, `login.spencer.lan`, `chat.spencer.lan`, `ai.spencer.lan`, `llm.spencer.lan`, `logs.spencer.lan`, `dozzle.spencer.lan`, `push.spencer.lan`, `ntfy.spencer.lan`, `vault.spencer.lan`, `openbao.spencer.lan`, `git.spencer.lan`, `gitea.spencer.lan`, `home.spencer.lan`, `homepage.spencer.lan`, `glances.spencer.lan`, `stats.spencer.lan`).
 - **Networking**:
   - The Traefik container and proxied services requiring external web access (Open WebUI, OmniRoute, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage, Glances) as well as the CrowdSec Local API engine must belong to the bridge network named `net1`.
-  - Internal AI communication (between Open WebUI, Open Terminal, OmniRoute, Ollama, MoMoE, OpenBao, SearXNG, Firecrawl, ntfy, Gitea, Homepage, Glances) occurs on the isolated bridge network named `ai`.
+  - Internal AI communication (between Open WebUI, Open Terminal, llama-server, llama-embed, OmniRoute, OpenBao, SearXNG, Firecrawl, ntfy, Gitea, Homepage, Glances) occurs on the isolated bridge network named `ai`.
   - Database services (`pgvector`) are isolated on the dedicated bridge network named `db` and must **not** expose ports to the host or attach to the `ai` network. Any service needing database access must connect to the `db` network (Open WebUI, Authentik, Gitea).
   - Cache services (Valkey, OmniRoute, SearXNG, Firecrawl, Authentik sessions & queue, Gitea cache & queue) communicate on the dedicated bridge network named `redis`.
-  - Internal backend services (Open Terminal, Firecrawl, SearXNG, Valkey, pgvector, MoMoE) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
+  - Internal backend services (Open Terminal, llama-server, llama-embed, Firecrawl, SearXNG, Valkey, pgvector) should **not** expose ports to the host or Traefik unless explicitly requested. Proxied web services let Traefik handle routing via container labels.
 - **Documentation**: Detailed architecture, configuration, and operational guides for every service reside in [`docs/`](file:///data/homelab/docs/README.md). Always update the corresponding service guide when adding or modifying service configurations. Legacy/retired stack guides reside in [`docs/archive/`](file:///data/homelab/docs/archive/open-webui-legacy-stack.md).
 
 ---
@@ -44,7 +44,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
   docker compose config
   ```
 - **Do not** modify ports `80` and `443` binding on the Traefik container, as they are reserved for the reverse proxy entrypoints.
-- **GPU Resource Pass-through**: Do not remove or alter the `nvidia` GPU resource reservations block for the `ollama` service without explicit user instructions, as hardware acceleration is required for local LLM inference.
+- **GPU Resource Pass-through**: Do not remove or alter the `nvidia` GPU resource reservations block for the `llama-server` service without explicit user instructions, as hardware acceleration is required for local MoE inference.
 
 ### 2. Traefik Configurations
 - **Static vs. Dynamic Configuration**:

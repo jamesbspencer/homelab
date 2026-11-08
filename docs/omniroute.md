@@ -6,12 +6,12 @@ OmniRoute provides a unified, universal AI gateway, proxy, and dynamic model rou
 
 ## 🎯 Overview & Architecture
 
-* **Role**: Centralized LLM dispatch gateway, model router, prompt/token optimizer, and rate limiter.
+* **Role**: Centralized LLM dispatch gateway, model router, prompt/token optimizer, and rate limiter (Standalone; decoupled from Open WebUI direct inference).
 * **Container Name**: `omniroute`
 * **Image**: `diegosouzapw/omniroute:latest`
 * **Networks**:
   * `net1`: Traefik reverse proxy ingress (`llm.spencer.lan`).
-  * `ai`: Internal communication with Ollama (`ollama:11434`), MoMoE (`momoe:8080`), and Open WebUI (`open-webui:8080`).
+  * `ai`: Internal communication with `llama-server` (`llama-server:8080`), `llama-embed` (`llama-embed:8081`), and Open WebUI (`open-webui:8080`).
   * `redis`: High-performance caching, token optimization, and distributed rate limiting via Valkey (`valkey:6379`).
 * **External Ingress & Ports**:
   * API Endpoints: `https://llm.spencer.lan/v1` & `https://llm.spencer.lan/v1/messages`
@@ -24,13 +24,12 @@ graph TD
     Traefik[Traefik Proxy :443] -->|llm.spencer.lan| OmniRoute[OmniRoute Gateway :20128]
     
     subgraph Clients
-        OpenWebUI[Open WebUI] -->|http://omniroute:20128/v1| OmniRoute
         LAN[LAN Clients / Claude Code / Cursor] -->|https://llm.spencer.lan/v1| Traefik
+        OpenWebUI[Open WebUI] -.->|Optional Secondary Path| OmniRoute
     end
 
     subgraph Backends & Storage
-        OmniRoute -->|Local GPU Inference| Ollama[Ollama :11434]
-        OmniRoute -->|Hybrid MoE Inference 64k| MoMoE[MoMoE :8080]
+        OmniRoute -->|Llama.cpp MoE 64k Inference| LlamaServer[llama-server :8080]
         OmniRoute <-->|Cache & Rate Limiter| Valkey[(Valkey :6379)]
         OmniRoute -->|Local Encrypted SQLite| SQLite[(storage.sqlite)]
         OmniRoute -.->|Optional Cloud Fallbacks| Cloud[Groq / OpenRouter / DeepSeek]
@@ -45,11 +44,7 @@ OmniRoute routes model requests across local hardware acceleration backends and 
 
 | Model Alias / ID | Target Provider | Target Backend | Capabilities |
 |---|---|---|---|
-| `gemma4:12b` | `ollama-local` | `http://ollama:11434/v1` | GPU-accelerated local instruction & tool calling (64k context) |
-| `default` | `ollama-local` | `http://ollama:11434/v1` | Default homelab fallback model |
-| `qwen2.5:14b` | `ollama-local` | `http://ollama:11434/v1` | GPU-accelerated local instruction & tool calling (32k context) |
-| `nomic-embed-text` | `ollama-local` | `http://ollama:11434/v1` | High-performance text vector embeddings (768-dim) |
-| `ornith-1.5-35b` / `momoe` | `llama-cpp` | `http://momoe:8080/v1` | Agentic coding & deep reasoning via MoMoE (64k KV streaming in RAM + MTP drafting; context window overridden to 65,536) |
+| `qwen3.6-35b-a3b` | `llama-cpp` | `http://llama-server:8080/v1` | Hybrid MoE 35B reasoning & coding (--n-cpu-moe GPU + RAM, 64k unified context) |
 | `groq/llama-3.3-70b-versatile` | `groq` | Groq Cloud (`GROQ_API_KEY`) | Ultra-fast cloud fallback when local compute is saturated |
 | `openrouter/auto` | `openrouter` | OpenRouter (`OPENROUTER_API_KEY`) | Flexible fallback routing to foundation models |
 | `deepseek/deepseek-chat` | `deepseek` | DeepSeek (`DEEPSEEK_API_KEY`) | Cost-efficient large-context coding and reasoning |
@@ -58,11 +53,11 @@ OmniRoute routes model requests across local hardware acceleration backends and 
 
 ## 🗜️ Context Window Management & Token Compression
 
-OmniRoute enforces context window safety and token optimization to prevent upstream backend refusals (e.g., MoMoE 64k context overflow):
+OmniRoute enforces context window safety and token optimization to prevent upstream backend refusals (e.g., MoE 64k context overflow):
 
 1. **Context Window Overrides (`model_context_overrides`)**:
-   * MoMoE models (`llamacpp/ornith-1.5-35b-a3b-iq4_xs`, `llama-cpp/ornith-1.5-35b-a3b-iq4_xs`, `momoe`) are explicitly pinned to **65,536 tokens** (`real_context: 65536`).
-   * This guarantees that `/v1/models` advertises `context_length: 65536` and `max_input_tokens: 65536` to clients (Open WebUI, Claude Code, Cursor), allowing clients to proactively trim chat histories within the valid window.
+   * MoE models (`llama-cpp/qwen3.6-35b-a3b`, `qwen3.6-35b-a3b`) are explicitly pinned to **65,536 tokens** (`real_context: 65536`).
+   * This guarantees that `/v1/models` advertises `context_length: 65536` and `max_input_tokens: 65536` to clients (Claude Code, Cursor), allowing clients to proactively trim chat histories within the valid window.
 
 2. **Adaptive Context Budgeting (`contextBudget`)**:
    * **Mode**: `replace-autotrigger`

@@ -16,12 +16,12 @@ This document provides architecture specifications, integration details, configu
 | **Internal Port** | `8080` |
 | **Database** | PostgreSQL 16 on `pgvector` container (DB: `openwebui`, isolated `db` network) |
 | **Vector Knowledge DB** | Dedicated PostgreSQL 16 database (`openwebui_knowledge` on `pgvector` container) for RAG document chunks, external knowledge collections, web cache, and user memory vectors (`VECTOR_DB=pgvector`) |
-| **Embedding Engine** | Offloaded to OmniRoute / Ollama (`nomic-embed-text`, 768-dim) |
-| **Model Ingress** | Dual: OmniRoute Gateway (`http://omniroute:20128/v1`) & Ollama (`http://ollama:11434`) |
+| **Embedding Engine** | Offloaded to `llama-embed` (`nomic-embed-text`, 768-dim, CPU AVX-512) |
+| **Model Ingress** | Direct Llama.cpp MoE Server (`http://llama-server:8080/v1`) |
 | **Web Search Grounding** | Local Firecrawl Cluster (`http://firecrawl:3002`) & SearXNG (`http://searxng:8080`) |
 | **Web Loader / Scraper** | Firecrawl Headless Cluster (`http://firecrawl:3002/v2/scrape`) |
 | **Agent Action Substrate**| Open Terminal (`http://open-terminal:8000`, isolated `ai` network) |
-| **Network Attachments**| `net1` (Traefik Ingress), `ai` (OmniRoute, Ollama, SearXNG, Firecrawl, Open Terminal), `db` (pgvector) |
+| **Network Attachments**| `net1` (Traefik Ingress), `ai` (llama-server, llama-embed, OmniRoute, SearXNG, Firecrawl, Open Terminal), `db` (pgvector) |
 | **Persistent Storage** | `/data/homelab/open-webui` (`/app/backend/data` in container) |
 
 ---
@@ -40,17 +40,12 @@ graph TD
     end
 
     subgraph AI Backends & Grounding
-        OWUI -->|ai network| OmniRoute["OmniRoute Gateway (:20128)<br/>OpenAI & Anthropic Compatible"]
-        OWUI -->|ai network| Ollama["Ollama GPU Server (:11434)"]
+        OWUI -->|ai network: direct inference| LlamaServer["llama-server (:8080)<br/>Qwen3.6-35B-A3B MoE"]
+        OWUI -->|ai network: direct embeddings| LlamaEmbed["llama-embed (:8081)<br/>nomic-embed-text"]
+        OWUI -->|ai network: standalone proxy| OmniRoute["OmniRoute Gateway (:20128)"]
         OWUI -->|ai network| Firecrawl["Firecrawl Scraper & Search (:3002)"]
         OWUI -->|ai network| SearXNG["SearXNG Search (:8080)"]
         OWUI -->|ai network| OT["Open Terminal (:8000)<br/>Remote Shell & File Workspace"]
-    end
-
-    subgraph Embeddings & Memory
-        OWUI -->|POST /v1/embeddings| OmniRoute
-        OmniRoute -->|nomic-embed-text| Ollama
-        OmniRoute --> MoMoE["MoMoE 64k MoE Engine (:8080)"]
     end
 ```
 
@@ -59,10 +54,10 @@ graph TD
 ## 🧠 Memory Management & Cross-AI Synchronization
 
 ### 1. Zero-RAM In-Container Embedding Offload
-By default, Open WebUI loads PyTorch and SentenceTransformer weights in memory (~500 MB–1 GB RAM). In our modernized configuration, embeddings are completely offloaded to OmniRoute:
+By default, Open WebUI loads PyTorch and SentenceTransformer weights in memory (~500 MB–1 GB RAM). In our modernized configuration, embeddings are completely offloaded to the dedicated `llama-embed` companion container:
 * `RAG_EMBEDDING_ENGINE=openai`
-* `RAG_OPENAI_API_BASE_URL=http://omniroute:20128/v1`
-* `RAG_OPENAI_API_KEY=${OMNIROUTE_MASTER_KEY}`
+* `RAG_OPENAI_API_BASE_URL=http://llama-embed:8081/v1`
+* `RAG_OPENAI_API_KEY=${LLAMA_EMBED_API_KEY:-llama-local}`
 * `RAG_EMBEDDING_MODEL=nomic-embed-text`
 
 Open WebUI acts as a pure API client, retaining a minimal memory footprint (~350 MB) while vectorizing documents and user memories at GPU speeds.

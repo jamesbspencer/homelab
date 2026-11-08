@@ -10,6 +10,19 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-11-08]
 
 ### Added
+- **64k Context Window & Open WebUI Full Tooling Integration**:
+  - Expanded `llama-server` context size to **65,536 tokens** using unified KV cache (`--kv-unified --kv-unified-per-slot 65536 -np 2`), resolving 32k context boundary errors with zero VRAM overflow (resident at 11,689 MiB on RTX 3060).
+  - Pre-configured `qwen3.6-35b-a3b` persistent model preset in Open WebUI with default Web Search, all tools (`openbao_client`, `ubuntu_ssh_client`, `openwrt_client`), client skills, and Open Terminal execution substrate.
+  - Set global user interface default `webSearch: "always"` in Open WebUI user settings.
+  - Synchronized [`docs/open-webui.md`](file:///data/homelab/docs/open-webui.md) and [`docs/omniroute.md`](file:///data/homelab/docs/omniroute.md) to reflect the decoupled inference architecture.
+- **Llama.cpp Hybrid MoE Runtime & Zero-VRAM Embeddings (Replacing Ollama & MoMoE)**:
+  - Deployed `llama-server` (`ghcr.io/ggml-org/llama.cpp:server-cuda`) running `Qwen3.6-35B-A3B` (IQ4_XS, 35.5B parameters, 32k context) with expert offloading (`--n-cpu-moe 20`), flash attention (`--flash-attn on`), and quantized KV cache (`--cache-type-k q8_0 --cache-type-v q8_0`).
+  - Dedicated 100% of the NVIDIA GeForce RTX 3060 (12 GB VRAM) to non-expert layers, shared experts, and KV cache, while offloading inactive routed expert weights to system DDR4 RAM computed via Intel Xeon W-2145 AVX-512 extensions (`--threads 8`), achieving ~47–55 tokens/sec generation speed.
+  - Deployed companion `llama-embed` container running `nomic-embed-text` on CPU (0 MB VRAM, ~250 MB RAM) to handle vector search and conversational memory embeddings without GPU memory contention.
+  - Decoupled OmniRoute from Open WebUI's critical inference and embedding path: Open WebUI connects directly to `llama-server:8080/v1` for chat and `llama-embed:8081/v1` for RAG, unblocking startup dependencies while retaining OmniRoute as an independent standalone router.
+  - Retired and removed `ollama` and `momoe` containers, reclaiming fragmented VRAM reserves.
+  - Archived [`docs/ollama.md`](file:///data/homelab/docs/archive/ollama.md) and [`docs/momoe.md`](file:///data/homelab/docs/archive/momoe.md) into [`docs/archive/`](file:///data/homelab/docs/archive/); authored comprehensive architecture and tuning guide in [`docs/llama-cpp.md`](file:///data/homelab/docs/llama-cpp.md).
+  - Updated Homepage service cards, `README.md`, `AGENTS.md`, and `TODO.md`.
 - **GitHub & Gitea CLI Developer Tooling in Open Terminal**:
   - Installed official upstream GitHub CLI (`gh` v2.103.3) directly into `/usr/bin/gh` with system package bash completions.
   - Installed both modern Gitea CLI (`gt` v0.1.0) and classic Gitea CLI (`tea` v0.16.0) into `/usr/local/bin` along with compatibility symlink `/usr/local/bin/gitea-cli -> gt`.

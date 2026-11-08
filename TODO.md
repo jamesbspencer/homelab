@@ -63,12 +63,12 @@ This file tracks upcoming features, architectural improvements, and exploration 
 
 ---
 
-### 8. ⚡ Hybrid Mixture-of-Experts (MoE) Inference Engine (MoMoE)
-- [x] **Architecture Research & Candidate Selection**: Explored Strata, aflin/momoe, KTransformers, and ik_llama.cpp for combining GPU VRAM and host quad-channel DDR4 memory.
-- [x] **Container Deployment & Build Optimization**: Cloned `aflin/momoe` into `momoe/src`, compiled native CUDA 86 binary for RTX 3060 (`homelab/momoe:latest`), and deployed on the `ai` bridge with custom entrypoint and 2.5 GiB VRAM reservation for Ollama coexistence.
-- [x] **LiteLLM Model Routing & 64k KV Streaming**: Integrated `ornith-1.5-35b` and `momoe` into LiteLLM Proxy with 65,536 context (`MOMOE_CONTEXT=65536`) utilizing RAM KV cache streaming, MTP speculative drafting (112.5 tok/s live throughput), and dynamic API key forwarding.
-- [x] **Hermes Agent Scraping & Tool Alignment**: Aligned Hermes's Firecrawl web extraction and deep reasoning tools with the 64k MoMoE engine, eliminating VRAM contention with dense Ollama models.
-- [x] **Multi-Agent Code Review & Documentation**: Conducted 4-agent security, systems, routing, and standards audit; updated `AGENTS.md`, `README.md`, `docs/momoe.md`, `docs/litellm.md`, `docs/ollama.md`, and Homepage dashboard.
+### 8. ⚡ Llama.cpp MoE Expert Offloading & Zero-VRAM Embeddings (Replacing Ollama & MoMoE)
+- [x] **Architecture Research & Candidate Selection**: Explored Strata, aflin/momoe, KTransformers, and llama.cpp `--n-cpu-moe` for running 30B–35B MoE models across RTX 3060 12GB VRAM and 64GB DDR4 host memory.
+- [x] **Container Deployment & Build Optimization**: Deployed `llama-server` (`ghcr.io/ggml-org/llama.cpp:server-cuda`) with `--n-cpu-moe 20`, `--flash-attn on`, `--cache-type-k q8_0 --cache-type-v q8_0`, dedicating 100% of the RTX 3060's 12 GB VRAM to active attention and shared layers while offloading inactive expert weights to host RAM (55 tok/s throughput).
+- [x] **Zero-VRAM CPU Embedding Companion**: Deployed `llama-embed` (`ghcr.io/ggml-org/llama.cpp:server-cuda`) on the internal `ai` network (`:8081`) running `nomic-embed-text` with CPU AVX-512 acceleration, freeing GPU memory completely from background embedding tasks.
+- [x] **Direct Open WebUI Pipeline & OmniRoute Decoupling**: Connected Open WebUI directly to `llama-server:8080/v1` for chat and `llama-embed:8081/v1` for embeddings, unblocking startup dependencies while keeping OmniRoute preserved as a standalone router.
+- [x] **Multi-Agent Code Review & Documentation**: Conducted security, systems, routing, and standards audit; updated `AGENTS.md`, `README.md`, `docs/llama-cpp.md`, archived legacy docs to `docs/archive/`, and updated Homepage dashboard.
 
 ---
 

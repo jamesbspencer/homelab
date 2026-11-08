@@ -8,27 +8,33 @@
     - OmniRoute Gateway:
         icon: openai.png
         href: https://llm.spencer.lan
-        description: "Universal AI Gateway & Dynamic LLM Router"
+        description: "Universal AI Gateway & Dynamic LLM Router (Standalone)"
         server: local-docker
         container: omniroute
-    - Ollama LLM:
-        icon: ollama.png
-        href: https://llm.spencer.lan
-        description: "Local GPU-Accelerated LLM Runtime"
+    - Llama.cpp MoE Engine:
+        icon: mdi-cpu-64-bit
+        href: https://chat.spencer.lan
+        description: "Hybrid MoE 35B Inference Engine (--n-cpu-moe GPU + RAM)"
         server: local-docker
-        container: ollama
+        container: llama-server
         widget:
           type: customapi
-          url: http://ollama:11434/api/tags
+          url: http://llama-server:8080/health
           mappings:
-            - field: models.length
-              label: Models
-    - MoMoE Engine:
-        icon: mdi-cpu-64-bit
-        href: https://llm.spencer.lan
-        description: "Hybrid MoE 64k Inference Engine (GPU + RAM)"
+            - field: status
+              label: Engine
+    - Llama.cpp Embeddings:
+        icon: mdi-vector-point
+        href: https://chat.spencer.lan
+        description: "Zero-VRAM Text Vector Embeddings (CPU AVX-512)"
         server: local-docker
-        container: momoe
+        container: llama-embed
+        widget:
+          type: customapi
+          url: http://llama-embed:8081/health
+          mappings:
+            - field: status
+              label: Embeddings
     - NVIDIA RTX 3060:
         icon: nvidia.png
         href: https://glances.spencer.lan

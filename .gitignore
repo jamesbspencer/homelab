@@ -27,6 +27,10 @@ pgvector/archives/*
 archives/*
 *.tar.gz
 
+# Llama.cpp models and runtime caches
+llama/models/*
+!llama/models/.gitkeep
+
 # Ollama models, caches, and key pairs
 ollama/*
 !ollama/.gitkeep

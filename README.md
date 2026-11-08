@@ -12,11 +12,11 @@ Detailed architectural designs, configuration options, environment variables, an
 |---|---|---|---|
 | **Traefik** | Reverse proxy, SSL, Geoblock (US Only) & edge router | `:80`, `:443` (`https://traefik.spencer.lan`) | [Traefik Guide](docs/traefik.md) |
 | **CrowdSec** | Intrusion detection & Traefik Bouncer plugin | `:8080` (Internal `net1` network) | [CrowdSec Guide](docs/crowdsec.md) |
-| **OmniRoute Gateway** | Universal AI gateway, OpenAI/Anthropic proxy & dynamic router | `https://llm.spencer.lan` (:20128) | [OmniRoute Guide](docs/omniroute.md) |
+| **OmniRoute Gateway** | Universal AI gateway, OpenAI/Anthropic proxy & dynamic router (Standalone) | `https://llm.spencer.lan` (:20128) | [OmniRoute Guide](docs/omniroute.md) |
 | **Open WebUI** | Multi-model generative AI chat & memory client (Fernet valve encryption at rest) | `https://chat.spencer.lan` / `https://ai.spencer.lan` (:8080) | [Open WebUI Guide](docs/open-webui.md) |
 | **Open Terminal** | Sandboxed remote shell & agent execution substrate (OpenBao, GitHub & Gitea CLIs pre-installed) | `:8000` (Internal `ai` network) | [Open Terminal Guide](docs/open-terminal.md) |
-| **Ollama** | Local LLM inference engine with GPU acceleration | `http://ollama:11434` (Internal `ai` network) | [Ollama Guide](docs/ollama.md) |
-| **MoMoE** | Hybrid MoE inference engine (GPU + 61 GiB RAM) | `:8080` (Internal `ai` network) | [MoMoE Guide](docs/momoe.md) |
+| **Llama.cpp Server** | Hybrid MoE LLM inference engine (--n-cpu-moe GPU + RAM) | `:8080` (Internal `ai` network) | [Llama.cpp Guide](docs/llama-cpp.md) |
+| **Llama.cpp Embed** | Zero-VRAM text embedding runtime (CPU AVX-512) | `:8081` (Internal `ai` network) | [Llama.cpp Guide](docs/llama-cpp.md#mounted-volumes--models) |
 | **pgvector** | Unified vector & relational DB (Open WebUI relational + knowledge, Authentik & Gitea) | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
 | **Firecrawl Stack** | Web scraper, crawler, and search backend | `http://firecrawl:3002` (Internal `ai` network) | [Firecrawl Guide](docs/firecrawl.md) |
 | **SearXNG** | Privacy-respecting metasearch engine | `http://searxng:8080` (Internal `ai` network) | [SearXNG Guide](docs/searxng.md) |
@@ -61,16 +61,16 @@ flowchart TB
 
     %% AI Agent & Inference Layer
     subgraph AICore ["🧠 AI Agent & Inference Layer (ai)"]
-        OmniRoute["OmniRoute AI Gateway\n(Universal Router, Optimizer & Cache)"]
-        Ollama["Ollama (GPU Accelerated)\ngemma4:12b | nomic-embed"]
-        MoMoE["MoMoE Hybrid MoE (GPU + RAM)\nornith-1.5-35b (64k)"]
+        LlamaServer["llama-server Hybrid MoE\n(RTX 3060 12GB + RAM AVX-512 :8080)"]
+        LlamaEmbed["llama-embed Zero-VRAM Embeddings\n(CPU nomic-embed-text :8081)"]
+        OmniRoute["OmniRoute AI Gateway (Standalone)\n(Universal Router, Optimizer & Cache :20128)"]
         OpenTerminal["Open Terminal Sandbox\n:8000 (Agent Shell & Files)"]
         
-        OpenWebUI -->|LLM Requests| OmniRoute
+        OpenWebUI -->|Direct Chat :8080/v1| LlamaServer
+        OpenWebUI -->|Direct Embeddings :8081/v1| LlamaEmbed
         OpenWebUI -->|Remote Shell & Workspace| OpenTerminal
-        OmniRoute -->|Local GPU Inference| Ollama
-        OmniRoute -->|Hybrid MoE 64k| MoMoE
-        OmniRoute -.->|Optional Cloud| CloudLLM[OpenRouter / Groq / DeepSeek]
+        OmniRoute -.->|Optional Upstream Inference| LlamaServer
+        OmniRoute -.->|Optional Cloud Fallbacks| CloudLLM[OpenRouter / Groq / DeepSeek]
     end
 
     %% Tools, Search & Scraping Cluster
@@ -216,16 +216,17 @@ curl -kfsSL https://llm.spencer.lan/healthz
 curl -kfsSL https://llm.spencer.lan/v1/models -H "Authorization: Bearer ${OMNIROUTE_MASTER_KEY}"
 ```
 
-### Test Ollama GPU Inference
+### Test Llama.cpp MoE GPU Inference
 ```bash
-curl http://localhost:11434/api/tags
-docker compose exec ollama nvidia-smi
+docker compose exec llama-server curl -s http://localhost:8080/health
+docker compose exec open-webui curl -s http://llama-server:8080/v1/models
+nvidia-smi
 ```
 
-### Test MoMoE Hybrid MoE Inference
+### Test Llama.cpp Embedding Service
 ```bash
-docker compose exec momoe curl -s http://127.0.0.1:8080/health
-docker compose exec momoe ./momoe status
+docker compose exec llama-embed curl -s http://localhost:8081/health
+docker compose exec open-webui curl -s http://llama-embed:8081/v1/models
 ```
 
 ### Test Internal Scraping (Firecrawl)
