@@ -10,6 +10,14 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-11-08]
 
 ### Added
+- **NVIDIA GPU Performance Telemetry on Homepage via Glances**:
+  - Deployed `glances` container (`nicolargo/glances:ubuntu-latest-full`) with full NVIDIA GPU device passthrough (`driver: nvidia`, `count: all`, `capabilities: [gpu]`) on the isolated `ai` and `net1` bridge networks.
+  - Utilized the `ubuntu-latest-full` (glibc) image base to ensure compatibility with host NVML (`libnvidia-ml.so.1`) drivers, avoiding Alpine musl `dlvsym` library loading issues.
+  - Exposed Glances REST API v4 on internal port `61208` and registered Traefik reverse proxy routes for `glances.spencer.lan` and `stats.spencer.lan`.
+  - Added `NVIDIA RTX 3060` hardware telemetry widget to the **AI & Agents** category (`metric: gpu:nvidia0`) and `Host Performance` widget to the **Developer Tools & Ops** category (`metric: cpu`) in Homepage ([`homepage/config/services.yaml`](file:///data/homelab/homepage/config/services.yaml)).
+  - Updated grid column layout to 4 columns for **Developer Tools & Ops** in [`homepage/config/settings.yaml`](file:///data/homelab/homepage/config/settings.yaml).
+  - Authored dedicated service documentation in [`docs/glances.md`](file:///data/homelab/docs/glances.md) and updated [`README.md`](file:///data/homelab/README.md), [`AGENTS.md`](file:///data/homelab/AGENTS.md), and [`docs/homepage.md`](file:///data/homelab/docs/homepage.md).
+
 - **Open WebUI Valve Encryption at Rest**:
   - Configured `ENABLE_VALVE_ENCRYPTION=True` in [`docker-compose.yaml`](file:///data/homelab/docker-compose.yaml) and parameterized in [`.env.example`](file:///data/homelab/.env.example) and `.env`.
   - Enables Fernet (AES-128) symmetric encryption for all Tool and Function plugin valves and user valves stored in PostgreSQL, deriving the encryption key deterministically from `OPENWEBUI_SECRET_KEY`.

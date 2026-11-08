@@ -29,6 +29,18 @@
         description: "Hybrid MoE 64k Inference Engine (GPU + RAM)"
         server: local-docker
         container: momoe
+    - NVIDIA RTX 3060:
+        icon: nvidia.png
+        href: https://glances.spencer.lan
+        description: "12GB VRAM Local AI Hardware Accelerator"
+        server: local-docker
+        container: glances
+        widget:
+          type: glances
+          url: http://glances:61208
+          version: 4
+          metric: gpu:nvidia0
+          refreshInterval: 5000
 
 - Search & Scrape:
     - SearXNG:
@@ -89,6 +101,18 @@
         description: "System Notifications & Push Gateway"
         server: local-docker
         container: ntfy
+    - Host Performance:
+        icon: glances.png
+        href: https://glances.spencer.lan
+        description: "Physical Host CPU, System Load & Processes"
+        server: local-docker
+        container: glances
+        widget:
+          type: glances
+          url: http://glances:61208
+          version: 4
+          metric: cpu
+          refreshInterval: 5000
 
 - Data & Storage:
     - pgvector Database:

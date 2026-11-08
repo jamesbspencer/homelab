@@ -17,7 +17,7 @@ layout:
     columns: 3
   Developer Tools & Ops:
     style: row
-    columns: 3
+    columns: 4
   Data & Storage:
     style: row
     columns: 3

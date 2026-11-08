@@ -262,6 +262,41 @@ services:
       - "traefik.http.routers.dozzle.middlewares=authentik@file"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
 
+  glances:
+    image: nicolargo/glances:${GLANCES_VERSION:-ubuntu-latest-full}
+    container_name: glances
+    restart: unless-stopped
+    pid: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - net1
+      - ai
+    environment:
+      - GLANCES_OPT=-w
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:61208/api/4/version')\" || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=net1"
+      # Local LAN Router
+      - "traefik.http.routers.glances.rule=Host(`glances.spencer.lan`) || Host(`stats.spencer.lan`)"
+      - "traefik.http.routers.glances.entrypoints=websecure"
+      - "traefik.http.routers.glances.tls=true"
+      - "traefik.http.routers.glances.service=glances-svc"
+      - "traefik.http.services.glances-svc.loadbalancer.server.port=61208"
+
   ntfy:
     image: binwiederhier/ntfy:${NTFY_VERSION:-latest}
     container_name: ntfy

@@ -39,9 +39,10 @@ This file tracks upcoming features, architectural improvements, and exploration 
 
 ---
 
-### 5. 📈 NVIDIA GPU & System Telemetry (Prometheus + Grafana + DCGM)
+### 5. 📈 NVIDIA GPU & System Telemetry
+- [x] **Glances GPU Telemetry & Homepage Widget**: Deployed `glances` container (`ubuntu-latest-full`) with full NVIDIA GPU passthrough on `ai` and `net1` networks, exposing live RTX 3060 load, VRAM, and temperature directly on Homepage (`https://home.spencer.lan`) via `gpu:nvidia0`.
 - [ ] **NVIDIA GPU Exporter**: Deploy `dcgm-exporter` or `nvidia-gpu-exporter` with GPU pass-through to monitor vRAM allocation, tensor core utilization, temperatures, and power draw during Ollama inference.
-- [ ] **Service Metrics Ingestion**: Scrape Prometheus metrics from Traefik (`:8080/metrics`), LiteLLM (`:4000/metrics`), and CrowdSec Local API.
+- [ ] **Service Metrics Ingestion**: Scrape Prometheus metrics from Traefik (`:8080/metrics`), OmniRoute, and CrowdSec Local API.
 - [ ] **Unified Homelab Grafana Dashboard**: Create a single-pane dashboard displaying real-time LLM tokens/sec throughput, cache hit ratios in Valkey, active Traefik connections, and agent memory usage.
 
 ---
