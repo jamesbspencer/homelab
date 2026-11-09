@@ -15,7 +15,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **OmniRoute Gateway** | Universal AI gateway, OpenAI/Anthropic proxy & dynamic router (Standalone) | `https://llm.spencer.lan` (:20128) | [OmniRoute Guide](docs/omniroute.md) |
 | **Open WebUI** | Multi-model generative AI chat & memory client (Fernet valve encryption at rest) | `https://chat.spencer.lan` / `https://ai.spencer.lan` (:8080) | [Open WebUI Guide](docs/open-webui.md) |
 | **Open Terminal** | Sandboxed remote shell & agent execution substrate (OpenBao, GitHub & Gitea CLIs pre-installed) | `:8000` (Internal `ai` network) | [Open Terminal Guide](docs/open-terminal.md) |
-| **Llama.cpp Server** | Hybrid MoE LLM inference engine (--n-cpu-moe GPU + RAM) | `:8080` (Internal `ai` network) | [Llama.cpp Guide](docs/llama-cpp.md) |
+| **Llama.cpp Server** | Multi-Model Hybrid MoE Router (Qwen 3.6 35B & Qwen 3 Coder 30B, --n-cpu-moe GPU + RAM) | `:8080` (Internal `ai` network) | [Llama.cpp Guide](docs/llama-cpp.md) |
 | **Llama.cpp Embed** | Zero-VRAM text embedding runtime (CPU AVX-512) | `:8081` (Internal `ai` network) | [Llama.cpp Guide](docs/llama-cpp.md#mounted-volumes--models) |
 | **Knowledge Search** | Vector & full-text knowledge retrieval substrate and web UI | `https://knowledge.spencer.lan` / `https://rag.spencer.lan` (:8000) | [Knowledge Search Guide](docs/knowledge-search.md) |
 | **pgvector** | Unified vector & relational DB (Open WebUI relational + knowledge, Authentik & Gitea) | `pgvector:5432` (Internal `db` network) | [pgvector Guide](docs/pgvector.md) |
@@ -155,6 +155,9 @@ flowchart TB
 │   ├── requirements.txt     # FastAPI, Uvicorn, asyncpg & httpx dependencies
 │   ├── main.py              # Asynchronous search, RRF & vector retrieval service
 │   └── static/              # Modern single-page web UI (HTML/JS/CSS)
+├── llama/                   # llama.cpp persistent model weights and router presets
+│   ├── models/              # Downloaded GGUF weights (Qwen3.6, Qwen3 Coder, nomic-embed)
+│   └── presets.ini          # Router presets defining context, offloading and GPU layers
 ├── momoe/                   # MoMoE hybrid MoE engine data, packs & entrypoint
 │   ├── data/                # Downloaded GGUF weights, packs, configs and logs
 │   └── docker-entrypoint.sh # Container startup orchestrator & CLI pass-through

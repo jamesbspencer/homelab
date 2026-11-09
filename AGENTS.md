@@ -8,7 +8,7 @@ This file defines guidelines, rules, and architecture constraints that AI agents
 
 - **Services**:
   - **Traefik Reverse Proxy**: Single entry point for all HTTP/HTTPS traffic to the homelab (`traefik.spencer.lan`).
-  - **Llama.cpp Server (`llama-server`)**: Hybrid Mixture-of-Experts (MoE) LLM inference engine combining RTX 3060 12GB VRAM and host RAM/AVX-512 via `--n-cpu-moe` on internal port `8080`.
+  - **Llama.cpp Server (`llama-server`)**: Multi-model Hybrid Mixture-of-Experts (MoE) router engine combining RTX 3060 12GB VRAM and host RAM/AVX-512 via `--n-cpu-moe` on internal port `8080` (supporting `qwen3.6-35b-a3b` and `qwen3-coder-30b-a3b` with dynamic on-demand presets).
   - **Llama.cpp Embeddings (`llama-embed`)**: Dedicated zero-VRAM text vector embedding runtime on internal port `8081` running `nomic-embed-text` with CPU AVX-512 acceleration.
   - **OmniRoute AI Gateway**: Universal AI gateway, model router, prompt compressor, and rate limiter on internal port `20128` and `llm.spencer.lan` (standalone; decoupled from Open WebUI's direct inference path).
   - **Open WebUI**: Multi-model generative AI chat interface and conversational memory client on internal port `8080` (`chat.spencer.lan`, `ai.spencer.lan`) connected directly to `llama-server` and `llama-embed`, with unified pgvector database and Fernet (AES-128) valve encryption at rest.

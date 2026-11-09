@@ -17,7 +17,7 @@ This document provides architecture specifications, integration details, configu
 | **Database** | PostgreSQL 16 on `pgvector` container (DB: `openwebui`, isolated `db` network) |
 | **Vector Knowledge DB** | Dedicated PostgreSQL 16 database (`openwebui_knowledge` on `pgvector` container) for RAG document chunks, external knowledge collections, web cache, and user memory vectors (`VECTOR_DB=pgvector`) |
 | **Embedding Engine** | Offloaded to `llama-embed` (`nomic-embed-text`, 768-dim, CPU AVX-512) |
-| **Model Ingress** | Direct Llama.cpp MoE Server (`http://llama-server:8080/v1`) |
+| **Model Ingress** | Direct Llama.cpp MoE Router Server (`http://llama-server:8080/v1` supporting `qwen3.6-35b-a3b` and `qwen3-coder-30b-a3b`) |
 | **Web Search Grounding** | Local Firecrawl Cluster (`http://firecrawl:3002`) & SearXNG (`http://searxng:8080`) |
 | **Web Loader / Scraper** | Firecrawl Headless Cluster (`http://firecrawl:3002/v2/scrape`) |
 | **Agent Action Substrate**| Open Terminal (`http://open-terminal:8000`, isolated `ai` network) |
@@ -92,6 +92,25 @@ OPENWEBUI_POSTGRES_PASSWORD=<secure-password>
 OPEN_TERMINAL_VERSION=latest
 OPEN_TERMINAL_API_KEY=<secure-terminal-api-key>
 ```
+
+---
+
+## 🗂️ Workspace Models & IDE Integration
+
+Open WebUI provides curated workspace models with custom capability profiles for different operational environments:
+
+| Model ID | Name | Base Model | Capabilities | Target Use Case |
+|---|---|---|---|---|
+| `qwen3.6-35b-a3b` | Qwen 3.6 35B A3B | Upstream MoE | Full (web search, terminal, tool calling, citations) | Interactive conversational chat with full homelab tooling |
+| `qwen` | qwen-all | `qwen3.6-35b-a3b` | Full + Homelab Docs Knowledge Base (`homelab-docs`) | Homelab operations, infrastructure troubleshooting, knowledge queries |
+| `qwen3-coder-30b-a3b` | Qwen 3 Coder 30B A3B | Upstream MoE | Raw coding model | Local coding generation and code refactoring |
+| `vscode-coder` (alias `vscode`) | VSCode Coder | `qwen3-coder-30b-a3b` | **Raw Passthrough**: No tools, no memory, no knowledge, no web search | VS Code extensions (Continue, Cline, Roo Code, Aider) requiring clean prompt passthrough without prompt contamination |
+
+### Connecting VS Code to Open WebUI
+Configure your VS Code AI extension (Continue, Cline, Roo Code, etc.) with the following parameters:
+- **Base URL**: `https://chat.spencer.lan/api/v1` (or `https://ai.spencer.lan/api/v1`)
+- **API Key**: User Open WebUI API key (`Settings` > `Account` > `API Keys`)
+- **Model**: `vscode-coder` (or `vscode`)
 
 ---
 

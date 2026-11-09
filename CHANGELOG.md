@@ -7,6 +7,19 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-11-09]
+
+### Added
+- **Qwen 3 Coder 30B MoE & Multi-Model Llama Router**:
+  - Downloaded `Qwen3-Coder-30B-A3B-Instruct-IQ4_XS.gguf` (16.3 GB, 48 hidden layers, 128 experts with 8 active per token) into `./llama/models`.
+  - Converted `llama-server` to Router Mode using `--models-preset /presets.ini` with single-model memory constraint (`--models-max 1`) for safe GPU VRAM sharing.
+  - Defined router model presets in `llama/presets.ini` with 64k unified KV cache and `--n-cpu-moe` offloading:
+    - `qwen3.6-35b-a3b`: `--n-cpu-moe 20` (20 CPU layers / 20 GPU layers).
+    - `qwen3-coder-30b-a3b`: `--n-cpu-moe 32` (32 CPU layers / 16 GPU layers, ~7.8 GiB VRAM footprint).
+  - Provisioned clean raw workspace models in Open WebUI (`vscode-coder` and `vscode`) with no tools, no memories, no knowledge retrieval, and no web search for VS Code extensions (Continue, Cline, Roo Code, Aider).
+  - Configured OmniRoute context window overrides for `qwen3-coder-30b-a3b` and `vscode-coder` (65,536 tokens).
+  - Synchronized documentation in `docs/llama-cpp.md`, `docs/open-webui.md`, `docs/omniroute.md`, `README.md`, and `AGENTS.md`.
+
 ## [2026-11-08]
 
 ### Added

@@ -44,7 +44,9 @@ OmniRoute routes model requests across local hardware acceleration backends and 
 
 | Model Alias / ID | Target Provider | Target Backend | Capabilities |
 |---|---|---|---|
-| `qwen3.6-35b-a3b` | `llama-cpp` | `http://llama-server:8080/v1` | Hybrid MoE 35B reasoning & coding (--n-cpu-moe GPU + RAM, 64k unified context) |
+| `qwen3.6-35b-a3b` | `llama-cpp` | `http://llama-server:8080/v1` | Hybrid MoE 35B reasoning & instruction (--n-cpu-moe 20 GPU + RAM, 64k unified context) |
+| `qwen3-coder-30b-a3b` | `llama-cpp` | `http://llama-server:8080/v1` | Hybrid MoE 30B coding & agentic reasoning (--n-cpu-moe 24 GPU + RAM, 64k unified context) |
+| `vscode-coder` | `llama-cpp` | `http://llama-server:8080/v1` | Pure coding model passthrough for VSCode / IDE integrations |
 | `groq/llama-3.3-70b-versatile` | `groq` | Groq Cloud (`GROQ_API_KEY`) | Ultra-fast cloud fallback when local compute is saturated |
 | `openrouter/auto` | `openrouter` | OpenRouter (`OPENROUTER_API_KEY`) | Flexible fallback routing to foundation models |
 | `deepseek/deepseek-chat` | `deepseek` | DeepSeek (`DEEPSEEK_API_KEY`) | Cost-efficient large-context coding and reasoning |
@@ -56,7 +58,7 @@ OmniRoute routes model requests across local hardware acceleration backends and 
 OmniRoute enforces context window safety and token optimization to prevent upstream backend refusals (e.g., MoE 64k context overflow):
 
 1. **Context Window Overrides (`model_context_overrides`)**:
-   * MoE models (`llama-cpp/qwen3.6-35b-a3b`, `qwen3.6-35b-a3b`) are explicitly pinned to **65,536 tokens** (`real_context: 65536`).
+   * MoE models (`llama-cpp/qwen3.6-35b-a3b`, `qwen3.6-35b-a3b`, `llama-cpp/qwen3-coder-30b-a3b`, `qwen3-coder-30b-a3b`, `vscode-coder`) are explicitly pinned to **65,536 tokens** (`real_context: 65536`).
    * This guarantees that `/v1/models` advertises `context_length: 65536` and `max_input_tokens: 65536` to clients (Claude Code, Cursor), allowing clients to proactively trim chat histories within the valid window.
 
 2. **Adaptive Context Budgeting (`contextBudget`)**:

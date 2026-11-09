@@ -49,24 +49,14 @@ services:
         hard: -1
     volumes:
       - ./llama/models:/models:ro
+      - ./llama/presets.ini:/presets.ini:ro
     environment:
       - CUDA_VISIBLE_DEVICES=0
     command: >
-      --model /models/Qwen3.6-35B-A3B-IQ4_XS.gguf
-      --alias qwen3.6-35b-a3b
+      --models-preset /presets.ini
+      --models-max 1
       --host 0.0.0.0
       --port 8080
-      -ngl 99
-      --n-cpu-moe 20
-      --kv-unified
-      --kv-unified-per-slot 65536
-      -np 2
-      --flash-attn on
-      --cache-type-k q8_0
-      --cache-type-v q8_0
-      --threads 8
-      --jinja
-      --chat-template-kwargs '{"preserve_thinking":true}'
     deploy:
       resources:
         reservations:

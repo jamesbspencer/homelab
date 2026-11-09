@@ -108,3 +108,12 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **Multi-Mode Search Pipeline**: Implemented Hybrid Search (Reciprocal Rank Fusion - RRF), Dense Vector Cosine Similarity (nomic-embed-text zero-padded to 1536 dims), Sparse Full-Text GIN Search, and Cosine Nearest Neighbors (`/api/similar`).
 - [x] **Metadata & Partition Resolution**: Integrated auto-enrichment linking collection UUIDs to human-readable names from `openwebui.knowledge` and `openwebui.file`.
 - [x] **Homepage & Traefik Integration**: Registered Traefik routers with wildcard TLS and created a service tile with live status widget on Homepage.
+
+---
+
+### 13. 🧠 Multi-Model MoE Router & Dedicated VS Code Clean Workspace Model
+- [x] **Qwen 3 Coder 30B MoE Download**: Downloaded `Qwen3-Coder-30B-A3B-Instruct-IQ4_XS.gguf` (16.3 GB) to `./llama/models`.
+- [x] **Llama.cpp Router Mode**: Migrated `llama-server` to `--models-preset /presets.ini` with `--models-max 1` dynamic LRU switching for zero VRAM collision between 35B and 30B MoE weights.
+- [x] **Hardware Layer Offloading**: Configured `--n-cpu-moe 20` for Qwen 3.6 35B and `--n-cpu-moe 24` for Qwen 3 Coder 30B, with 64k unified context.
+- [x] **VS Code Clean Workspace Model**: Provisioned `vscode-coder` and `vscode` models in Open WebUI with no tools, no memories, no knowledge retrieval, and no web search for clean IDE integrations.
+- [x] **OmniRoute Context Limits**: Enforced 65,536 token context window in OmniRoute SQLite `model_context_overrides`.

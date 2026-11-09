@@ -8,7 +8,7 @@ High-performance local Mixture-of-Experts (MoE) and dense LLM inference using **
 
 * **Role**: Primary local LLM inference engine executing 30B–35B MoE models directly behind Open WebUI and local tooling.
 * **Services**:
-  * **`llama-server`**: MoE chat and reasoning engine with NVIDIA GPU acceleration and CPU expert offloading (`:8080`).
+  * **`llama-server`**: Multi-model MoE router engine with NVIDIA GPU acceleration, CPU expert offloading (`--n-cpu-moe`), and dynamic LRU model switching via `--models-preset` (`:8080`).
   * **`llama-embed`**: Companion zero-VRAM CPU embedding service (`:8081`) running `nomic-embed-text`.
 * **Container Image**: `ghcr.io/ggml-org/llama.cpp:server-cuda`
 * **Network**: `ai` (Internal AI communication network; no host ports exposed).
@@ -20,13 +20,18 @@ graph TD
     Traefik -.->|https://llm.spencer.lan| OmniRoute[OmniRoute Standalone :20128]
 
     subgraph Direct Inference Plane
-        OpenWebUI -->|Direct Chat :8080/v1| LlamaServer["llama-server (:8080)"]
+        OpenWebUI -->|Direct Chat :8080/v1| LlamaServer["llama-server (:8080 Router Mode)"]
         OpenWebUI -->|Direct Embeddings :8081/v1| LlamaEmbed["llama-embed (:8081)"]
+    end
+
+    subgraph Llama.cpp Router Presets
+        LlamaServer -.->|Preset: qwen3.6-35b-a3b| M1["Qwen3.6-35B-A3B-IQ4_XS (--n-cpu-moe 20)"]
+        LlamaServer -.->|Preset: qwen3-coder-30b-a3b| M2["Qwen3-Coder-30B-A3B-Instruct-IQ4_XS (--n-cpu-moe 32)"]
     end
 
     subgraph Hardware Memory Hierarchy
         LlamaServer -->|Attention, Shared Experts, Norms, KV Cache| GPU["RTX 3060 (12 GB VRAM)"]
-        LlamaServer -->|--n-cpu-moe 20 Routed Inactive Experts| RAM["Intel Xeon W-2145 + 61 GiB RAM (AVX-512)"]
+        LlamaServer -->|Routed Inactive Experts| RAM["Intel Xeon W-2145 + 61 GiB RAM (AVX-512)"]
         LlamaEmbed -->|nomic-embed-text (~250 MB)| RAM
     end
 ```
@@ -35,7 +40,9 @@ graph TD
 
 ## 🚀 GPU & Memory Hierarchy Math (RTX 3060 + Xeon W-2145)
 
-Spencer's homelab runs **Qwen3.6-35B-A3B** (35.5 billion total parameters, 3 billion active parameters per token) across a single **NVIDIA GeForce RTX 3060 (12 GB VRAM)** and **61 GiB DDR4 RAM**:
+Spencer's homelab executes MoE models across a single **NVIDIA GeForce RTX 3060 (12 GB VRAM)** and **61 GiB DDR4 RAM** with dynamic LRU memory eviction (`--models-max 1`):
+
+### Model 1: Qwen 3.6 35B A3B (`qwen3.6-35b-a3b`)
 
 | Component | Parameter Count | Quantization | Resident Placement | Memory Footprint |
 |---|---|---|---|---|
@@ -46,6 +53,19 @@ Spencer's homelab runs **Qwen3.6-35B-A3B** (35.5 billion total parameters, 3 bil
 | **KV Cache (64k context)** | Unified slots | Q8_0 (`--cache-type-k/v q8_0`, `--kv-unified-per-slot 65536`) | **GPU VRAM** | ~2.3 GiB |
 | **Total VRAM Consumption** | — | — | **RTX 3060** | **~11.6 GiB / 12 GiB** |
 | **Offloaded CPU Experts (`--n-cpu-moe 20`)** | 20 layers | IQ4_XS | **System RAM** | **~8.9 GiB / 61 GiB** |
+| **Embedding Engine (`llama-embed`)** | 137M | F16 / Q4_K | **System RAM** | **~0.27 GiB (0 MB VRAM)** |
+
+### Model 2: Qwen 3 Coder 30B A3B (`qwen3-coder-30b-a3b`)
+
+| Component | Parameter Count | Quantization | Resident Placement | Memory Footprint |
+|---|---|---|---|---|
+| **Embeddings & Shared Tensors** | ~1.2B dense | Q8_0 / Q4_K_M | **GPU VRAM** | ~1.5 GiB |
+| **Attention Layers & Norms** | 48 layers | Q4_K / Q8_0 | **GPU VRAM** | ~2.6 GiB |
+| **Shared Experts** | 1 shared | Q4_K_M | **GPU VRAM** | ~1.0 GiB |
+| **GPU Routed Experts** | 16 layers | IQ4_XS | **GPU VRAM** | ~2.2 GiB |
+| **KV Cache (64k context)** | Unified slots | Q4_0 (`--cache-type-k/v q4_0`, `--kv-unified-per-slot 65536`) | **GPU VRAM** | ~1.6 GiB |
+| **Total VRAM Consumption** | — | — | **RTX 3060** | **~7.8 GiB / 12 GiB** |
+| **Offloaded CPU Experts (`--n-cpu-moe 32`)** | 32 layers | IQ4_XS | **System RAM** | **~8.6 GiB / 61 GiB** |
 | **Embedding Engine (`llama-embed`)** | 137M | F16 / Q4_K | **System RAM** | **~0.27 GiB (0 MB VRAM)** |
 
 ---
@@ -63,7 +83,8 @@ Spencer's homelab runs **Qwen3.6-35B-A3B** (35.5 billion total parameters, 3 bil
 
 | Host Path | Container Path | Purpose |
 |---|---|---|
-| `./llama/models` | `/models:ro` | Stores GGUF model weights (`Qwen3.6-35B-A3B-IQ4_XS.gguf`, `nomic-embed-text.gguf`) |
+| `./llama/models` | `/models:ro` | Stores GGUF model weights (`Qwen3.6-35B-A3B-IQ4_XS.gguf`, `Qwen3-Coder-30B-A3B-Instruct-IQ4_XS.gguf`, `nomic-embed-text.gguf`) |
+| `./llama/presets.ini` | `/presets.ini:ro` | Router configuration defining model presets, GPU offload layers, and `--n-cpu-moe` parameters |
 
 ---
 
@@ -71,13 +92,13 @@ Spencer's homelab runs **Qwen3.6-35B-A3B** (35.5 billion total parameters, 3 bil
 
 ### Checking Service Health & Endpoints
 ```bash
-# MoE chat server health
+# MoE router server health
 docker compose exec llama-server curl -s http://localhost:8080/health
 
 # Embedding server health
 docker compose exec llama-embed curl -s http://localhost:8081/health
 
-# List active models & aliases
+# List active models & router presets
 docker compose exec open-webui curl -s http://llama-server:8080/v1/models
 docker compose exec open-webui curl -s http://llama-embed:8081/v1/models
 ```
@@ -87,13 +108,24 @@ docker compose exec open-webui curl -s http://llama-embed:8081/v1/models
 nvidia-smi
 ```
 
-### Test Chat Generation via Llama-Server
+### Test General Chat Generation (Qwen 3.6 35B MoE)
 ```bash
 docker compose exec open-webui curl -s http://llama-server:8080/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "qwen3.6-35b-a3b",
     "messages": [{"role": "user", "content": "Explain quantum computing in one sentence."}]
+  }'
+```
+
+### Test Coding Generation (Qwen 3 Coder 30B MoE)
+```bash
+docker compose exec open-webui curl -s http://llama-server:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen3-coder-30b-a3b",
+    "messages": [{"role": "user", "content": "Write a Python function to check if a number is prime."}],
+    "max_tokens": 128
   }'
 ```
 
