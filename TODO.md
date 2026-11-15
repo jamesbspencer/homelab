@@ -117,3 +117,12 @@ This file tracks upcoming features, architectural improvements, and exploration 
 - [x] **Hardware Layer Offloading**: Configured `--n-cpu-moe 20` for Qwen 3.6 35B and `--n-cpu-moe 24` for Qwen 3 Coder 30B, with 64k unified context.
 - [x] **VS Code Clean Workspace Model**: Provisioned `vscode-coder` and `vscode` models in Open WebUI with no tools, no memories, no knowledge retrieval, and no web search for clean IDE integrations.
 - [x] **OmniRoute Context Limits**: Enforced 65,536 token context window in OmniRoute SQLite `model_context_overrides`.
+
+---
+
+### 14. 📄 Paperless-ngx Document Management & Native AI Archival System
+- [x] **Stack Deployment (PostgreSQL + Tika + Gotenberg)**: Deployed `paperless-ngx` (`ghcr.io/paperless-ngx/paperless-ngx:latest`), `gotenberg` (v8.38), and `tika` (v3.3.1.0) on `net1`, `db`, `redis`, `ai`, and isolated `paperless-internal` networks.
+- [x] **Unified Database & Task Broker**: Integrated with shared `pgvector` container (PostgreSQL 16) with dedicated `paperless` role/database and Valkey DB 4 for Celery worker queues.
+- [x] **Native AI with Llama Embeddings (GGUF)**: Deployed dedicated `llama-embed-minilm` container serving `all-MiniLM-L6-v2-Q8_0.gguf` on port 8082 (`--embedding --pooling mean`) for zero-VRAM dense vector embeddings, and wired `llama-server` (`qwen3.6-35b-a3b` MoE) for automated metadata suggestions and document chat.
+- [x] **Traefik Ingress & Native Authentication**: Configured routing on `paperless.spencer.lan` and `docs.spencer.lan` with native Paperless-ngx Django authentication and API tokens (no Authentik proxy auth).
+- [x] **Ecosystem Integrations & Documentation**: Implemented post-consumption ntfy push alert hook (`scripts/post-consume-ntfy.sh`), Homepage service tile, and comprehensive service guide in [`docs/paperless.md`](file:///data/homelab/docs/paperless.md).

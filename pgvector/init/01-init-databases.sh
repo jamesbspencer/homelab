@@ -165,6 +165,27 @@ EOSQL
 EOSQL
 fi
 
+# Conditionally provision dedicated database & user for Paperless-ngx
+if [ -n "$PAPERLESS_POSTGRES_DB" ]; then
+    PAPERLESS_USER="${PAPERLESS_POSTGRES_USER:-paperless}"
+    PAPERLESS_PASS="${PAPERLESS_POSTGRES_PASSWORD:-$POSTGRES_PASSWORD}"
+
+    echo "Provisioning dedicated user '$PAPERLESS_USER' and database '$PAPERLESS_POSTGRES_DB'..."
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        DO \$\$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = '$PAPERLESS_USER') THEN
+                CREATE ROLE "$PAPERLESS_USER" WITH LOGIN PASSWORD '$PAPERLESS_PASS';
+            END IF;
+        END
+        \$\$;
+        SELECT 'CREATE DATABASE "$PAPERLESS_POSTGRES_DB" OWNER "$PAPERLESS_USER"'
+        WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$PAPERLESS_POSTGRES_DB')\gexec
+        GRANT ALL PRIVILEGES ON DATABASE "$PAPERLESS_POSTGRES_DB" TO "$PAPERLESS_USER";
+        GRANT ALL ON SCHEMA public TO "$PAPERLESS_USER";
+EOSQL
+fi
+
 echo "pgvector initialization completed successfully."
 
 

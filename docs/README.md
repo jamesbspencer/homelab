@@ -25,6 +25,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **ntfy** | Push Notification Gateway & System Alerts | `push.spencer.lan`, `ntfy.spencer.lan`, `:80` | [ntfy Guide](ntfy.md) |
 | **OpenBao** | Secrets & Encryption Management Service | `vault.spencer.lan`, `openbao.spencer.lan` (:8200) | [OpenBao Guide](openbao.md) |
 | **Gitea** | Self-Hosted Git Platform & Issue Tracker | `git.spencer.lan`, `gitea.spencer.lan`, `:2222` (SSH) | [Gitea Guide](gitea.md) |
+| **Paperless-ngx** | Document Management, OCR & Native AI Archival System | `paperless.spencer.lan`, `docs.spencer.lan` (:8000) | [Paperless Guide](paperless.md) |
 | **Homepage** | Unified Homelab Dashboard & Service Directory | `home.spencer.lan`, `homepage.spencer.lan` (:3000) | [Homepage Guide](homepage.md) |
 | **Glances** | Hardware Telemetry & GPU Performance Monitor | `glances.spencer.lan`, `stats.spencer.lan` (:61208) | [Glances Guide](glances.md) |
 | *Retired Services* | *Archived Services Stack* | *Retired (ollama, momoe, litellm, hindsight, memlord, hermes, legacy chat, database, agent vault, infisical)* | [Ollama](archive/ollama.md), [MoMoE](archive/momoe.md), [LiteLLM](archive/litellm.md), [Hindsight](archive/hindsight.md), [Memlord](archive/memlord.md), [Hermes Agent](archive/hermes.md), [Hermes Sandbox](archive/hermes-terminal-image/README.md), [Legacy Stack](archive/open-webui-legacy-stack.md), [Agent Vault](archive/agent-vault.md), [Infisical](archive/infisical.md) |

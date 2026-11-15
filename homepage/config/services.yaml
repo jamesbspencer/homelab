@@ -107,6 +107,12 @@
         description: "Self-Hosted Git Platform & Repositories"
         server: local-docker
         container: gitea
+    - Paperless-ngx:
+        icon: paperless.png
+        href: https://paperless.spencer.lan
+        description: "Document Management, OCR & Archival System"
+        server: local-docker
+        container: paperless
     - Dozzle:
         icon: dozzle.png
         href: https://logs.spencer.lan

@@ -97,6 +97,33 @@ services:
       retries: 3
       start_period: 15s
 
+  llama-embed-minilm:
+    image: ghcr.io/ggml-org/llama.cpp:server-cuda
+    container_name: llama-embed-minilm
+    restart: unless-stopped
+    networks:
+      - ai
+    volumes:
+      - ./llama/models:/models:ro
+    environment:
+      - CUDA_VISIBLE_DEVICES=""
+    command: >
+      --model /models/all-MiniLM-L6-v2-Q8_0.gguf
+      --alias all-MiniLM-L6-v2,sentence-transformers/all-MiniLM-L6-v2
+      --embedding
+      --pooling mean
+      --host 0.0.0.0
+      --port 8082
+      -ngl 0
+      -c 512
+      --threads 2
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8082/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   pgvector:
     image: pgvector/pgvector:${PGVECTOR_VERSION:-pg16}
     container_name: pgvector
@@ -121,6 +148,9 @@ services:
       OPENWEBUI_POSTGRES_USER: ${OPENWEBUI_POSTGRES_USER:-openwebui}
       OPENWEBUI_POSTGRES_PASSWORD: ${OPENWEBUI_POSTGRES_PASSWORD}
       OPENWEBUI_KNOWLEDGE_POSTGRES_DB: ${OPENWEBUI_KNOWLEDGE_POSTGRES_DB:-openwebui_knowledge}
+      PAPERLESS_POSTGRES_DB: ${PAPERLESS_POSTGRES_DB:-paperless}
+      PAPERLESS_POSTGRES_USER: ${PAPERLESS_POSTGRES_USER:-paperless}
+      PAPERLESS_POSTGRES_PASSWORD: ${PAPERLESS_POSTGRES_PASSWORD}
     volumes:
       - ./pgvector/data:/var/lib/postgresql/data
       - ./pgvector/init:/docker-entrypoint-initdb.d:ro
@@ -804,6 +834,115 @@ services:
       - INTERVAL=10
     entrypoint: ["/bin/sh", "/unseal.sh"]
 
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:${GOTENBERG_VERSION:-8.38}
+    container_name: gotenberg
+    restart: unless-stopped
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=^file:///tmp/.*"
+    networks:
+      - paperless-internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  tika:
+    image: docker.io/apache/tika:${TIKA_VERSION:-3.3.1.0}
+    container_name: tika
+    restart: unless-stopped
+    networks:
+      - paperless-internal
+    healthcheck:
+      test: ["CMD", "/usr/bin/bash", "-c", "echo > /dev/tcp/localhost/9998 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:${PAPERLESS_VERSION:-latest}
+    container_name: paperless
+    restart: unless-stopped
+    depends_on:
+      pgvector:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      gotenberg:
+        condition: service_healthy
+      tika:
+        condition: service_healthy
+      llama-server:
+        condition: service_healthy
+      llama-embed-minilm:
+        condition: service_healthy
+    networks:
+      - net1
+      - db
+      - redis
+      - paperless-internal
+      - ai
+    environment:
+      USERMAP_UID: ${PUID:-1000}
+      USERMAP_GID: ${PGID:-1000}
+      PAPERLESS_URL: https://${PAPERLESS_DOMAIN:-paperless.spencer.lan}
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
+      PAPERLESS_TIME_ZONE: ${TIMEZONE:-America/New_York}
+      PAPERLESS_OCR_LANGUAGE: ${PAPERLESS_OCR_LANGUAGE:-eng}
+      PAPERLESS_OCR_LANGUAGES: ${PAPERLESS_OCR_LANGUAGES:-eng}
+      PAPERLESS_DBENGINE: postgresql
+      PAPERLESS_DBHOST: pgvector
+      PAPERLESS_DBPORT: 5432
+      PAPERLESS_DBNAME: ${PAPERLESS_POSTGRES_DB:-paperless}
+      PAPERLESS_DBUSER: ${PAPERLESS_POSTGRES_USER:-paperless}
+      PAPERLESS_DBPASS: ${PAPERLESS_POSTGRES_PASSWORD}
+      PAPERLESS_REDIS: redis://valkey:6379/4
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_AI_ENABLED: "true"
+      PAPERLESS_AI_LLM_BACKEND: openai-like
+      PAPERLESS_AI_LLM_ENDPOINT: http://llama-server:8080/v1
+      PAPERLESS_AI_LLM_MODEL: qwen3.6-35b-a3b
+      PAPERLESS_AI_LLM_API_KEY: none
+      PAPERLESS_AI_LLM_ALLOW_INTERNAL_ENDPOINTS: "true"
+      PAPERLESS_AI_LLM_CONTEXT_SIZE: 16384
+      PAPERLESS_AI_LLM_REQUEST_TIMEOUT: 120
+      PAPERLESS_AI_LLM_EMBEDDING_BACKEND: openai-like
+      PAPERLESS_AI_LLM_EMBEDDING_ENDPOINT: http://llama-embed-minilm:8082/v1
+      PAPERLESS_AI_LLM_EMBEDDING_MODEL: all-MiniLM-L6-v2
+      PAPERLESS_AI_LLM_EMBEDDING_API_KEY: none
+      PAPERLESS_AI_LLM_EMBEDDING_ALLOW_INTERNAL_ENDPOINTS: "true"
+      PAPERLESS_WEBSERVER_WORKERS: 2
+      PAPERLESS_TASK_WORKERS: 2
+      PAPERLESS_POST_CONSUME_SCRIPT: /usr/src/paperless/scripts/post-consume-ntfy.sh
+    volumes:
+      - ./paperless/data:/usr/src/paperless/data
+      - ./paperless/media:/usr/src/paperless/media
+      - ./paperless/export:/usr/src/paperless/export
+      - ./paperless/consume:/usr/src/paperless/consume
+      - ./paperless/scripts:/usr/src/paperless/scripts:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.paperless.rule=Host(`paperless.spencer.lan`) || Host(`docs.spencer.lan`)"
+      - "traefik.http.routers.paperless.entrypoints=websecure"
+      - "traefik.http.routers.paperless.tls=true"
+      - "traefik.http.routers.paperless.service=paperless-svc"
+      - "traefik.http.services.paperless-svc.loadbalancer.server.port=8000"
+
 networks:
   net1:
     name: net1
@@ -814,4 +953,7 @@ networks:
     name: db
   redis:
     name: redis
+  paperless-internal:
+    name: paperless-internal
+    internal: true
 

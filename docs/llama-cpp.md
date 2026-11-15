@@ -9,7 +9,8 @@ High-performance local Mixture-of-Experts (MoE) and dense LLM inference using **
 * **Role**: Primary local LLM inference engine executing 30B–35B MoE models directly behind Open WebUI and local tooling.
 * **Services**:
   * **`llama-server`**: Multi-model MoE router engine with NVIDIA GPU acceleration, CPU expert offloading (`--n-cpu-moe`), and dynamic LRU model switching via `--models-preset` (`:8080`).
-  * **`llama-embed`**: Companion zero-VRAM CPU embedding service (`:8081`) running `nomic-embed-text`.
+  * **`llama-embed`**: Companion zero-VRAM CPU embedding service (`:8081`) running `nomic-embed-text` (Open WebUI & Knowledge Search).
+  * **`llama-embed-minilm`**: Companion zero-VRAM CPU embedding service (`:8082`) running `all-MiniLM-L6-v2-Q8_0.gguf` with mean pooling (Paperless-ngx).
 * **Container Image**: `ghcr.io/ggml-org/llama.cpp:server-cuda`
 * **Network**: `ai` (Internal AI communication network; no host ports exposed).
 * **Decoupled Architecture**: Open WebUI communicates directly with `llama-server` and `llama-embed`, completely bypassing proxy and gateway layers for minimal inference latency.
@@ -22,6 +23,8 @@ graph TD
     subgraph Direct Inference Plane
         OpenWebUI -->|Direct Chat :8080/v1| LlamaServer["llama-server (:8080 Router Mode)"]
         OpenWebUI -->|Direct Embeddings :8081/v1| LlamaEmbed["llama-embed (:8081)"]
+        Paperless["Paperless-ngx :8000"] -->|Suggestions & Chat :8080/v1| LlamaServer
+        Paperless -->|Vector Embeddings :8082/v1| LlamaMiniLM["llama-embed-minilm (:8082)"]
     end
 
     subgraph Llama.cpp Router Presets
@@ -33,6 +36,7 @@ graph TD
         LlamaServer -->|Attention, Shared Experts, Norms, KV Cache| GPU["RTX 3060 (12 GB VRAM)"]
         LlamaServer -->|Routed Inactive Experts| RAM["Intel Xeon W-2145 + 61 GiB RAM (AVX-512)"]
         LlamaEmbed -->|nomic-embed-text (~250 MB)| RAM
+        LlamaMiniLM -->|all-MiniLM-L6-v2 (~24 MB)| RAM
     end
 ```
 
@@ -83,7 +87,7 @@ Spencer's homelab executes MoE models across a single **NVIDIA GeForce RTX 3060 
 
 | Host Path | Container Path | Purpose |
 |---|---|---|
-| `./llama/models` | `/models:ro` | Stores GGUF model weights (`Qwen3.6-35B-A3B-IQ4_XS.gguf`, `Qwen3-Coder-30B-A3B-Instruct-IQ4_XS.gguf`, `nomic-embed-text.gguf`) |
+| `./llama/models` | `/models:ro` | Stores GGUF model weights (`Qwen3.6-35B-A3B-IQ4_XS.gguf`, `Qwen3-Coder-30B-A3B-Instruct-IQ4_XS.gguf`, `nomic-embed-text.gguf`, `all-MiniLM-L6-v2-Q8_0.gguf`) |
 | `./llama/presets.ini` | `/presets.ini:ro` | Router configuration defining model presets, GPU offload layers, and `--n-cpu-moe` parameters |
 
 ---
@@ -95,8 +99,11 @@ Spencer's homelab executes MoE models across a single **NVIDIA GeForce RTX 3060 
 # MoE router server health
 docker compose exec llama-server curl -s http://localhost:8080/health
 
-# Embedding server health
+# Embedding server health (Open WebUI & Knowledge Search)
 docker compose exec llama-embed curl -s http://localhost:8081/health
+
+# Embedding server health (Paperless-ngx all-MiniLM-L6-v2)
+docker compose exec llama-embed-minilm curl -s http://localhost:8082/health
 
 # List active models & router presets
 docker compose exec open-webui curl -s http://llama-server:8080/v1/models
@@ -136,5 +143,15 @@ docker compose exec open-webui curl -s http://llama-embed:8081/v1/embeddings \
   -d '{
     "model": "nomic-embed-text",
     "input": "Spencer Homelab Vector Grounding"
+  }'
+```
+
+### Test Embedding Generation via Llama-Embed-MiniLM (Paperless-ngx)
+```bash
+docker compose exec paperless curl -s http://llama-embed-minilm:8082/v1/embeddings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "all-MiniLM-L6-v2",
+    "input": "Spencer Homelab Document Archive"
   }'
 ```

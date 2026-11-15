@@ -7,6 +7,30 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 
 ---
 
+## [2026-11-15]
+
+### Added
+- **Paperless-ngx Document Management & Native AI Archival System**:
+  - Deployed `paperless-ngx` (`ghcr.io/paperless-ngx/paperless-ngx:latest`) with web UI, Django REST API, and Celery task scheduler on `net1`, `db`, `redis`, `ai`, and `paperless-internal` networks.
+  - Deployed document conversion companions on isolated internal network:
+    - **Gotenberg 8.38** (`gotenberg/gotenberg:8.38`) for Chromium and LibreOffice high-fidelity conversion of `.docx`, `.xlsx`, `.pptx`, `.eml`, and HTML documents to PDF.
+    - **Apache Tika 3.3.1.0** (`apache/tika:3.3.1.0`) for rich content and metadata extraction.
+  - Deployed dedicated zero-VRAM CPU vector embedding server **`llama-embed-minilm`** (`ghcr.io/ggml-org/llama.cpp:server-cuda`) on internal port `8082` serving **`all-MiniLM-L6-v2-Q8_0.gguf`** with mean pooling (`--pooling mean`), generating 384-dimensional dense semantic vectors.
+  - Wired native AI subsystem (`PAPERLESS_AI_*`):
+    - Generative metadata suggestions (Title, Date, Correspondent, Document Type, Tags) and in-UI document chat via `llama-server` (`qwen3.6-35b-a3b` MoE).
+    - Dense vector embeddings via `llama-embed-minilm` (`all-MiniLM-L6-v2`) for semantic search.
+  - Integrated storage and persistence:
+    - Dedicated database and role provisioned in unified `pgvector` container (PostgreSQL 16) with entry added to `pgvector/init/01-init-databases.sh`.
+    - Dedicated Redis/Valkey DB index 4 allocated on existing `valkey` cache container for Celery queues.
+    - Persistent directories created at `/data/homelab/paperless/` (`consume`, `data`, `media`, `export`, `scripts`).
+  - Implemented reverse proxy & native authentication:
+    - Traefik ingress on `https://paperless.spencer.lan` and `https://docs.spencer.lan` with wildcard TLS.
+    - Native Paperless-ngx Django authentication and REST API tokens (no Authentik proxy auth), preserving direct access for web users and mobile scanner applications (Paperless Mobile, QuickScan).
+  - Ecosystem integrations:
+    - Implemented post-consumption push alert webhook (`paperless/scripts/post-consume-ntfy.sh`) dispatching alerts to `push.spencer.lan/paperless`.
+    - Added Paperless-ngx service tile to Homepage dashboard under `Developer Tools & Ops`.
+    - Authored comprehensive documentation in [`docs/paperless.md`](file:///data/homelab/docs/paperless.md) and synchronized [`docs/README.md`](file:///data/homelab/docs/README.md), [`README.md`](file:///data/homelab/README.md), and [`AGENTS.md`](file:///data/homelab/AGENTS.md).
+
 ## [2026-11-09]
 
 ### Added

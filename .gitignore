@@ -104,3 +104,15 @@ open-terminal/workspace/*
 # OmniRoute runtime data and SQLite storage
 omniroute/data/*
 !omniroute/data/.gitkeep
+
+# Paperless-ngx document storage, media, index and export
+paperless/data/*
+!paperless/data/.gitkeep
+paperless/media/*
+!paperless/media/.gitkeep
+paperless/consume/*
+!paperless/consume/.gitkeep
+paperless/export/*
+!paperless/export/.gitkeep
+paperless/scripts/*
+!paperless/scripts/post-consume-ntfy.sh
