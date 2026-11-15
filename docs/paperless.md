@@ -12,6 +12,7 @@
   * `llama-embed-minilm`: Dedicated CPU AVX-512 vector embedding server running `all-MiniLM-L6-v2.gguf` via `llama.cpp`.
   * `gotenberg`: Headless Chromium and LibreOffice document conversion service (`.docx`, `.xlsx`, `.pptx`, `.eml` to PDF).
   * `tika`: Apache Tika text and metadata extraction service.
+  * `brscan-skey`: Brother scanner scan-key daemon service (`devzwf/brscan-skey:latest`) receiving hardware button events from Brother multifunction printers over host networking and saving PDF scans directly into the Paperless consume directory.
 * **User**: `"${PUID:-1000}:${PGID:-1000}"` (`suadmin:suadmin`)
 * **Networks**:
   * `net1`: Edge reverse proxy network connecting Traefik to Paperless for web and API access.
@@ -32,6 +33,7 @@ graph TD
     subgraph Clients ["Clients & Scanners"]
         WebUser([Web Browser])
         MobileScanner([Mobile Scanner App])
+        BrotherPrinter([Brother DCP-L2550DW Printer])
         ScannerFolder([Scanner Drop Folder])
     end
 
@@ -44,6 +46,7 @@ graph TD
         Gotenberg["gotenberg:3000\n(Office/HTML to PDF)"]
         Tika["tika:9998\n(Text Extraction)"]
         LlamaMiniLM["llama-embed-minilm:8082\n(all-MiniLM-L6-v2 GGUF)"]
+        BrscanSkey["brscan-skey\n(devzwf/brscan-skey:latest\nnetwork_mode: host)"]
     end
 
     subgraph Infrastructure ["Homelab Subnets"]
@@ -63,6 +66,8 @@ graph TD
     WebUser -->|HTTPS :443 paperless.spencer.lan| Traefik
     MobileScanner -->|HTTPS :443 /api| Traefik
     ScannerFolder -->|Drop files| ConsumeVol
+    BrotherPrinter -->|UDP 54925 Scan-Key Event| BrscanSkey
+    BrscanSkey -->|Atomic PDF write| ConsumeVol
 
     Traefik -->|Proxy :8000 on net1| Paperless
 
@@ -112,7 +117,7 @@ Paperless-ngx utilizes its native **AI Configuration Subsystem** (`PAPERLESS_AI_
 * **Backend**: `openai-like`
 * **Endpoint**: `http://llama-embed-minilm:8082/v1`
 * **Model**: `all-MiniLM-L6-v2` (`all-MiniLM-L6-v2-Q8_0.gguf`)
-* **Runtime**: Dedicated `llama.cpp:server-cuda` container running with zero VRAM on CPU with mean pooling (`--pooling mean`).
+* **Runtime**: Dedicated `llama.cpp:server-cuda` container running with zero VRAM on CPU with mean pooling (`--pooling mean`), 2048 context and batch size (`-c 2048 -b 2048 -ub 2048`) to cleanly accommodate dense multi-page OCR chunking.
 * **Capabilities**:
   * Generates 384-dimensional dense semantic vectors for each document.
   * Powers semantic search and finds similar documents across the archive.
@@ -123,6 +128,18 @@ Paperless-ngx utilizes its native **AI Configuration Subsystem** (`PAPERLESS_AI_
 
 ### ntfy Document Alerts
 A post-consumption hook is deployed at [`/data/homelab/paperless/scripts/post-consume-ntfy.sh`](file:///data/homelab/paperless/scripts/post-consume-ntfy.sh). Whenever a document is successfully processed, an alert is sent to `https://push.spencer.lan/paperless` with document title and a direct clickable URL.
+
+### Brother Scanner Direct Hardware Ingestion (`brscan-skey`)
+The stack includes a containerized Brother scan-key listener (`brscan-skey`) deployed with `network_mode: host` to ingest scans directly from physical Brother multifunction printers (e.g., `DCP-L2550DW`):
+* **Discovery & Callback Protocols**: UDP broadcast port `54925` (physical "Scan to PC" button triggers) and TCP `54921` (SANE data transfer).
+* **SNMP Communication & Host IP Resolution**: Device SNMP v1/v2c communication using community `internal` to register the destination host name (`Paperless`). Because Linux systems with non-`eth0` physical interfaces (e.g., `eno1`) can cause Brother daemons to fall back to loopback (`127.0.0.1`), a dedicated wrapper at [`/data/homelab/paperless/scripts/brscan-entrypoint.sh`](file:///data/homelab/paperless/scripts/brscan-entrypoint.sh) injects `ip_address=${BROTHER_SCANNER_HOST_IP}` directly into `brscan-skey.config`.
+* **Host Firewall (firewalld)**: Since the daemon runs in `network_mode: host`, incoming printer packets enter via the host's physical NIC (`eno1`). Whitelisting the scanner in firewalld's `trusted` zone ensures all button events and dynamic high-port scan data streams pass without hindrance:
+  ```bash
+  sudo firewall-cmd --permanent --zone=trusted --add-source=<BROTHER_SCANNER_IP>
+  sudo firewall-cmd --reload
+  ```
+* **Atomic File Ingestion**: Scans are rendered in a temporary hidden directory (`/output/.brscan-tmp/`) and atomically moved to `/output/scan_YYYY-MM-DD_HHMMSS.pdf` upon scan completion, preventing premature Paperless ingestion of in-progress multi-page scans.
+* **Volume Mount**: `./paperless/consume:/output` (UID/GID `1000:1000`).
 
 ### Homepage Dashboard
 Paperless-ngx is integrated into [`homepage/config/services.yaml`](file:///data/homelab/homepage/config/services.yaml) under **Productivity & Documents** for quick access and health monitoring.
@@ -153,4 +170,5 @@ docker compose logs -f paperless
 docker compose logs -f llama-embed-minilm
 docker compose logs -f gotenberg
 docker compose logs -f tika
+docker compose logs -f brscan-skey
 ```

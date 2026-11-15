@@ -10,6 +10,15 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
 ## [2026-11-15]
 
 ### Added
+- **Brother Scanner Direct Hardware Ingestion (`brscan-skey`)**:
+  - Deployed `brscan-skey` container (`devzwf/brscan-skey:latest`) configured for Brother DCP-L2550DW multifunction printer on the local LAN.
+  - Configured `network_mode: host` to listen for Brother UDP broadcast events (port 54925) dispatched when users press the physical "Scan to PC" button on the printer.
+  - Implemented custom entrypoint script [`paperless/scripts/brscan-entrypoint.sh`](paperless/scripts/brscan-entrypoint.sh) to inject `ip_address=${BROTHER_SCANNER_HOST_IP}` directly into `brscan-skey.config`, resolving the "Connecting to PC" hang caused by Brother's fallback to `127.0.0.1` on non-`eth0` interfaces.
+  - Expanded `llama-embed-minilm` context and batch size to 2048 (`-c 2048 -b 2048 -ub 2048`) to eliminate 500 batch limit errors during Paperless vector chunk embedding.
+  - Linked Brother scan-key output volume directly into `/data/homelab/paperless/consume`, enabling automatic PDF rendering and zero-latency Paperless-ngx ingestion.
+  - Parameterized printer settings via `.env` (`BROTHER_SCANNER_IP`, `BROTHER_SCANNER_MODEL`, `BROTHER_SCANNER_SKEY_USER`, `BROTHER_SCANNER_SNMP_COMMUNITY`, `BROTHER_SCANNER_RESOLUTION`, `BROTHER_SCANNER_SCAN_MODE`, `BROTHER_SCANNER_PAGE_SIZE`) and updated `.env.example` with zero-leak templates.
+  - Updated Paperless architecture documentation and diagrams in [`docs/paperless.md`](file:///data/homelab/docs/paperless.md), [`docs/README.md`](file:///data/homelab/docs/README.md), [`README.md`](file:///data/homelab/README.md), and [`AGENTS.md`](file:///data/homelab/AGENTS.md).
+
 - **Paperless-ngx Document Management & Native AI Archival System**:
   - Deployed `paperless-ngx` (`ghcr.io/paperless-ngx/paperless-ngx:latest`) with web UI, Django REST API, and Celery task scheduler on `net1`, `db`, `redis`, `ai`, and `paperless-internal` networks.
   - Deployed document conversion companions on isolated internal network:

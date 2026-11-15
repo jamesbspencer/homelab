@@ -25,7 +25,7 @@ This directory contains in-depth documentation, architecture designs, configurat
 | **ntfy** | Push Notification Gateway & System Alerts | `push.spencer.lan`, `ntfy.spencer.lan`, `:80` | [ntfy Guide](ntfy.md) |
 | **OpenBao** | Secrets & Encryption Management Service | `vault.spencer.lan`, `openbao.spencer.lan` (:8200) | [OpenBao Guide](openbao.md) |
 | **Gitea** | Self-Hosted Git Platform & Issue Tracker | `git.spencer.lan`, `gitea.spencer.lan`, `:2222` (SSH) | [Gitea Guide](gitea.md) |
-| **Paperless-ngx** | Document Management, OCR & Native AI Archival System | `paperless.spencer.lan`, `docs.spencer.lan` (:8000) | [Paperless Guide](paperless.md) |
+| **Paperless-ngx** | Document Management, OCR, AI & Hardware Scanner Ingestion | `paperless.spencer.lan`, `docs.spencer.lan` (:8000), `brscan-skey` (host) | [Paperless Guide](paperless.md) |
 | **Homepage** | Unified Homelab Dashboard & Service Directory | `home.spencer.lan`, `homepage.spencer.lan` (:3000) | [Homepage Guide](homepage.md) |
 | **Glances** | Hardware Telemetry & GPU Performance Monitor | `glances.spencer.lan`, `stats.spencer.lan` (:61208) | [Glances Guide](glances.md) |
 | *Retired Services* | *Archived Services Stack* | *Retired (ollama, momoe, litellm, hindsight, memlord, hermes, legacy chat, database, agent vault, infisical)* | [Ollama](archive/ollama.md), [MoMoE](archive/momoe.md), [LiteLLM](archive/litellm.md), [Hindsight](archive/hindsight.md), [Memlord](archive/memlord.md), [Hermes Agent](archive/hermes.md), [Hermes Sandbox](archive/hermes-terminal-image/README.md), [Legacy Stack](archive/open-webui-legacy-stack.md), [Agent Vault](archive/agent-vault.md), [Infisical](archive/infisical.md) |
@@ -34,7 +34,9 @@ This directory contains in-depth documentation, architecture designs, configurat
 
 ## 🌐 Network Topologies
 
-1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Open WebUI, OmniRoute, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Homepage, Glances, Traefik API).
-2. **`ai`**: Private high-speed network for inter-service communication (Open WebUI, Open Terminal, llama-server, llama-embed, OmniRoute, OpenBao, SearXNG, Firecrawl, ntfy, Homepage, Glances).
-3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Open WebUI, Authentik, Gitea).
-4. **`redis`**: Dedicated caching network shared between Valkey, OmniRoute (cache & rate limiter), SearXNG, Firecrawl, Authentik (sessions and task queue), and Gitea (cache, session, and queue).
+1. **`net1`**: Traefik edge network connecting reverse proxy to exposed web services (Open WebUI, OmniRoute, Authentik Server, Dozzle, ntfy, OpenBao, Gitea, Paperless-ngx, Homepage, Glances, Traefik API).
+2. **`ai`**: Private high-speed network for inter-service communication (Open WebUI, Open Terminal, llama-server, llama-embed, llama-embed-minilm, OmniRoute, OpenBao, SearXNG, Firecrawl, ntfy, Paperless-ngx, Homepage, Glances).
+3. **`db`**: Isolated database network hosting PostgreSQL instances (`pgvector`). Any service needing vector or relational database access connects to `db` (Open WebUI, Authentik, Gitea, Paperless-ngx).
+4. **`redis`**: Dedicated caching network shared between Valkey, OmniRoute (cache & rate limiter), SearXNG, Firecrawl, Authentik (sessions and task queue), Gitea (cache, session, and queue), and Paperless-ngx (Celery broker & cache).
+5. **`paperless-internal`**: Isolated bridge network for Paperless conversion backends (`gotenberg:3000`, `tika:9998`).
+6. **Host Networking**: Utilized by `brscan-skey` (`network_mode: host`) to receive physical Brother scanner UDP button push events (port 54925) and SNMP device communication across the LAN.

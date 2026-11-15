@@ -116,3 +116,4 @@ paperless/export/*
 !paperless/export/.gitkeep
 paperless/scripts/*
 !paperless/scripts/post-consume-ntfy.sh
+!paperless/scripts/brscan-entrypoint.sh

@@ -27,7 +27,7 @@ Detailed architectural designs, configuration options, environment variables, an
 | **ntfy** | Push notification gateway & system alerts | `https://push.spencer.lan` / `https://ntfy.spencer.lan` | [ntfy Guide](docs/ntfy.md) |
 | **OpenBao** | Identity-based secrets & encryption management | `https://vault.spencer.lan` / `https://openbao.spencer.lan` (:8200) | [OpenBao Guide](docs/openbao.md) |
 | **Gitea** | Self-hosted Git platform & issue tracker | `https://git.spencer.lan` / `https://gitea.spencer.lan`, `:2222` (SSH) | [Gitea Guide](docs/gitea.md) |
-| **Paperless-ngx** | Document management, OCR & native AI archival system | `https://paperless.spencer.lan` / `https://docs.spencer.lan` (:8000) | [Paperless Guide](docs/paperless.md) |
+| **Paperless-ngx** | Document management, OCR, native AI & Brother scanner ingestion | `https://paperless.spencer.lan` / `https://docs.spencer.lan` (:8000), `brscan-skey` | [Paperless Guide](docs/paperless.md) |
 | **Homepage** | Centralized dashboard & service health monitor | `https://home.spencer.lan` / `https://homepage.spencer.lan` | [Homepage Guide](docs/homepage.md) |
 | **Glances** | Hardware telemetry & NVIDIA GPU performance monitor | `https://glances.spencer.lan` / `https://stats.spencer.lan` (:61208) | [Glances Guide](docs/glances.md) |
 | *Legacy Stack* | *Archived / Retired Legacy Services* | *Reclaimed ~1.02 GB RAM* | [Legacy Stack Archive](docs/archive/open-webui-legacy-stack.md) |
@@ -144,6 +144,7 @@ flowchart TB
 │   ├── openbao.md           # OpenBao secrets & encryption management guide
 │   ├── open-terminal.md     # Open Terminal agent execution sandbox guide
 │   ├── open-webui.md        # Open WebUI generative chat & memory client guide
+│   ├── paperless.md         # Paperless-ngx document management, AI & Brother scanner guide
 │   ├── pgvector.md          # Dedicated pgvector database for Open WebUI (core + knowledge), Authentik & Gitea
 │   ├── searxng.md           # SearXNG configuration & JSON engine setup
 │   ├── traefik.md           # Traefik reverse proxy, SSL & bouncer plugin
@@ -175,6 +176,12 @@ flowchart TB
 │   ├── Dockerfile           # Custom image recipe embedding developer CLIs (bao, gh, gt, tea)
 │   └── workspace/           # Persistent agent home directory (/home/user)
 ├── open-webui/              # Open WebUI runtime data, vectors and user uploads
+├── paperless/               # Paperless-ngx document storage, media, index and consume drop
+│   ├── consume/             # Scan ingestion watch directory (fed by brscan-skey)
+│   ├── data/                # Application database cache, index, and models
+│   ├── export/              # Document exporter backup directory
+│   ├── media/               # Archived PDF documents, originals and thumbnails
+│   └── scripts/             # Post-consume automation scripts (ntfy alerts)
 ├── pgvector/                # Dedicated pgvector database data & init scripts
 ├── scripts/                 # Maintenance, notification & operational automation
 ├── searxng/                 # SearXNG configuration and cache directories

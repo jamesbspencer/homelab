@@ -115,7 +115,9 @@ services:
       --host 0.0.0.0
       --port 8082
       -ngl 0
-      -c 512
+      -c 2048
+      -b 2048
+      -ub 2048
       --threads 2
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8082/health || exit 1"]
@@ -942,6 +944,34 @@ services:
       - "traefik.http.routers.paperless.tls=true"
       - "traefik.http.routers.paperless.service=paperless-svc"
       - "traefik.http.services.paperless-svc.loadbalancer.server.port=8000"
+
+  brscan-skey:
+    image: devzwf/brscan-skey:latest
+    container_name: brscan-skey
+    restart: unless-stopped
+    network_mode: host
+    extra_hosts:
+      tower1: ${BROTHER_SCANNER_HOST_IP}
+    depends_on:
+      paperless:
+        condition: service_healthy
+    environment:
+      SCANNER_IP: ${BROTHER_SCANNER_IP}
+      SCANNER_MODEL: ${BROTHER_SCANNER_MODEL}
+      HOST_IP: ${BROTHER_SCANNER_HOST_IP}
+      SKEY_USER: ${BROTHER_SCANNER_SKEY_USER:-Paperless}
+      SNMP_COMMUNITY: ${BROTHER_SCANNER_SNMP_COMMUNITY:-internal}
+      SCAN_RESOLUTION: ${BROTHER_SCANNER_RESOLUTION:-300}
+      SCAN_MODE: ${BROTHER_SCANNER_SCAN_MODE:-True Gray}
+      SCAN_PAGE_SIZE: ${BROTHER_SCANNER_PAGE_SIZE:-Letter}
+      JPEG_QUALITY: 80
+      FILENAME_PREFIX: scan
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-America/New_York}
+    volumes:
+      - ./paperless/consume:/output
+      - ./paperless/scripts/brscan-entrypoint.sh:/opt/scan/entrypoint.sh:ro
 
 networks:
   net1:
