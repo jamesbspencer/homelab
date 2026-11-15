@@ -893,6 +893,8 @@ services:
       USERMAP_UID: ${PUID:-1000}
       USERMAP_GID: ${PGID:-1000}
       PAPERLESS_URL: https://${PAPERLESS_DOMAIN:-paperless.spencer.lan}
+      PAPERLESS_ALLOWED_HOSTS: paperless.spencer.lan,docs.spencer.lan,${PAPERLESS_PUBLIC_DOMAIN:-docs.jamesspencer.me},paperless,localhost,127.0.0.1
+      PAPERLESS_CSRF_TRUSTED_ORIGINS: https://paperless.spencer.lan,https://docs.spencer.lan,https://${PAPERLESS_PUBLIC_DOMAIN:-docs.jamesspencer.me}
       PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
       PAPERLESS_TIME_ZONE: ${TIMEZONE:-America/New_York}
       PAPERLESS_OCR_LANGUAGE: ${PAPERLESS_OCR_LANGUAGE:-eng}
@@ -939,10 +941,18 @@ services:
       start_period: 30s
     labels:
       - "traefik.enable=true"
+      # Local LAN Router (Wildcard TLS)
       - "traefik.http.routers.paperless.rule=Host(`paperless.spencer.lan`) || Host(`docs.spencer.lan`)"
       - "traefik.http.routers.paperless.entrypoints=websecure"
       - "traefik.http.routers.paperless.tls=true"
       - "traefik.http.routers.paperless.service=paperless-svc"
+      # Public WAN Router (Let's Encrypt TLS)
+      - "traefik.http.routers.paperless-public.rule=Host(`${PAPERLESS_PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.paperless-public.entrypoints=websecure"
+      - "traefik.http.routers.paperless-public.tls=true"
+      - "traefik.http.routers.paperless-public.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.paperless-public.service=paperless-svc"
+      # Load balancer service
       - "traefik.http.services.paperless-svc.loadbalancer.server.port=8000"
 
   brscan-skey:

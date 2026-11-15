@@ -34,6 +34,8 @@ and this project adheres to date-based versioning (`YYYY-MM-DD`).
     - Persistent directories created at `/data/homelab/paperless/` (`consume`, `data`, `media`, `export`, `scripts`).
   - Implemented reverse proxy & native authentication:
     - Traefik ingress on `https://paperless.spencer.lan` and `https://docs.spencer.lan` with wildcard TLS.
+    - Public WAN ingress on `https://docs.jamesspencer.me` with automated Let's Encrypt TLS (HTTP-01 challenge), parameterized via `PAPERLESS_PUBLIC_DOMAIN`.
+    - Configured Django `PAPERLESS_ALLOWED_HOSTS` and `PAPERLESS_CSRF_TRUSTED_ORIGINS` to support simultaneous LAN and WAN access without CSRF or host header errors.
     - Native Paperless-ngx Django authentication and REST API tokens (no Authentik proxy auth), preserving direct access for web users and mobile scanner applications (Paperless Mobile, QuickScan).
   - Ecosystem integrations:
     - Implemented post-consumption push alert webhook (`paperless/scripts/post-consume-ntfy.sh`) dispatching alerts to `push.spencer.lan/paperless`.

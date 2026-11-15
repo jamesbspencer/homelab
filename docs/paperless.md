@@ -23,6 +23,7 @@
 * **Ingress & URLs**:
   * Primary URL: `https://paperless.spencer.lan` (TLS via local wildcard certificate)
   * Secondary Alias: `https://docs.spencer.lan`
+  * Public WAN Ingress: `https://docs.jamesspencer.me` (TLS via Let's Encrypt HTTP-01 challenge)
   * Internal Direct Endpoint: `http://paperless:8000`
 * **Authentication**:
   * **Native Authentication**: Paperless-ngx built-in authentication system with local user accounts, session cookies, password management, and REST API tokens. ForwardAuth proxy middleware is not used, enabling full native control over users, permissions, and mobile scanner app integrations.
